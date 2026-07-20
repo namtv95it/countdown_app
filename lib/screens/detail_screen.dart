@@ -283,9 +283,18 @@ class _DetailScreenState extends State<DetailScreen>
                         const Text('🎉', style: TextStyle(fontSize: 48)),
                         const SizedBox(height: 12),
                         Text(
-                          'Chúc mừng ${ann.title}!',
+                          'Chúc mừng',
                           style: GoogleFonts.outfit(
-                            fontSize: 24,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.amber,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        Text(
+                          ann.title,
+                          style: GoogleFonts.outfit(
+                            fontSize: 26,
                             fontWeight: FontWeight.w800,
                             color: Colors.amber,
                           ),
@@ -303,6 +312,7 @@ class _DetailScreenState extends State<DetailScreen>
                       ],
                     ),
                   ),
+                  const SizedBox(height: 28),
                 ] else if (!isPast) ...[
                   Text(
                     'ĐẾM NGƯỢC',
@@ -391,8 +401,10 @@ class _DetailScreenState extends State<DetailScreen>
                   _buildNoteSection(ann, cardColor),
                 ],
 
-                const SizedBox(height: 24),
-                _buildGiftSuggestionButton(cardColor),
+                if (ann.category.canSuggestProducts) ...[
+                  const SizedBox(height: 24),
+                  _buildGiftSuggestionButton(cardColor),
+                ],
 
                 const SizedBox(height: 40),
               ]),

@@ -505,62 +505,41 @@ class _HomeScreenState extends State<HomeScreen>
 
                           const SizedBox(height: 16),
 
-                          if (isToday) ...[
-                            // ── Chúc mừng: layout gọn gàng, 1 dòng đẹp ──
-                            ShaderMask(
-                              shaderCallback: (bounds) => const LinearGradient(
-                                colors: [
-                                  Color(0xFFFFD700),
-                                  Color(0xFFFFA500),
-                                  Color(0xFFFFD700),
-                                ],
-                              ).createShader(bounds),
-                              child: Text(
-                                '🎊 Chúc mừng!',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.w900,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Hôm nay là ${item.title}',
-                              style: GoogleFonts.outfit(
-                                fontSize: 15,
-                                color: Colors.white70,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 16),
-                            // Confetti dots row
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                          if (isToday)
+                            Column(
                               children: [
-                                for (final c in [
-                                  const Color(0xFFFF6B6B),
-                                  const Color(0xFFFFD93D),
-                                  const Color(0xFF6BCB77),
-                                  const Color(0xFF4D96FF),
-                                  const Color(0xFFFF9F43),
-                                ])
-                                  Container(
-                                    width: 10,
-                                    height: 10,
-                                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                                    decoration: BoxDecoration(
-                                      color: c,
-                                      shape: BoxShape.circle,
-                                      boxShadow: [
-                                        BoxShadow(color: c.withValues(alpha: 0.6), blurRadius: 8),
+                                  // ── Chúc mừng: layout gọn gàng, 1 dòng đẹp ──
+                                  ShaderMask(
+                                    shaderCallback: (bounds) => const LinearGradient(
+                                      colors: [
+                                        Color(0xFFFFD700),
+                                        Color(0xFFFFA500),
+                                        Color(0xFFFFD700),
                                       ],
+                                    ).createShader(bounds),
+                                    child: Text(
+                                      '🎊 Chúc mừng!',
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 32,
+                                        fontWeight: FontWeight.w900,
+                                        color: Colors.white,
+                                      ),
                                     ),
                                   ),
-                              ],
-                            ),
-                          ] else ...[
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Hôm nay là ${item.title}',
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 15,
+                                      color: Colors.white70,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+
+                                ],
+                              )
+                          else ...[
                             // ── Badge ngày ──
                             AnimatedContainer(
                               duration: const Duration(milliseconds: 300),
