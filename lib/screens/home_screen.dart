@@ -10,7 +10,7 @@ import '../services/storage_service.dart';
 import '../services/ad_service.dart';
 import '../widgets/countdown_card.dart';
 import '../widgets/time_unit_box.dart';
-import '../widgets/fireworks_widget.dart';
+
 import 'add_event_screen.dart';
 import 'detail_screen.dart';
 
@@ -300,9 +300,6 @@ class _HomeScreenState extends State<HomeScreen>
           ),
         ),
 
-        // 🎆 Fireworks when it's a celebration day
-        if (_upcomingList.any((a) => a.daysRemaining == 0))
-          const Positioned.fill(child: FireworksWidget()),
 
         SafeArea(
           child: Column(
@@ -706,29 +703,7 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ),
 
-              // ── Dots indicator ──
-              if (upcoming.length > 1)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      upcoming.length.clamp(0, 5),
-                      (i) => AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        width: i == _featuredIndex ? 24 : 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: i == _featuredIndex
-                              ? cardColor
-                              : Colors.white24,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+
 
               const SizedBox(height: 80), // space for FAB + nav
             ],

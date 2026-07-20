@@ -7,7 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/anniversary.dart';
 import '../services/storage_service.dart';
 import '../widgets/time_unit_box.dart';
-import '../widgets/fireworks_widget.dart';
+
 
 class DetailScreen extends StatefulWidget {
   final Anniversary anniversary;
@@ -401,11 +401,7 @@ class _DetailScreenState extends State<DetailScreen>
         ],
       ),
     ),
-        // 🎆 Pháo hoa khi đúng ngày kỷ niệm
-        if (isToday)
-          const Positioned.fill(
-            child: IgnorePointer(child: FireworksWidget()),
-          ),
+
       ],
     );
   }
