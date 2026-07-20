@@ -25,11 +25,19 @@ class Anniversary {
 
   Color get color => Color(colorValue);
 
+  DateTime? _cachedNextOccurrence;
+  int? _cachedCalculationDay;
+
   /// Nếu sự kiện lặp hàng năm, trả về ngày gần nhất (năm nay hoặc năm sau)
   DateTime get nextOccurrence {
     if (!isYearly) return date;
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
+    
+    // Sử dụng cache nếu đã tính toán trong cùng một ngày
+    if (_cachedNextOccurrence != null && _cachedCalculationDay == now.day) {
+      return _cachedNextOccurrence!;
+    }
     
     DateTime candidate;
     if (isLunar) {
@@ -49,6 +57,9 @@ class Anniversary {
         candidate = DateTime(now.year + 1, date.month, date.day);
       }
     }
+    
+    _cachedNextOccurrence = candidate;
+    _cachedCalculationDay = now.day;
     return candidate;
   }
 
