@@ -1,5 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/anniversary.dart';
+import 'widget_service.dart';
 
 class StorageService {
   static const String _key = 'anniversaries_list_v2';
@@ -24,6 +25,13 @@ class StorageService {
     final List<String> data =
         anniversaries.map((item) => item.toJson()).toList();
     await prefs.setStringList(_key, data);
+    
+    // Update home widget whenever data is saved
+    try {
+      await WidgetService.updateWidgetWithClosestEvent(anniversaries);
+    } catch (e) {
+      print('Failed to update widget: $e');
+    }
   }
 
   Future<void> deleteAnniversary(String id) async {
