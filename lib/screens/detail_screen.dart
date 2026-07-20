@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/anniversary.dart';
 import '../services/storage_service.dart';
 import '../widgets/time_unit_box.dart';
+import '../widgets/fireworks_widget.dart';
 
 class DetailScreen extends StatefulWidget {
   final Anniversary anniversary;
@@ -126,9 +127,11 @@ class _DetailScreenState extends State<DetailScreen>
     final daysSinceYear = eventInYear.difference(yearStart).inDays;
     final yearProgress = daysSinceYear / totalDays;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF0D0D1A),
-      body: CustomScrollView(
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: const Color(0xFF0D0D1A),
+          body: CustomScrollView(
         slivers: [
           SliverAppBar(
             expandedHeight: 280,
@@ -265,7 +268,42 @@ class _DetailScreenState extends State<DetailScreen>
                 const SizedBox(height: 28),
 
                 // Đếm ngược real-time
-                if (!isPast) ...[
+                if (isToday) ...[
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                          color: Colors.amber.withValues(alpha: 0.4), width: 2),
+                    ),
+                    child: Column(
+                      children: [
+                        const Text('🎉', style: TextStyle(fontSize: 48)),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Chúc mừng ${ann.title}!',
+                          style: GoogleFonts.outfit(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.amber,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Chúc bạn một ngày thật ý nghĩa và tràn đầy niềm vui.',
+                          style: GoogleFonts.outfit(
+                            fontSize: 16,
+                            color: Colors.white70,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ] else if (!isPast) ...[
                   Text(
                     'ĐẾM NGƯỢC',
                     style: GoogleFonts.outfit(
@@ -362,6 +400,13 @@ class _DetailScreenState extends State<DetailScreen>
           ),
         ],
       ),
+    ),
+        // 🎆 Pháo hoa khi đúng ngày kỷ niệm
+        if (isToday)
+          const Positioned.fill(
+            child: IgnorePointer(child: FireworksWidget()),
+          ),
+      ],
     );
   }
 

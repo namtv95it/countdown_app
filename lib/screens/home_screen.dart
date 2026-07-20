@@ -10,6 +10,7 @@ import '../services/storage_service.dart';
 import '../services/ad_service.dart';
 import '../widgets/countdown_card.dart';
 import '../widgets/time_unit_box.dart';
+import '../widgets/fireworks_widget.dart';
 import 'add_event_screen.dart';
 import 'detail_screen.dart';
 
@@ -32,10 +33,12 @@ class _HomeScreenState extends State<HomeScreen>
   Timer? _timer;
   BannerAd? _bannerAd;
   bool _isBannerAdReady = false;
+  late PageController _pageController;
 
   @override
   void initState() {
     super.initState();
+    _pageController = PageController(initialPage: 0);
     _loadAnniversaries();
     _startTimer();
     _loadBannerAd();
@@ -72,6 +75,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   void dispose() {
+    _pageController.dispose();
     _timer?.cancel();
     _bannerAd?.dispose();
     super.dispose();
@@ -256,14 +260,7 @@ class _HomeScreenState extends State<HomeScreen>
     }
 
     final cardColor = featured.color;
-    final days = featured.daysRemaining;
-    final isToday = days == 0;
-    // Tính fresh mỗi lần build (timer tick mỗi giây → rebuild → cập nhật)
-    final remaining = _computeRemaining(featured);
-    final daysLeft = remaining.inDays;
-    final hours = remaining.inHours % 24;
-    final minutes = remaining.inMinutes % 60;
-    final seconds = remaining.inSeconds % 60;
+    // cardColor used for background gradient and dot indicator
 
     return Stack(
       children: [
@@ -303,6 +300,10 @@ class _HomeScreenState extends State<HomeScreen>
           ),
         ),
 
+        // 🎆 Fireworks when it's a celebration day
+        if (_upcomingList.any((a) => a.daysRemaining == 0))
+          const Positioned.fill(child: FireworksWidget()),
+
         SafeArea(
           child: Column(
             children: [
@@ -337,7 +338,10 @@ class _HomeScreenState extends State<HomeScreen>
                             Padding(
                               padding: const EdgeInsets.only(right: 8),
                               child: GestureDetector(
-                                onTap: () => setState(() => _featuredIndex = 0),
+                                onTap: () {
+                                  _pageController.animateToPage(0, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+                                  setState(() => _featuredIndex = 0);
+                                },
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                   decoration: BoxDecoration(
@@ -394,282 +398,335 @@ class _HomeScreenState extends State<HomeScreen>
               ),
 
               Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // ── Emoji lớn với glow ──
-                      TweenAnimationBuilder<double>(
-                        tween: Tween(begin: 0.8, end: 1.0),
-                        duration: const Duration(milliseconds: 600),
-                        curve: Curves.elasticOut,
-                        builder: (_, v, child) =>
-                            Transform.scale(scale: v, child: child),
-                        child: Container(
-                          width: 110,
-                          height: 110,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: cardColor.withValues(alpha: 0.15),
-                            border: Border.all(
-                                color: cardColor.withValues(alpha: 0.5),
-                                width: 2),
-                            boxShadow: [
-                              BoxShadow(
-                                color: cardColor.withValues(alpha: 0.5),
-                                blurRadius: 40,
-                                spreadRadius: 8,
+                child: PageView.builder(
+                  controller: _pageController,
+                  physics: const BouncingScrollPhysics(),
+                  onPageChanged: (index) {
+                    setState(() {
+                      _featuredIndex = index;
+                    });
+                  },
+                  itemCount: upcoming.length,
+                  itemBuilder: (context, index) {
+                    final item = upcoming[index];
+                    final itemColor = item.color;
+                    final days = item.daysRemaining;
+                    final isToday = days == 0;
+                    final remaining = _computeRemaining(item);
+                    final daysLeft = remaining.inDays;
+                    final hours = remaining.inHours % 24;
+                    final minutes = remaining.inMinutes % 60;
+                    final seconds = remaining.inSeconds % 60;
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // ── Emoji lớn với glow ──
+                          TweenAnimationBuilder<double>(
+                            tween: Tween(begin: 0.8, end: 1.0),
+                            duration: const Duration(milliseconds: 600),
+                            curve: Curves.elasticOut,
+                            builder: (_, v, child) =>
+                                Transform.scale(scale: v, child: child),
+                            child: Container(
+                              width: 110,
+                              height: 110,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: itemColor.withValues(alpha: 0.15),
+                                border: Border.all(
+                                    color: itemColor.withValues(alpha: 0.5),
+                                    width: 2),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: itemColor.withValues(alpha: 0.5),
+                                    blurRadius: 40,
+                                    spreadRadius: 8,
+                                  ),
+                                ],
+                              ),
+                              child: Center(
+                                child: Text(item.emoji,
+                                    style: const TextStyle(fontSize: 52)),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          // ── Tên sự kiện ──
+                          Text(
+                            item.title,
+                            style: GoogleFonts.outfit(
+                              fontSize: 30,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              height: 1.2,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+
+                          const SizedBox(height: 8),
+
+                          // ── Ngày ──
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.calendar_today_rounded,
+                                  size: 14, color: Colors.white54),
+                              const SizedBox(width: 6),
+                              Text(
+                                DateFormat('dd MMMM yyyy', 'vi')
+                                    .format(item.displayDate),
+                                style: GoogleFonts.outfit(
+                                    fontSize: 15, color: Colors.white54),
+                              ),
+                              if (item.isYearly) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: itemColor.withValues(alpha: 0.25),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    '↺ hàng năm',
+                                    style: GoogleFonts.outfit(
+                                        fontSize: 11,
+                                        color: itemColor,
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          if (isToday) ...[
+                            // ── Chúc mừng: layout gọn gàng, 1 dòng đẹp ──
+                            ShaderMask(
+                              shaderCallback: (bounds) => const LinearGradient(
+                                colors: [
+                                  Color(0xFFFFD700),
+                                  Color(0xFFFFA500),
+                                  Color(0xFFFFD700),
+                                ],
+                              ).createShader(bounds),
+                              child: Text(
+                                '🎊 Chúc mừng!',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Hôm nay là ${item.title}',
+                              style: GoogleFonts.outfit(
+                                fontSize: 15,
+                                color: Colors.white70,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 16),
+                            // Confetti dots row
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                for (final c in [
+                                  const Color(0xFFFF6B6B),
+                                  const Color(0xFFFFD93D),
+                                  const Color(0xFF6BCB77),
+                                  const Color(0xFF4D96FF),
+                                  const Color(0xFFFF9F43),
+                                ])
+                                  Container(
+                                    width: 10,
+                                    height: 10,
+                                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                                    decoration: BoxDecoration(
+                                      color: c,
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(color: c.withValues(alpha: 0.6), blurRadius: 8),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ] else ...[
+                            // ── Badge ngày ──
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 24, vertical: 12),
+                              decoration: BoxDecoration(
+                                color: itemColor.withValues(alpha: 0.25),
+                                borderRadius: BorderRadius.circular(30),
+                                border: Border.all(
+                                  color: itemColor.withValues(alpha: 0.6),
+                                  width: 1.5,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: itemColor.withValues(alpha: 0.3),
+                                    blurRadius: 20,
+                                  ),
+                                ],
+                              ),
+                              child: Text(
+                                '⏳ Còn $days ngày nữa',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 16),
+
+                            // ── Countdown boxes ──
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                TimeUnitBox(
+                                  value: daysLeft.toString().padLeft(2, '0'),
+                                  label: 'Ngày',
+                                  color: itemColor,
+                                ),
+                                _separator(itemColor),
+                                TimeUnitBox(
+                                  value: hours.toString().padLeft(2, '0'),
+                                  label: 'Giờ',
+                                  color: itemColor,
+                                ),
+                                _separator(itemColor),
+                                TimeUnitBox(
+                                  value: minutes.toString().padLeft(2, '0'),
+                                  label: 'Phút',
+                                  color: itemColor,
+                                ),
+                                _separator(itemColor),
+                                TimeUnitBox(
+                                  value: seconds.toString().padLeft(2, '0'),
+                                  label: 'Giây',
+                                  color: itemColor,
+                                ),
+                              ],
+                            ),
+                          ],
+
+
+                          const SizedBox(height: 16),
+
+                          // ── Các nút hành động ──
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              if (item.category.canSuggestProducts) ...[
+                                GestureDetector(
+                                  onTap: () {
+                                    // TODO: Mở tính năng gợi ý quà tặng
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 20, vertical: 14),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF10B981)
+                                          .withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                          color: const Color(0xFF10B981)
+                                              .withValues(alpha: 0.5)),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Text('🛍️', style: TextStyle(fontSize: 14)),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          'Gợi ý quà',
+                                          style: GoogleFonts.outfit(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w700,
+                                            color: const Color(0xFF10B981),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                              ],
+                              GestureDetector(
+                                onTap: () => _navigateToDetail(item),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 24, vertical: 14),
+                                  decoration: BoxDecoration(
+                                    color: itemColor.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                        color: itemColor.withValues(alpha: 0.5)),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'Xem chi tiết',
+                                        style: GoogleFonts.outfit(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      const Icon(Icons.arrow_forward_ios_rounded,
+                                          color: Colors.white, size: 14),
+                                    ],
+                                  ),
+                                ),
                               ),
                             ],
                           ),
-                          child: Center(
-                            child: Text(featured.emoji,
-                                style: const TextStyle(fontSize: 52)),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // ── Tên sự kiện ──
-                      Text(
-                        featured.title,
-                        style: GoogleFonts.outfit(
-                          fontSize: 30,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                          height: 1.2,
-                        ),
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-
-                      const SizedBox(height: 8),
-
-                      // ── Ngày ──
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.calendar_today_rounded,
-                              size: 14, color: Colors.white54),
-                          const SizedBox(width: 6),
-                          Text(
-                            DateFormat('dd MMMM yyyy', 'vi')
-                                .format(featured.displayDate),
-                            style: GoogleFonts.outfit(
-                                fontSize: 15, color: Colors.white54),
-                          ),
-                          if (featured.isYearly) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: cardColor.withValues(alpha: 0.25),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                '↺ hàng năm',
-                                style: GoogleFonts.outfit(
-                                    fontSize: 11,
-                                    color: cardColor,
-                                    fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                          ],
                         ],
                       ),
-
-                      const SizedBox(height: 16),
-
-                      // ── Badge ngày ──
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: isToday
-                              ? Colors.amber.shade700
-                              : cardColor.withValues(alpha: 0.25),
-                          borderRadius: BorderRadius.circular(30),
-                          border: Border.all(
-                            color: isToday
-                                ? Colors.amber.shade400
-                                : cardColor.withValues(alpha: 0.6),
-                            width: 1.5,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: (isToday ? Colors.amber : cardColor)
-                                  .withValues(alpha: 0.3),
-                              blurRadius: 20,
-                            ),
-                          ],
-                        ),
-                        child: Text(
-                          isToday
-                              ? '🎊 Hôm nay là ngày kỷ niệm!'
-                              : '⏳ Còn $days ngày nữa',
-                          style: GoogleFonts.outfit(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // ── Countdown boxes: Ngày : Giờ : Phút : Giây ──
-                      if (!isToday)
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            TimeUnitBox(
-                              value: daysLeft.toString().padLeft(2, '0'),
-                              label: 'Ngày',
-                              color: cardColor,
-                            ),
-                            _separator(cardColor),
-                            TimeUnitBox(
-                              value: hours.toString().padLeft(2, '0'),
-                              label: 'Giờ',
-                              color: cardColor,
-                            ),
-                            _separator(cardColor),
-                            TimeUnitBox(
-                              value: minutes.toString().padLeft(2, '0'),
-                              label: 'Phút',
-                              color: cardColor,
-                            ),
-                            _separator(cardColor),
-                            TimeUnitBox(
-                              value: seconds.toString().padLeft(2, '0'),
-                              label: 'Giây',
-                              color: cardColor,
-                            ),
-                          ],
-                        ),
-
-                      const SizedBox(height: 16),
-
-                      // ── Các nút hành động ──
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          if (featured.category.canSuggestProducts) ...[
-                            GestureDetector(
-                              onTap: () {
-                                // TODO: Mở tính năng gợi ý quà tặng
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 20, vertical: 14),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                      color: const Color(0xFF10B981).withValues(alpha: 0.5)),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Text('🛍️', style: TextStyle(fontSize: 14)),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      'Gợi ý quà',
-                                      style: GoogleFonts.outfit(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w700,
-                                        color: const Color(0xFF10B981),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                          ],
-                          GestureDetector(
-                            onTap: () => _navigateToDetail(featured),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 24, vertical: 14),
-                              decoration: BoxDecoration(
-                                color: cardColor.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                    color: cardColor.withValues(alpha: 0.5)),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    'Xem chi tiết',
-                                    style: GoogleFonts.outfit(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  const Icon(Icons.arrow_forward_ios_rounded,
-                                      color: Colors.white, size: 14),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
               ),
 
-              // ── Prev / Next ──
+              // ── Dots indicator ──
               if (upcoming.length > 1)
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+                  padding: const EdgeInsets.only(bottom: 16),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _navButton(
-                        icon: Icons.chevron_left_rounded,
-                        label: 'Trước',
-                        enabled: _featuredIndex > 0,
-                        onTap: () => setState(() {
-                          _featuredIndex--;
-                        }),
-                      ),
-                      // Dots indicator
-                      Row(
-                        children: List.generate(
-                          upcoming.length.clamp(0, 5),
-                          (i) => AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            margin: const EdgeInsets.symmetric(horizontal: 3),
-                            width: i == _featuredIndex ? 20 : 6,
-                            height: 6,
-                            decoration: BoxDecoration(
-                              color: i == _featuredIndex
-                                  ? cardColor
-                                  : Colors.white24,
-                              borderRadius: BorderRadius.circular(3),
-                            ),
-                          ),
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(
+                      upcoming.length.clamp(0, 5),
+                      (i) => AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        width: i == _featuredIndex ? 24 : 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: i == _featuredIndex
+                              ? cardColor
+                              : Colors.white24,
+                          borderRadius: BorderRadius.circular(4),
                         ),
                       ),
-                      _navButton(
-                        icon: Icons.chevron_right_rounded,
-                        label: 'Sau',
-                        enabled: _featuredIndex < upcoming.length - 1,
-                        onTap: () => setState(() {
-                          _featuredIndex++;
-                        }),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
 
@@ -695,39 +752,6 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _navButton({
-    required IconData icon,
-    required String label,
-    required bool enabled,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: enabled ? onTap : null,
-      child: AnimatedOpacity(
-        opacity: enabled ? 1.0 : 0.3,
-        duration: const Duration(milliseconds: 200),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white12),
-          ),
-          child: Row(
-            children: [
-              if (icon == Icons.chevron_left_rounded)
-                Icon(icon, color: Colors.white70, size: 18),
-              Text(label,
-                  style:
-                      GoogleFonts.outfit(fontSize: 13, color: Colors.white70)),
-              if (icon == Icons.chevron_right_rounded)
-                Icon(icon, color: Colors.white70, size: 18),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   // ─────────────────────────────────────────────────────────
   // TAB 1: Tất cả sự kiện
