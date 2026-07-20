@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:lunar/lunar.dart';
+import 'event_category.dart';
 
 class Anniversary {
   final String id;
@@ -11,6 +12,7 @@ class Anniversary {
   final bool isYearly;
   final bool isLunar;
   final String note;
+  final String categoryId;
 
   Anniversary({
     required this.id,
@@ -21,9 +23,13 @@ class Anniversary {
     this.isYearly = false,
     this.isLunar = false,
     this.note = '',
+    this.categoryId = 'other',
   });
 
   Color get color => Color(colorValue);
+
+  /// Trả về [EventCategory] tương ứng với sự kiện này.
+  EventCategory get category => EventCategory.findById(categoryId);
 
   DateTime? _cachedNextOccurrence;
   int? _cachedCalculationDay;
@@ -88,19 +94,26 @@ class Anniversary {
       'isYearly': isYearly,
       'isLunar': isLunar,
       'note': note,
+      'categoryId': categoryId,
     };
   }
 
   factory Anniversary.fromMap(Map<String, dynamic> map) {
+    final emoji = map['emoji'] as String? ?? '🎉';
+    // Backward compatibility: nếu không có categoryId,
+    // thử map từ emoji cũ sang category.
+    final categoryId = map['categoryId'] as String?
+        ?? EventCategory.fromLegacyEmoji(emoji).id;
     return Anniversary(
       id: map['id'] as String,
       title: map['title'] as String,
       date: DateTime.parse(map['date'] as String),
-      emoji: map['emoji'] as String? ?? '🎉',
+      emoji: emoji,
       colorValue: map['colorValue'] as int? ?? 0xFF7C3AED,
       isYearly: map['isYearly'] as bool? ?? false,
       isLunar: map['isLunar'] as bool? ?? false,
       note: map['note'] as String? ?? '',
+      categoryId: categoryId,
     );
   }
 
@@ -118,6 +131,7 @@ class Anniversary {
     bool? isYearly,
     bool? isLunar,
     String? note,
+    String? categoryId,
   }) {
     return Anniversary(
       id: id ?? this.id,
@@ -128,6 +142,7 @@ class Anniversary {
       isYearly: isYearly ?? this.isYearly,
       isLunar: isLunar ?? this.isLunar,
       note: note ?? this.note,
+      categoryId: categoryId ?? this.categoryId,
     );
   }
 
