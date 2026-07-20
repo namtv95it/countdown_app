@@ -289,28 +289,55 @@ class _HomeScreenState extends State<HomeScreen>
                     Text(
                       'Sắp tới',
                       style: GoogleFonts.outfit(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                      ),
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white),
                     ),
                     const Spacer(),
-                    // Chỉ số sự kiện x/n
                     if (upcoming.length > 1)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(20),
-                          border:
-                              Border.all(color: Colors.white12),
-                        ),
-                        child: Text(
-                          '${_featuredIndex + 1} / ${upcoming.length}',
-                          style: GoogleFonts.outfit(
-                              fontSize: 13, color: Colors.white70),
-                        ),
+                      Row(
+                        children: [
+                          if (_featuredIndex > 0)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: GestureDetector(
+                                onTap: () => setState(() => _featuredIndex = 0),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.refresh_rounded, color: Colors.white, size: 14),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Gần nhất',
+                                        style: GoogleFonts.outfit(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.white12),
+                            ),
+                            child: Text(
+                              '${_featuredIndex + 1} / ${upcoming.length}',
+                              style: GoogleFonts.outfit(fontSize: 13, color: Colors.white70),
+                            ),
+                          ),
+                        ],
                       ),
                   ],
                 ),

@@ -558,6 +558,61 @@ class _AddEventScreenState extends State<AddEventScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Row(
+                      children: [
+                        ActionChip(
+                          label: const Text('🇻🇳 Chọn Việt Nam'),
+                          backgroundColor: Colors.white.withValues(alpha: 0.1),
+                          labelStyle: GoogleFonts.outfit(color: Colors.white, fontSize: 13),
+                          side: BorderSide.none,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          onPressed: () {
+                            setModalState(() {
+                              for (var h in PresetHolidays.all.where((h) => h.badge == 'Việt Nam')) {
+                                if (!widget.existingEvents.any((e) => e.title == h.title)) {
+                                  selectedHolidays.add(h);
+                                }
+                              }
+                            });
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        ActionChip(
+                          label: const Text('🌍 Chọn Quốc tế'),
+                          backgroundColor: Colors.white.withValues(alpha: 0.1),
+                          labelStyle: GoogleFonts.outfit(color: Colors.white, fontSize: 13),
+                          side: BorderSide.none,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          onPressed: () {
+                            setModalState(() {
+                              for (var h in PresetHolidays.all.where((h) => h.badge == 'Quốc tế')) {
+                                if (!widget.existingEvents.any((e) => e.title == h.title)) {
+                                  selectedHolidays.add(h);
+                                }
+                              }
+                            });
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        ActionChip(
+                          label: const Text('✕ Bỏ chọn tất cả'),
+                          backgroundColor: Colors.white.withValues(alpha: 0.05),
+                          labelStyle: GoogleFonts.outfit(color: Colors.white70, fontSize: 13),
+                          side: BorderSide.none,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          onPressed: () {
+                            setModalState(() {
+                              selectedHolidays.clear();
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   Expanded(
                     child: ListView(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
