@@ -1,0 +1,1031 @@
+import 'dart:async';
+import 'dart:ui';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+import '../models/anniversary.dart';
+import '../services/storage_service.dart';
+import '../widgets/countdown_card.dart';
+import '../widgets/time_unit_box.dart';
+import 'add_event_screen.dart';
+import 'detail_screen.dart';
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
+  final StorageService _storageService = StorageService();
+  List<Anniversary> _anniversaries = [];
+  bool _isLoading = true;
+  int _currentTab = 0;
+  int _featuredIndex = 0;
+
+  // Timer ticking mỗi giây để rebuild countdown
+  late Timer _ticker;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAnniversaries();
+    // Tick mỗi giây → setState() → build lại → countdown cập nhật
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _ticker.cancel();
+    super.dispose();
+  }
+
+  Future<void> _loadAnniversaries() async {
+    try {
+      final data = await _storageService.getAnniversaries();
+      setState(() {
+        _anniversaries = data;
+        _sortAnniversaries();
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Error loading anniversaries: $e');
+      setState(() {
+        _anniversaries = [];
+        _isLoading = false;
+      });
+    }
+  }
+
+  /// Tính thời gian còn lại tới 00:00:00 của ngày sự kiện
+  Duration _computeRemaining(Anniversary ann) {
+    final target = ann.displayDate;
+    // Đếm đến đầu ngày (00:00:00) — ngày kỷ niệm bắt đầu
+    final targetDt = DateTime(target.year, target.month, target.day);
+    final now = DateTime.now();
+    return targetDt.isAfter(now) ? targetDt.difference(now) : Duration.zero;
+  }
+
+  void _sortAnniversaries() {
+    _anniversaries.sort((a, b) {
+      final dA = a.daysRemaining;
+      final dB = b.daysRemaining;
+      if (dA >= 0 && dB >= 0) return dA.compareTo(dB);
+      if (dA < 0 && dB < 0) return dB.compareTo(dA);
+      return dA >= 0 ? -1 : 1;
+    });
+  }
+
+  List<Anniversary> get _upcomingList =>
+      _anniversaries.where((a) => a.daysRemaining >= 0).toList();
+
+  Anniversary? get _featuredAnniversary {
+    final list = _upcomingList;
+    if (list.isEmpty) return null;
+    return list[_featuredIndex.clamp(0, list.length - 1)];
+  }
+
+  Color get _accentColor {
+    return _featuredAnniversary?.color ?? const Color(0xFF7C3AED);
+  }
+
+
+  Future<void> _navigateToAdd() async {
+    final result = await Navigator.push<Anniversary>(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (_, a1, a2) => const AddEventScreen(),
+        transitionsBuilder: (_, anim, _, child) {
+          return SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, 1),
+              end: Offset.zero,
+            ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOut)),
+            child: child,
+          );
+        },
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        _anniversaries.add(result);
+        _sortAnniversaries();
+        _featuredIndex = 0;
+      });
+      await _storageService.saveAnniversaries(_anniversaries);
+    }
+  }
+
+  Future<void> _navigateToDetail(Anniversary item) async {
+    final updated = await Navigator.push<Anniversary?>(
+      context,
+      MaterialPageRoute(builder: (_) => DetailScreen(anniversary: item)),
+    );
+    if (updated == null) {
+      setState(() {
+        _anniversaries.removeWhere((a) => a.id == item.id);
+        _sortAnniversaries();
+        _featuredIndex = 0;
+      });
+      await _storageService.saveAnniversaries(_anniversaries);
+    }
+  }
+
+  Future<void> _deleteEvent(Anniversary event) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: AlertDialog(
+          backgroundColor: const Color(0xFF1A1A2E),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: const BorderSide(color: Colors.white12),
+          ),
+          title: Text(
+            'Xóa kỷ niệm?',
+            style: GoogleFonts.outfit(
+                fontWeight: FontWeight.w700, color: Colors.white),
+          ),
+          content: Text(
+            'Bạn có chắc muốn xóa "${event.title}" không?',
+            style: GoogleFonts.outfit(color: Colors.white70),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child:
+                  Text('Hủy', style: GoogleFonts.outfit(color: Colors.white54)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(
+                'Xóa',
+                style: GoogleFonts.outfit(
+                    color: Colors.red.shade400, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (confirm == true) {
+      setState(() {
+        _anniversaries.removeWhere((a) => a.id == event.id);
+        _sortAnniversaries();
+        _featuredIndex = 0;
+      });
+      await _storageService.saveAnniversaries(_anniversaries);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF0D0D1A),
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF7C3AED)),
+            )
+          : _currentTab == 0
+              ? _buildHeroTab()
+              : _buildAllEventsTab(),
+      bottomNavigationBar: _buildBottomNav(),
+      floatingActionButton: _buildFAB(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // TAB 0: Hero — Sự kiện sắp tới nổi bật
+  // ─────────────────────────────────────────────────────────
+  Widget _buildHeroTab() {
+    final featured = _featuredAnniversary;
+    final upcoming = _upcomingList;
+
+    if (_anniversaries.isEmpty) return _buildEmptyState();
+
+    if (featured == null) {
+      // Chỉ có sự kiện đã qua
+      return _buildNoUpcomingState();
+    }
+
+    final cardColor = featured.color;
+    final days = featured.daysRemaining;
+    final isToday = days == 0;
+    // Tính fresh mỗi lần build (timer tick mỗi giây → rebuild → cập nhật)
+    final remaining = _computeRemaining(featured);
+    final daysLeft = remaining.inDays;
+    final hours = remaining.inHours % 24;
+    final minutes = remaining.inMinutes % 60;
+    final seconds = remaining.inSeconds % 60;
+
+    return Stack(
+      children: [
+        // Background gradient theo màu sự kiện
+        Positioned.fill(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 600),
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                center: const Alignment(0, -0.3),
+                radius: 1.2,
+                colors: [
+                  cardColor.withValues(alpha: 0.35),
+                  const Color(0xFF0D0D1A),
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        // Particle glow top
+        Positioned(
+          top: -60,
+          left: MediaQuery.of(context).size.width / 2 - 150,
+          child: Container(
+            width: 300,
+            height: 300,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  cardColor.withValues(alpha: 0.25),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        SafeArea(
+          child: Column(
+            children: [
+              // ── App Bar ──
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: _accentColor,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.favorite_rounded,
+                          color: Colors.white, size: 18),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Sắp tới',
+                      style: GoogleFonts.outfit(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const Spacer(),
+                    // Chỉ số sự kiện x/n
+                    if (upcoming.length > 1)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(20),
+                          border:
+                              Border.all(color: Colors.white12),
+                        ),
+                        child: Text(
+                          '${_featuredIndex + 1} / ${upcoming.length}',
+                          style: GoogleFonts.outfit(
+                              fontSize: 13, color: Colors.white70),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // ── Emoji lớn với glow ──
+                      TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0.8, end: 1.0),
+                        duration: const Duration(milliseconds: 600),
+                        curve: Curves.elasticOut,
+                        builder: (_, v, child) =>
+                            Transform.scale(scale: v, child: child),
+                        child: Container(
+                          width: 110,
+                          height: 110,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: cardColor.withValues(alpha: 0.15),
+                            border: Border.all(
+                                color: cardColor.withValues(alpha: 0.5),
+                                width: 2),
+                            boxShadow: [
+                              BoxShadow(
+                                color: cardColor.withValues(alpha: 0.5),
+                                blurRadius: 40,
+                                spreadRadius: 8,
+                              ),
+                            ],
+                          ),
+                          child: Center(
+                            child: Text(featured.emoji,
+                                style: const TextStyle(fontSize: 52)),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // ── Tên sự kiện ──
+                      Text(
+                        featured.title,
+                        style: GoogleFonts.outfit(
+                          fontSize: 30,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          height: 1.2,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      // ── Ngày ──
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.calendar_today_rounded,
+                              size: 14, color: Colors.white54),
+                          const SizedBox(width: 6),
+                          Text(
+                            DateFormat('dd MMMM yyyy', 'vi')
+                                .format(featured.displayDate),
+                            style: GoogleFonts.outfit(
+                                fontSize: 15, color: Colors.white54),
+                          ),
+                          if (featured.isYearly) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: cardColor.withValues(alpha: 0.25),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '↺ hàng năm',
+                                style: GoogleFonts.outfit(
+                                    fontSize: 11,
+                                    color: cardColor,
+                                    fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+
+                      const SizedBox(height: 36),
+
+                      // ── Badge ngày ──
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: isToday
+                              ? Colors.amber.shade700
+                              : cardColor.withValues(alpha: 0.25),
+                          borderRadius: BorderRadius.circular(30),
+                          border: Border.all(
+                            color: isToday
+                                ? Colors.amber.shade400
+                                : cardColor.withValues(alpha: 0.6),
+                            width: 1.5,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: (isToday ? Colors.amber : cardColor)
+                                  .withValues(alpha: 0.3),
+                              blurRadius: 20,
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          isToday
+                              ? '🎊 Hôm nay là ngày kỷ niệm!'
+                              : '⏳ Còn $days ngày nữa',
+                          style: GoogleFonts.outfit(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      // ── Countdown boxes: Ngày : Giờ : Phút : Giây ──
+                      if (!isToday)
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            TimeUnitBox(
+                              value: daysLeft.toString().padLeft(2, '0'),
+                              label: 'Ngày',
+                              color: cardColor,
+                            ),
+                            _separator(cardColor),
+                            TimeUnitBox(
+                              value: hours.toString().padLeft(2, '0'),
+                              label: 'Giờ',
+                              color: cardColor,
+                            ),
+                            _separator(cardColor),
+                            TimeUnitBox(
+                              value: minutes.toString().padLeft(2, '0'),
+                              label: 'Phút',
+                              color: cardColor,
+                            ),
+                            _separator(cardColor),
+                            TimeUnitBox(
+                              value: seconds.toString().padLeft(2, '0'),
+                              label: 'Giây',
+                              color: cardColor,
+                            ),
+                          ],
+                        ),
+
+                      const SizedBox(height: 32),
+
+                      // ── Nút xem chi tiết ──
+                      GestureDetector(
+                        onTap: () => _navigateToDetail(featured),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 28, vertical: 14),
+                          decoration: BoxDecoration(
+                            color: cardColor.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                                color: cardColor.withValues(alpha: 0.5)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Xem chi tiết',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              const Icon(Icons.arrow_forward_ios_rounded,
+                                  color: Colors.white, size: 14),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // ── Prev / Next ──
+              if (upcoming.length > 1)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _navButton(
+                        icon: Icons.chevron_left_rounded,
+                        label: 'Trước',
+                        enabled: _featuredIndex > 0,
+                        onTap: () => setState(() {
+                          _featuredIndex--;
+                        }),
+                      ),
+                      // Dots indicator
+                      Row(
+                        children: List.generate(
+                          upcoming.length.clamp(0, 5),
+                          (i) => AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            margin: const EdgeInsets.symmetric(horizontal: 3),
+                            width: i == _featuredIndex ? 20 : 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: i == _featuredIndex
+                                  ? cardColor
+                                  : Colors.white24,
+                              borderRadius: BorderRadius.circular(3),
+                            ),
+                          ),
+                        ),
+                      ),
+                      _navButton(
+                        icon: Icons.chevron_right_rounded,
+                        label: 'Sau',
+                        enabled: _featuredIndex < upcoming.length - 1,
+                        onTap: () => setState(() {
+                          _featuredIndex++;
+                        }),
+                      ),
+                    ],
+                  ),
+                ),
+
+              const SizedBox(height: 80), // space for FAB + nav
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _separator(Color color) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      child: Text(
+        ':',
+        style: GoogleFonts.outfit(
+          fontSize: 28,
+          fontWeight: FontWeight.w800,
+          color: color,
+        ),
+      ),
+    );
+  }
+
+  Widget _navButton({
+    required IconData icon,
+    required String label,
+    required bool enabled,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: enabled ? onTap : null,
+      child: AnimatedOpacity(
+        opacity: enabled ? 1.0 : 0.3,
+        duration: const Duration(milliseconds: 200),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white12),
+          ),
+          child: Row(
+            children: [
+              if (icon == Icons.chevron_left_rounded)
+                Icon(icon, color: Colors.white70, size: 18),
+              Text(label,
+                  style:
+                      GoogleFonts.outfit(fontSize: 13, color: Colors.white70)),
+              if (icon == Icons.chevron_right_rounded)
+                Icon(icon, color: Colors.white70, size: 18),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // TAB 1: Tất cả sự kiện
+  // ─────────────────────────────────────────────────────────
+  Widget _buildAllEventsTab() {
+    return CustomScrollView(
+      slivers: [
+        SliverAppBar(
+          pinned: true,
+          backgroundColor: const Color(0xFF0D0D1A),
+          expandedHeight: 80,
+          flexibleSpace: FlexibleSpaceBar(
+            titlePadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: _accentColor,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.list_rounded,
+                      color: Colors.white, size: 18),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'Tất cả sự kiện',
+                  style: GoogleFonts.outfit(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(1),
+            child: Container(
+              height: 1,
+              decoration: BoxDecoration(
+                color: _accentColor,
+              ),
+            ),
+          ),
+        ),
+        if (_anniversaries.isEmpty)
+          SliverFillRemaining(child: _buildEmptyState())
+        else ...[
+          // Sắp tới
+          if (_upcomingList.isNotEmpty) ...[
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 4,
+                      height: 18,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Color(0xFF7C3AED), Color(0xFFEC4899)],
+                        ),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Sắp tới',
+                      style: GoogleFonts.outfit(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF7C3AED).withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${_upcomingList.length}',
+                        style: GoogleFonts.outfit(
+                            fontSize: 12,
+                            color: const Color(0xFF7C3AED),
+                            fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (_, i) {
+                    final item = _upcomingList[i];
+                    return CountdownCard(
+                      anniversary: item,
+                      onTap: () => _navigateToDetail(item),
+                      onDelete: () => _deleteEvent(item),
+                    );
+                  },
+                  childCount: _upcomingList.length,
+                ),
+              ),
+            ),
+          ],
+
+          // Đã qua
+          if (_anniversaries.any((a) => a.daysRemaining < 0)) ...[
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 4,
+                      height: 18,
+                      decoration: BoxDecoration(
+                        color: Colors.white24,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Đã qua',
+                      style: GoogleFonts.outfit(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white54,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (_, i) {
+                    final past =
+                        _anniversaries.where((a) => a.daysRemaining < 0).toList();
+                    final item = past[i];
+                    return CountdownCard(
+                      anniversary: item,
+                      onTap: () => _navigateToDetail(item),
+                      onDelete: () => _deleteEvent(item),
+                    );
+                  },
+                  childCount:
+                      _anniversaries.where((a) => a.daysRemaining < 0).length,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ],
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // Bottom Navigation Bar
+  // ─────────────────────────────────────────────────────────
+  Widget _buildBottomNav() {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF12122A),
+        border: Border(
+          top: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.5),
+            blurRadius: 20,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            children: [
+              _buildNavItem(
+                index: 0,
+                icon: Icons.star_rounded,
+                label: 'Sắp tới',
+              ),
+              _buildNavItem(
+                index: 1,
+                icon: Icons.format_list_bulleted_rounded,
+                label: 'Tất cả',
+                badge: _anniversaries.length,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem({
+    required int index,
+    required IconData icon,
+    required String label,
+    int? badge,
+  }) {
+    final isActive = _currentTab == index;
+    final accent = _accentColor;
+    return Expanded(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => setState(() => _currentTab = index),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+              decoration: BoxDecoration(
+                color: isActive
+                    ? accent.withValues(alpha: 0.15)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(
+                    icon,
+                    color: isActive ? accent : Colors.white38,
+                    size: 26,
+                  ),
+                  if (badge != null && badge > 0)
+                    Positioned(
+                      top: -4,
+                      right: -8,
+                      child: Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFEC4899),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          '$badge',
+                          style: GoogleFonts.outfit(
+                              fontSize: 9,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 2),
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 250),
+              style: GoogleFonts.outfit(
+                fontSize: 11,
+                fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
+                color: isActive ? accent : Colors.white38,
+              ),
+              child: Text(label),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // FAB
+  // ─────────────────────────────────────────────────────────
+  Widget _buildFAB() {
+    final accent = _accentColor;
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: accent,
+        boxShadow: [
+          BoxShadow(
+            color: accent.withValues(alpha: 0.5),
+            blurRadius: 20,
+          ),
+        ],
+      ),
+      child: FloatingActionButton(
+        onPressed: _navigateToAdd,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // Empty states
+  // ─────────────────────────────────────────────────────────
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFF7C3AED).withValues(alpha: 0.3),
+                  const Color(0xFFEC4899).withValues(alpha: 0.3),
+                ],
+              ),
+            ),
+            child: const Center(
+              child: Text('💝', style: TextStyle(fontSize: 44)),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Chưa có kỷ niệm nào',
+            style: GoogleFonts.outfit(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Hãy thêm những ngày quan trọng\ncủa bạn để không bao giờ quên!',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.outfit(fontSize: 15, color: Colors.white38),
+          ),
+          const SizedBox(height: 32),
+          GestureDetector(
+            onTap: _navigateToAdd,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF7C3AED), Color(0xFFEC4899)],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF7C3AED).withValues(alpha: 0.4),
+                    blurRadius: 16,
+                  ),
+                ],
+              ),
+              child: Text(
+                '+ Thêm ngay',
+                style: GoogleFonts.outfit(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoUpcomingState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text('📅', style: TextStyle(fontSize: 60)),
+          const SizedBox(height: 20),
+          Text(
+            'Không có sự kiện sắp tới',
+            style: GoogleFonts.outfit(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Tất cả sự kiện đã diễn ra.\nThêm sự kiện mới hoặc xem tab Tất cả.',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.outfit(fontSize: 14, color: Colors.white38),
+          ),
+          const SizedBox(height: 24),
+          GestureDetector(
+            onTap: () => setState(() => _currentTab = 1),
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white12),
+              ),
+              child: Text(
+                'Xem tất cả sự kiện →',
+                style: GoogleFonts.outfit(
+                    fontSize: 14, color: Colors.white70),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
