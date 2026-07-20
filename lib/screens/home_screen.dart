@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/intl.dart';
 import '../models/anniversary.dart';
 import '../services/storage_service.dart';
+import '../services/ad_service.dart';
 import '../widgets/countdown_card.dart';
 import '../widgets/time_unit_box.dart';
 import 'add_event_screen.dart';
@@ -26,21 +29,51 @@ class _HomeScreenState extends State<HomeScreen>
   int _featuredIndex = 0;
 
   // Timer ticking mỗi giây để rebuild countdown
-  late Timer _ticker;
+  Timer? _timer;
+  BannerAd? _bannerAd;
+  bool _isBannerAdReady = false;
 
   @override
   void initState() {
     super.initState();
     _loadAnniversaries();
-    // Tick mỗi giây → setState() → build lại → countdown cập nhật
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+    _startTimer();
+    _loadBannerAd();
+  }
+
+  void _startTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() {});
     });
   }
 
+  void _loadBannerAd() {
+    if (kIsWeb) return;
+    _bannerAd = BannerAd(
+      adUnitId: AdService.bannerAdUnitId,
+      request: const AdRequest(),
+      size: AdSize.banner,
+      listener: BannerAdListener(
+        onAdLoaded: (_) {
+          if (mounted) {
+            setState(() {
+              _isBannerAdReady = true;
+            });
+          }
+        },
+        onAdFailedToLoad: (ad, err) {
+          debugPrint('BannerAd failed to load: $err');
+          _isBannerAdReady = false;
+          ad.dispose();
+        },
+      ),
+    )..load();
+  }
+
   @override
   void dispose() {
-    _ticker.cancel();
+    _timer?.cancel();
+    _bannerAd?.dispose();
     super.dispose();
   }
 
@@ -185,6 +218,9 @@ class _HomeScreenState extends State<HomeScreen>
         _featuredIndex = 0;
       });
       await _storageService.saveAnniversaries(_anniversaries);
+      
+      // Hiển thị quảng cáo toàn màn hình sau khi xóa (Monetization)
+      AdService.showInterstitialAd();
     }
   }
 
@@ -645,8 +681,11 @@ class _HomeScreenState extends State<HomeScreen>
   // TAB 1: Tất cả sự kiện
   // ─────────────────────────────────────────────────────────
   Widget _buildAllEventsTab() {
-    return CustomScrollView(
-      slivers: [
+    return Column(
+      children: [
+        Expanded(
+          child: CustomScrollView(
+            slivers: [
         SliverAppBar(
           pinned: true,
           backgroundColor: const Color(0xFF0D0D1A),
@@ -803,8 +842,14 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ),
           ],
+
+          const SliverToBoxAdapter(child: SizedBox(height: 80)),
         ],
       ],
+    ),
+    ), // End of Expanded
+
+    ],
     );
   }
 
@@ -812,13 +857,28 @@ class _HomeScreenState extends State<HomeScreen>
   // Bottom Navigation Bar
   // ─────────────────────────────────────────────────────────
   Widget _buildBottomNav() {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF12122A),
-        border: Border(
-          top: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
-        ),
-        boxShadow: [
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (_isBannerAdReady && _bannerAd != null)
+          SafeArea(
+            top: false,
+            bottom: false,
+            child: Container(
+              width: _bannerAd!.size.width.toDouble(),
+              height: _bannerAd!.size.height.toDouble(),
+              alignment: Alignment.center,
+              margin: const EdgeInsets.only(top: 4, bottom: 4),
+              child: AdWidget(ad: _bannerAd!),
+            ),
+          ),
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF12122A),
+            border: Border(
+              top: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+            ),
+            boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.5),
             blurRadius: 20,
@@ -845,8 +905,10 @@ class _HomeScreenState extends State<HomeScreen>
             ],
           ),
         ),
-      ),
-    );
+      ), // SafeArea
+    ), // Container
+    ], // children
+    ); // Column
   }
 
   Widget _buildNavItem({

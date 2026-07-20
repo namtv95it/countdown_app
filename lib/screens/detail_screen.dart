@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/anniversary.dart';
 import '../services/storage_service.dart';
 import '../widgets/time_unit_box.dart';
@@ -352,6 +353,9 @@ class _DetailScreenState extends State<DetailScreen>
                   _buildNoteSection(ann, cardColor),
                 ],
 
+                const SizedBox(height: 24),
+                _buildGiftSuggestionButton(cardColor),
+
                 const SizedBox(height: 40),
               ]),
             ),
@@ -518,6 +522,73 @@ class _DetailScreenState extends State<DetailScreen>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildGiftSuggestionButton(Color cardColor) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [cardColor.withValues(alpha: 0.2), cardColor.withValues(alpha: 0.05)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: cardColor.withValues(alpha: 0.3)),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: () async {
+            final url = Uri.parse('https://shopee.vn/search?keyword=qu%C3%A0%20t%E1%BA%B7ng');
+            if (await canLaunchUrl(url)) {
+              await launchUrl(url, mode: LaunchMode.externalApplication);
+            }
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: cardColor.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.card_giftcard_rounded, color: Colors.white, size: 20),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Gợi ý quà tặng',
+                        style: GoogleFonts.outfit(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Tìm món quà ý nghĩa nhất',
+                        style: GoogleFonts.outfit(
+                          color: Colors.white70,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.open_in_new_rounded, color: Colors.white.withValues(alpha: 0.5), size: 18),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
