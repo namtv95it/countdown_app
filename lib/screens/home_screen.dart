@@ -95,10 +95,10 @@ class _HomeScreenState extends State<HomeScreen>
 
 
   Future<void> _navigateToAdd() async {
-    final result = await Navigator.push<Anniversary>(
+    final result = await Navigator.push<dynamic>(
       context,
       PageRouteBuilder(
-        pageBuilder: (_, a1, a2) => const AddEventScreen(),
+        pageBuilder: (_, a1, a2) => AddEventScreen(existingEvents: _anniversaries),
         transitionsBuilder: (_, anim, _, child) {
           return SlideTransition(
             position: Tween<Offset>(
@@ -113,7 +113,11 @@ class _HomeScreenState extends State<HomeScreen>
 
     if (result != null) {
       setState(() {
-        _anniversaries.add(result);
+        if (result is Anniversary) {
+          _anniversaries.add(result);
+        } else if (result is List<Anniversary>) {
+          _anniversaries.addAll(result);
+        }
         _sortAnniversaries();
         _featuredIndex = 0;
       });

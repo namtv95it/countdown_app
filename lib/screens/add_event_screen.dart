@@ -2,9 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../models/anniversary.dart';
+import '../data/preset_holidays.dart';
 
 class AddEventScreen extends StatefulWidget {
-  const AddEventScreen({super.key});
+  final List<Anniversary> existingEvents;
+
+  const AddEventScreen({
+    super.key,
+    this.existingEvents = const [],
+  });
 
   @override
   State<AddEventScreen> createState() => _AddEventScreenState();
@@ -124,7 +130,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
           padding: const EdgeInsets.all(20),
           children: [
             _buildPreviewCard(),
-            const SizedBox(height: 28),
+            const SizedBox(height: 16),
+            _buildPresetButton(),
+            const SizedBox(height: 24),
             _buildSectionLabel('Tên kỷ niệm'),
             const SizedBox(height: 8),
             _buildTextField(
@@ -480,6 +488,294 @@ class _AddEventScreenState extends State<AddEventScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildPresetButton() {
+    return GestureDetector(
+      onTap: _showPresetHolidaysSheet,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFF7C3AED).withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFF7C3AED).withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('🌟', style: TextStyle(fontSize: 18)),
+            const SizedBox(width: 8),
+            Text(
+              'Chọn từ ngày lễ có sẵn',
+              style: GoogleFonts.outfit(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF7C3AED),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showPresetHolidaysSheet() {
+    final Set<PresetHoliday> selectedHolidays = {};
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.85,
+              decoration: const BoxDecoration(
+                color: Color(0xFF1A1A2E),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                children: [
+                  const SizedBox(height: 12),
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Ngày lễ phổ biến',
+                    style: GoogleFonts.outfit(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      children: [
+                        _buildPresetSection('Tất cả ngày lễ', PresetHolidays.all, selectedHolidays, setModalState),
+                        const SizedBox(height: 100), // padding for bottom bar
+                      ],
+                    ),
+                  ),
+                  // Bottom Bar
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF12122A),
+                      border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.5),
+                          blurRadius: 20,
+                          offset: const Offset(0, -4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Đã chọn: ${selectedHolidays.length}',
+                            style: GoogleFonts.outfit(
+                              fontSize: 16,
+                              color: Colors.white70,
+                            ),
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: selectedHolidays.isEmpty ? null : () {
+                            // Tạo list Anniversary từ set
+                            final now = DateTime.now();
+                            final List<Anniversary> resultList = [];
+                            
+                            for (var h in selectedHolidays) {
+                              // Lưu ngày/tháng âm (hoặc dương) vào date,
+                              // Anniversary.nextOccurrence sẽ tự tính đúng ngày hiển thị
+                              final DateTime storeDate = DateTime(now.year, h.month, h.day);
+                              resultList.add(
+                                Anniversary(
+                                  id: '${DateTime.now().microsecondsSinceEpoch}${resultList.length}',
+                                  title: h.title,
+                                  date: storeDate,
+                                  emoji: h.emoji,
+                                  colorValue: h.colorValue,
+                                  isYearly: true,
+                                  isLunar: h.isLunar,
+                                  note: '',
+                                )
+                              );
+                            }
+                            // Đóng modal và trả về List
+                            Navigator.pop(context);
+                            Navigator.pop(context, resultList);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF7C3AED),
+                            disabledBackgroundColor: Colors.white12,
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: Text(
+                            'Thêm ${selectedHolidays.length} ngày',
+                            style: GoogleFonts.outfit(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: selectedHolidays.isEmpty ? Colors.white38 : Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildPresetSection(
+      String title, List<PresetHoliday> holidays, Set<PresetHoliday> selectedHolidays, StateSetter setModalState) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: GoogleFonts.outfit(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: Colors.white54,
+          ),
+        ),
+        const SizedBox(height: 12),
+        ...holidays.map((h) => _buildPresetTile(h, selectedHolidays, setModalState)),
+      ],
+    );
+  }
+
+  Widget _buildPresetTile(PresetHoliday h, Set<PresetHoliday> selectedHolidays, StateSetter setModalState) {
+    final isAlreadyAdded = widget.existingEvents.any((e) => e.title == h.title);
+    final isSelected = selectedHolidays.contains(h);
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: isAlreadyAdded 
+            ? Colors.white.withValues(alpha: 0.02)
+            : isSelected 
+                ? const Color(0xFF7C3AED).withValues(alpha: 0.15) 
+                : Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isAlreadyAdded
+              ? Colors.transparent
+              : isSelected 
+                  ? const Color(0xFF7C3AED) 
+                  : Colors.white12,
+        ),
+      ),
+      child: ListTile(
+        tileColor: Colors.transparent,
+        splashColor: Colors.white.withValues(alpha: 0.05),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        leading: Opacity(
+          opacity: isAlreadyAdded ? 0.3 : 1.0,
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: Color(h.colorValue).withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(h.emoji, style: const TextStyle(fontSize: 20)),
+            ),
+          ),
+        ),
+        title: Text(
+          h.title,
+          style: GoogleFonts.outfit(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: isAlreadyAdded ? Colors.white38 : Colors.white,
+          ),
+        ),
+        subtitle: Opacity(
+          opacity: isAlreadyAdded ? 0.3 : 1.0,
+          child: Row(
+            children: [
+              Text(
+                h.isLunar ? '${h.day}/${h.month} (Âm lịch)' : '${h.day}/${h.month}',
+                style: GoogleFonts.outfit(color: Colors.white54, fontSize: 13),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: h.isLunar
+                      ? const Color(0xFFF59E0B).withValues(alpha: 0.15)
+                      : Colors.white.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(4),
+                  border: h.isLunar
+                      ? Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.4), width: 0.5)
+                      : null,
+                ),
+                child: Text(
+                  h.badge,
+                  style: GoogleFonts.outfit(
+                    color: h.isLunar ? const Color(0xFFF59E0B) : Colors.white70,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        trailing: isAlreadyAdded
+            ? Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'Đã thêm',
+                  style: GoogleFonts.outfit(
+                    color: Colors.white38,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              )
+            : Icon(
+                isSelected ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+                color: isSelected ? const Color(0xFF7C3AED) : Colors.white38,
+              ),
+        onTap: isAlreadyAdded 
+            ? null 
+            : () {
+                setModalState(() {
+                  if (isSelected) {
+                    selectedHolidays.remove(h);
+                  } else {
+                    selectedHolidays.add(h);
+                  }
+                });
+              },
       ),
     );
   }
