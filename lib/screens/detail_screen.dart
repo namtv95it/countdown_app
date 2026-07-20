@@ -445,6 +445,46 @@ class _DetailScreenState extends State<DetailScreen>
       child: Column(
         children: [
           _buildInfoRow(
+            Icons.category_rounded,
+            'Danh mục',
+            '${ann.category.emoji} ${ann.category.name}',
+            cardColor,
+          ),
+          if (ann.category.canSuggestProducts) ...[
+            const SizedBox(height: 4),
+            Padding(
+              padding: const EdgeInsets.only(left: 32),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text('🛍️', style: TextStyle(fontSize: 11)),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Có thể gợi ý quà',
+                          style: GoogleFonts.outfit(
+                            fontSize: 11,
+                            color: const Color(0xFF10B981),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const Divider(color: Colors.white12, height: 24),
+          _buildInfoRow(
             Icons.calendar_today_rounded,
             'Ngày gốc',
             DateFormat('dd/MM/yyyy').format(ann.date),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../models/anniversary.dart';
+import '../models/event_category.dart';
 import '../data/preset_holidays.dart';
 
 class AddEventScreen extends StatefulWidget {
@@ -22,15 +23,11 @@ class _AddEventScreenState extends State<AddEventScreen> {
   final _noteController = TextEditingController();
 
   DateTime? _selectedDate;
-  String _selectedEmoji = '🎉';
-  int _selectedColorValue = 0xFF7C3AED;
+  String _selectedCategoryId = 'other';
+  int _selectedColorValue = 0xFF64748B;
   bool _isYearly = false;
 
-  static const List<String> _emojiList = [
-    '🎉', '🎂', '💑', '💍', '🎓', '🏆', '🌸', '💝',
-    '🎊', '🌟', '🥂', '🎁', '🏠', '✈️', '🌈', '❤️',
-    '🎵', '🌺', '🎄', '🙏', '🤝', '👶', '🐾', '📅',
-  ];
+  String get _selectedEmoji => EventCategory.findById(_selectedCategoryId).emoji;
 
   static const List<int> _colorOptions = [
     0xFF7C3AED,
@@ -82,6 +79,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
         colorValue: _selectedColorValue,
         isYearly: _isYearly,
         note: _noteController.text.trim(),
+        categoryId: _selectedCategoryId,
       );
       Navigator.pop(context, event);
     } else if (_selectedDate == null) {
@@ -147,9 +145,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
             const SizedBox(height: 8),
             _buildDatePicker(),
             const SizedBox(height: 20),
-            _buildSectionLabel('Biểu tượng'),
+            _buildSectionLabel('Danh mục sự kiện'),
             const SizedBox(height: 8),
-            _buildEmojiPicker(),
+            _buildCategoryPicker(),
             const SizedBox(height: 20),
             _buildSectionLabel('Màu sắc'),
             const SizedBox(height: 8),
@@ -334,7 +332,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
     );
   }
 
-  Widget _buildEmojiPicker() {
+  Widget _buildCategoryPicker() {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -345,27 +343,48 @@ class _AddEventScreenState extends State<AddEventScreen> {
       child: Wrap(
         spacing: 8,
         runSpacing: 8,
-        children: _emojiList.map((emoji) {
-          final selected = emoji == _selectedEmoji;
+        children: EventCategory.all.map((cat) {
+          final selected = cat.id == _selectedCategoryId;
+          final catColor = Color(cat.colorValue);
           return GestureDetector(
-            onTap: () => setState(() => _selectedEmoji = emoji),
+            onTap: () => setState(() {
+              _selectedCategoryId = cat.id;
+              _selectedColorValue = cat.colorValue;
+            }),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: selected
-                    ? Color(_selectedColorValue).withValues(alpha: 0.3)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(10),
-                border: selected
-                    ? Border.all(
-                        color:
-                            Color(_selectedColorValue).withValues(alpha: 0.7),
-                        width: 1.5,
-                      )
-                    : null,
+                    ? catColor.withValues(alpha: 0.25)
+                    : Colors.white.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: selected
+                      ? catColor.withValues(alpha: 0.7)
+                      : Colors.white12,
+                  width: selected ? 1.5 : 1,
+                ),
               ),
-              child: Text(emoji, style: const TextStyle(fontSize: 24)),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(cat.emoji, style: const TextStyle(fontSize: 18)),
+                  const SizedBox(width: 6),
+                  Text(
+                    cat.name,
+                    style: GoogleFonts.outfit(
+                      fontSize: 13,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                      color: selected ? Colors.white : Colors.white60,
+                    ),
+                  ),
+                  if (cat.canSuggestProducts) ...[
+                    const SizedBox(width: 4),
+                    Text('🛍️', style: const TextStyle(fontSize: 10)),
+                  ],
+                ],
+              ),
             ),
           );
         }).toList(),
@@ -667,6 +686,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                                   isYearly: true,
                                   isLunar: h.isLunar,
                                   note: '',
+                                  categoryId: h.categoryId,
                                 )
                               );
                             }
