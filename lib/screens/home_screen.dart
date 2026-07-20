@@ -696,6 +696,7 @@ class _HomeScreenState extends State<HomeScreen>
                               ),
                             ],
                           ),
+                          const SizedBox(height: 80), // space for FAB + nav (moved here to allow swipe at bottom)
                         ],
                       ),
                     );
@@ -704,8 +705,7 @@ class _HomeScreenState extends State<HomeScreen>
               ),
 
 
-
-              const SizedBox(height: 80), // space for FAB + nav
+              // space moved inside PageView
             ],
           ),
         ),
