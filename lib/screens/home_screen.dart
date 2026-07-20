@@ -236,7 +236,7 @@ class _HomeScreenState extends State<HomeScreen>
               ? _buildHeroTab()
               : _buildAllEventsTab(),
       bottomNavigationBar: _buildBottomNav(),
-      floatingActionButton: _buildFAB(),
+      floatingActionButton: _currentTab == 1 ? _buildFAB() : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
@@ -375,6 +375,20 @@ class _HomeScreenState extends State<HomeScreen>
                           ),
                         ],
                       ),
+                    const SizedBox(width: 12),
+                    // Add Button (Header)
+                    GestureDetector(
+                      onTap: _navigateToAdd,
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white24),
+                        ),
+                        child: const Icon(Icons.add_rounded, color: Colors.white, size: 20),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -416,7 +430,7 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                       ),
 
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
 
                       // ── Tên sự kiện ──
                       Text(
@@ -468,7 +482,7 @@ class _HomeScreenState extends State<HomeScreen>
                         ],
                       ),
 
-                      const SizedBox(height: 36),
+                      const SizedBox(height: 16),
 
                       // ── Badge ngày ──
                       AnimatedContainer(
@@ -506,7 +520,7 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                       ),
 
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 16),
 
                       // ── Countdown boxes: Ngày : Giờ : Phút : Giây ──
                       if (!isToday)
@@ -539,37 +553,75 @@ class _HomeScreenState extends State<HomeScreen>
                           ],
                         ),
 
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 16),
 
-                      // ── Nút xem chi tiết ──
-                      GestureDetector(
-                        onTap: () => _navigateToDetail(featured),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 28, vertical: 14),
-                          decoration: BoxDecoration(
-                            color: cardColor.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                                color: cardColor.withValues(alpha: 0.5)),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'Xem chi tiết',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
+                      // ── Các nút hành động ──
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          if (featured.category.canSuggestProducts) ...[
+                            GestureDetector(
+                              onTap: () {
+                                // TODO: Mở tính năng gợi ý quà tặng
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 14),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                      color: const Color(0xFF10B981).withValues(alpha: 0.5)),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Text('🛍️', style: TextStyle(fontSize: 14)),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Gợi ý quà',
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w700,
+                                        color: const Color(0xFF10B981),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              const SizedBox(width: 6),
-                              const Icon(Icons.arrow_forward_ios_rounded,
-                                  color: Colors.white, size: 14),
-                            ],
+                            ),
+                            const SizedBox(width: 12),
+                          ],
+                          GestureDetector(
+                            onTap: () => _navigateToDetail(featured),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 24, vertical: 14),
+                              decoration: BoxDecoration(
+                                color: cardColor.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                    color: cardColor.withValues(alpha: 0.5)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Xem chi tiết',
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  const Icon(Icons.arrow_forward_ios_rounded,
+                                      color: Colors.white, size: 14),
+                                ],
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
                     ],
                   ),
@@ -982,11 +1034,13 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   // ─────────────────────────────────────────────────────────
-  // FAB
+  // Empty states
   // ─────────────────────────────────────────────────────────
   Widget _buildFAB() {
     final accent = _accentColor;
     return Container(
+      width: 56,
+      height: 56,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         color: accent,
@@ -1005,10 +1059,6 @@ class _HomeScreenState extends State<HomeScreen>
       ),
     );
   }
-
-  // ─────────────────────────────────────────────────────────
-  // Empty states
-  // ─────────────────────────────────────────────────────────
   Widget _buildEmptyState() {
     return Center(
       child: Column(
