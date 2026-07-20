@@ -229,16 +229,39 @@ class _HomeScreenState extends State<HomeScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0D0D1A),
+      extendBody: true, // Thêm dòng này để body chìm dưới BottomNav trong suốt
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(color: Color(0xFF7C3AED)),
             )
-          : _currentTab == 0
-              ? _buildHeroTab()
-              : _buildAllEventsTab(),
+          : _buildCurrentTab(),
       bottomNavigationBar: _buildBottomNav(),
-      floatingActionButton: _currentTab == 1 ? _buildFAB() : null,
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+    );
+  }
+
+  Widget _buildCurrentTab() {
+    return IndexedStack(
+      index: _currentTab,
+      children: [
+        _buildHeroTab(),
+        _buildPlaceholderTab('Quà tặng'),
+        _buildAllEventsTab(),
+        _buildPlaceholderTab('Cài đặt'),
+      ],
+    );
+  }
+
+  Widget _buildPlaceholderTab(String title) {
+    return Center(
+      child: Text(
+        '$title\n(Sắp ra mắt)',
+        textAlign: TextAlign.center,
+        style: GoogleFonts.outfit(
+          fontSize: 20,
+          color: Colors.white54,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 
@@ -900,107 +923,92 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ),
         Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFF12122A),
-            border: Border(
-              top: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
-            ),
-            boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.5),
-            blurRadius: 20,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
+          color: Colors.transparent,
+          height: 110,
+          child: Stack(
+            alignment: Alignment.bottomCenter,
             children: [
-              _buildNavItem(
-                index: 0,
-                icon: Icons.star_rounded,
-                label: 'Sắp tới',
+              Container(
+                height: 70,
+                margin: const EdgeInsets.only(left: 16, right: 16, bottom: 20),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF12122A),
+                  borderRadius: BorderRadius.circular(35),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildNavIcon(0, Icons.home_rounded, 'Trang chủ'),
+                    _buildNavIcon(1, Icons.card_giftcard_rounded, 'Quà tặng'),
+                    const SizedBox(width: 60), // Không gian cho nút giữa
+                    _buildNavIcon(2, Icons.event_note_rounded, 'Sự kiện'),
+                    _buildNavIcon(3, Icons.settings_rounded, 'Cài đặt'),
+                  ],
+                ),
               ),
-              _buildNavItem(
-                index: 1,
-                icon: Icons.format_list_bulleted_rounded,
-                label: 'Tất cả',
-                badge: _anniversaries.length,
+              Positioned(
+                bottom: 40,
+                child: GestureDetector(
+                  onTap: _navigateToAdd,
+                  child: Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: _accentColor,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: _accentColor.withValues(alpha: 0.5),
+                          blurRadius: 15,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(Icons.add_rounded, color: Colors.white, size: 32),
+                  ),
+                ),
               ),
             ],
           ),
         ),
-      ), // SafeArea
-    ), // Container
-    ], // children
-    ); // Column
+      ],
+    );
   }
 
-  Widget _buildNavItem({
-    required int index,
-    required IconData icon,
-    required String label,
-    int? badge,
-  }) {
+  Widget _buildNavIcon(int index, IconData icon, String label) {
     final isActive = _currentTab == index;
     final accent = _accentColor;
-    return Expanded(
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () => setState(() => _currentTab = index),
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => setState(() => _currentTab = index),
+      child: SizedBox(
+        width: 60,
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-              decoration: BoxDecoration(
-                color: isActive
-                    ? accent.withValues(alpha: 0.15)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Icon(
-                    icon,
-                    color: isActive ? accent : Colors.white38,
-                    size: 26,
-                  ),
-                  if (badge != null && badge > 0)
-                    Positioned(
-                      top: -4,
-                      right: -8,
-                      child: Container(
-                        padding: const EdgeInsets.all(3),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFEC4899),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Text(
-                          '$badge',
-                          style: GoogleFonts.outfit(
-                              fontSize: 9,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
+            Icon(
+              icon,
+              color: isActive ? accent : Colors.white38,
+              size: 26,
             ),
-            const SizedBox(height: 2),
-            AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 250),
+            const SizedBox(height: 4),
+            Text(
+              label,
               style: GoogleFonts.outfit(
-                fontSize: 11,
-                fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
+                fontSize: 10,
+                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
                 color: isActive ? accent : Colors.white38,
               ),
-              child: Text(label),
+              textAlign: TextAlign.center,
+              maxLines: 1,
             ),
           ],
         ),
@@ -1011,29 +1019,6 @@ class _HomeScreenState extends State<HomeScreen>
   // ─────────────────────────────────────────────────────────
   // Empty states
   // ─────────────────────────────────────────────────────────
-  Widget _buildFAB() {
-    final accent = _accentColor;
-    return Container(
-      width: 56,
-      height: 56,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: accent,
-        boxShadow: [
-          BoxShadow(
-            color: accent.withValues(alpha: 0.5),
-            blurRadius: 20,
-          ),
-        ],
-      ),
-      child: FloatingActionButton(
-        onPressed: _navigateToAdd,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
-      ),
-    );
-  }
   Widget _buildEmptyState() {
     return Center(
       child: Column(
