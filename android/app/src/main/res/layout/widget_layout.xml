@@ -4,9 +4,19 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#1A1A2E"
+    android:background="@drawable/widget_background"
     android:gravity="center"
-    android:padding="16dp">
+    android:padding="12dp">
+
+    <TextView
+        android:id="@+id/widget_countdown"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="..."
+        android:textColor="#FFB300"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:gravity="center" />
 
     <TextView
         android:id="@+id/widget_title"
@@ -14,16 +24,10 @@
         android:layout_height="wrap_content"
         android:text="Chưa có sự kiện"
         android:textColor="#FFFFFF"
-        android:textSize="16sp"
-        android:textStyle="bold" />
-
-    <TextView
-        android:id="@+id/widget_countdown"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Mở app để cập nhật"
-        android:textColor="#FFB300"
-        android:textSize="20sp"
+        android:textSize="14sp"
         android:textStyle="bold"
-        android:layout_marginTop="8dp"/>
+        android:gravity="center"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:layout_marginTop="8dp" />
 </LinearLayout>

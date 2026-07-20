@@ -222,9 +222,6 @@ class _HomeScreenState extends State<HomeScreen>
         _featuredIndex = 0;
       });
       await _storageService.saveAnniversaries(_anniversaries);
-      
-      // Hiển thị quảng cáo toàn màn hình sau khi xóa (Monetization)
-      AdService.showInterstitialAd();
     }
   }
 
