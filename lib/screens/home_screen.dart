@@ -12,6 +12,7 @@ import '../services/ad_service.dart';
 import '../services/notification_service.dart';
 import '../widgets/countdown_card.dart';
 import '../widgets/time_unit_box.dart';
+import '../widgets/bubble_background.dart';
 
 import 'add_event_screen.dart';
 import 'detail_screen.dart';
@@ -249,7 +250,12 @@ class _HomeScreenState extends State<HomeScreen>
           ? const Center(
               child: CircularProgressIndicator(color: Color(0xFF7C3AED)),
             )
-          : _buildCurrentTab(),
+          : Stack(
+              children: [
+                const BubbleBackground(),
+                _buildCurrentTab(),
+              ],
+            ),
       bottomNavigationBar: _buildBottomNav(),
     );
   }
