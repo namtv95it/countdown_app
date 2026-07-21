@@ -1,4 +1,4 @@
-/// Danh mục sự kiện — mỗi sự kiện thuộc 1 danh mục.
+﻿/// Danh mục sự kiện — mỗi sự kiện thuộc 1 danh mục.
 /// Mỗi danh mục có emoji, màu, và cờ [canSuggestProducts]
 /// để sau này gắn gợi ý mua hàng.
 class EventCategory {

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../models/anniversary.dart';
@@ -100,7 +100,7 @@ class CountdownCard extends StatelessWidget {
                             children: [
                               Text(
                                 anniversary.title,
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.quicksand(
                                   fontSize: isFeatured ? 20 : 16,
                                   fontWeight: FontWeight.w700,
                                   color: Colors.white,
@@ -119,7 +119,7 @@ class CountdownCard extends StatelessWidget {
                                   const SizedBox(width: 4),
                                   Text(
                                     DateFormat('dd/MM/yyyy').format(displayDate),
-                                    style: GoogleFonts.outfit(
+                                    style: GoogleFonts.quicksand(
                                       fontSize: 13,
                                       color: Colors.white54,
                                     ),
@@ -137,7 +137,7 @@ class CountdownCard extends StatelessWidget {
                                       ),
                                       child: Text(
                                         '↺ năm',
-                                        style: GoogleFonts.outfit(
+                                        style: GoogleFonts.quicksand(
                                           fontSize: 10,
                                           color: cardColor.withValues(alpha: 0.9),
                                           fontWeight: FontWeight.w600,
@@ -158,7 +158,7 @@ class CountdownCard extends StatelessWidget {
                                       ),
                                       child: Text(
                                         '🛍️ Quà',
-                                        style: GoogleFonts.outfit(
+                                        style: GoogleFonts.quicksand(
                                           fontSize: 10,
                                           color: const Color(0xFF10B981),
                                           fontWeight: FontWeight.w600,
@@ -198,7 +198,7 @@ class CountdownCard extends StatelessWidget {
                       ),
                       child: Text(
                         _countdownText(days),
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.quicksand(
                           fontSize: isFeatured ? 16 : 14,
                           fontWeight: FontWeight.w700,
                           color: Colors.white,
@@ -209,7 +209,7 @@ class CountdownCard extends StatelessWidget {
                       const SizedBox(height: 10),
                       Text(
                         anniversary.note,
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.quicksand(
                           fontSize: 13,
                           color: Colors.white54,
                           fontStyle: FontStyle.italic,

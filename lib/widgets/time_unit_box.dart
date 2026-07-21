@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 /// Widget hiển thị một đơn vị đếm ngược (ngày/giờ/phút/giây)
@@ -28,7 +28,7 @@ class TimeUnitBox extends StatelessWidget {
         children: [
           Text(
             value,
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.quicksand(
               fontSize: 28,
               fontWeight: FontWeight.w800,
               color: Colors.white,
@@ -38,7 +38,7 @@ class TimeUnitBox extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             label,
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.quicksand(
               fontSize: 11,
               fontWeight: FontWeight.w500,
               color: Colors.white54,

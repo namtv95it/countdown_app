@@ -190,24 +190,24 @@ class _HomeScreenState extends State<HomeScreen>
           ),
           title: Text(
             'Xóa kỷ niệm?',
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.quicksand(
                 fontWeight: FontWeight.w700, color: Colors.white),
           ),
           content: Text(
             'Bạn có chắc muốn xóa "${event.title}" không?',
-            style: GoogleFonts.outfit(color: Colors.white70),
+            style: GoogleFonts.quicksand(color: Colors.white70),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
               child:
-                  Text('Hủy', style: GoogleFonts.outfit(color: Colors.white54)),
+                  Text('Hủy', style: GoogleFonts.quicksand(color: Colors.white54)),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
               child: Text(
                 'Xóa',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.quicksand(
                     color: Colors.red.shade400, fontWeight: FontWeight.w700),
               ),
             ),
@@ -256,7 +256,7 @@ class _HomeScreenState extends State<HomeScreen>
       child: Text(
         '$title\n(Sắp ra mắt)',
         textAlign: TextAlign.center,
-        style: GoogleFonts.outfit(
+        style: GoogleFonts.quicksand(
           fontSize: 20,
           color: Colors.white54,
           fontWeight: FontWeight.w600,
@@ -342,7 +342,7 @@ class _HomeScreenState extends State<HomeScreen>
                     const SizedBox(width: 10),
                     Text(
                       'Sắp tới',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.quicksand(
                           fontSize: 20,
                           fontWeight: FontWeight.w800,
                           color: Colors.white),
@@ -371,7 +371,7 @@ class _HomeScreenState extends State<HomeScreen>
                                       const SizedBox(width: 4),
                                       Text(
                                         'Gần nhất',
-                                        style: GoogleFonts.outfit(
+                                        style: GoogleFonts.quicksand(
                                           color: Colors.white,
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
@@ -391,25 +391,12 @@ class _HomeScreenState extends State<HomeScreen>
                             ),
                             child: Text(
                               '${_featuredIndex + 1} / ${upcoming.length}',
-                              style: GoogleFonts.outfit(fontSize: 13, color: Colors.white70),
+                              style: GoogleFonts.quicksand(fontSize: 13, color: Colors.white70),
                             ),
                           ),
                         ],
                       ),
-                    const SizedBox(width: 12),
-                    // Add Button (Header)
-                    GestureDetector(
-                      onTap: _navigateToAdd,
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white24),
-                        ),
-                        child: const Icon(Icons.add_rounded, color: Colors.white, size: 20),
-                      ),
-                    ),
+
                   ],
                 ),
               ),
@@ -476,7 +463,7 @@ class _HomeScreenState extends State<HomeScreen>
                           // ── Tên sự kiện ──
                           Text(
                             item.title,
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.quicksand(
                               fontSize: 30,
                               fontWeight: FontWeight.w800,
                               color: Colors.white,
@@ -499,7 +486,7 @@ class _HomeScreenState extends State<HomeScreen>
                               Text(
                                 DateFormat('dd MMMM yyyy', 'vi')
                                     .format(item.displayDate),
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.quicksand(
                                     fontSize: 15, color: Colors.white54),
                               ),
                               if (item.isYearly) ...[
@@ -513,7 +500,7 @@ class _HomeScreenState extends State<HomeScreen>
                                   ),
                                   child: Text(
                                     '↺ hàng năm',
-                                    style: GoogleFonts.outfit(
+                                    style: GoogleFonts.quicksand(
                                         fontSize: 11,
                                         color: itemColor,
                                         fontWeight: FontWeight.w600),
@@ -522,6 +509,17 @@ class _HomeScreenState extends State<HomeScreen>
                               ],
                             ],
                           ),
+
+                          if (item.isLunar) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              '(Ngày ${item.date.day} tháng ${item.date.month} Âm lịch)',
+                              style: GoogleFonts.quicksand(
+                                fontSize: 13,
+                                color: Colors.white54,
+                              ),
+                            ),
+                          ],
 
                           const SizedBox(height: 16),
 
@@ -539,7 +537,7 @@ class _HomeScreenState extends State<HomeScreen>
                                     ).createShader(bounds),
                                     child: Text(
                                       '🎊 Chúc mừng!',
-                                      style: GoogleFonts.outfit(
+                                      style: GoogleFonts.quicksand(
                                         fontSize: 32,
                                         fontWeight: FontWeight.w900,
                                         color: Colors.white,
@@ -549,7 +547,7 @@ class _HomeScreenState extends State<HomeScreen>
                                   const SizedBox(height: 8),
                                   Text(
                                     'Hôm nay là ${item.title}',
-                                    style: GoogleFonts.outfit(
+                                    style: GoogleFonts.quicksand(
                                       fontSize: 15,
                                       color: Colors.white70,
                                       fontWeight: FontWeight.w500,
@@ -580,8 +578,8 @@ class _HomeScreenState extends State<HomeScreen>
                                 ],
                               ),
                               child: Text(
-                                '⏳ Còn $days ngày nữa',
-                                style: GoogleFonts.outfit(
+                                '⏳ Còn $daysLeft ngày nữa',
+                                style: GoogleFonts.quicksand(
                                   fontSize: 17,
                                   fontWeight: FontWeight.w800,
                                   color: Colors.white,
@@ -652,7 +650,7 @@ class _HomeScreenState extends State<HomeScreen>
                                         const SizedBox(width: 6),
                                         Text(
                                           'Gợi ý quà',
-                                          style: GoogleFonts.outfit(
+                                          style: GoogleFonts.quicksand(
                                             fontSize: 15,
                                             fontWeight: FontWeight.w700,
                                             color: const Color(0xFF10B981),
@@ -680,7 +678,7 @@ class _HomeScreenState extends State<HomeScreen>
                                     children: [
                                       Text(
                                         'Xem chi tiết',
-                                        style: GoogleFonts.outfit(
+                                        style: GoogleFonts.quicksand(
                                           fontSize: 15,
                                           fontWeight: FontWeight.w700,
                                           color: Colors.white,
@@ -717,7 +715,7 @@ class _HomeScreenState extends State<HomeScreen>
       padding: const EdgeInsets.symmetric(horizontal: 6),
       child: Text(
         ':',
-        style: GoogleFonts.outfit(
+        style: GoogleFonts.quicksand(
           fontSize: 28,
           fontWeight: FontWeight.w800,
           color: color,
@@ -756,7 +754,7 @@ class _HomeScreenState extends State<HomeScreen>
                 const SizedBox(width: 10),
                 Text(
                   'Tất cả sự kiện',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.quicksand(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
@@ -800,7 +798,7 @@ class _HomeScreenState extends State<HomeScreen>
                     const SizedBox(width: 10),
                     Text(
                       'Sắp tới',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.quicksand(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
@@ -816,7 +814,7 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                       child: Text(
                         '${_upcomingList.length}',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.quicksand(
                             fontSize: 12,
                             color: const Color(0xFF7C3AED),
                             fontWeight: FontWeight.w700),
@@ -862,7 +860,7 @@ class _HomeScreenState extends State<HomeScreen>
                     const SizedBox(width: 10),
                     Text(
                       'Đã qua',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.quicksand(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: Colors.white54,
@@ -1002,7 +1000,7 @@ class _HomeScreenState extends State<HomeScreen>
             const SizedBox(height: 4),
             Text(
               label,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.quicksand(
                 fontSize: 10,
                 fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
                 color: isActive ? accent : Colors.white38,
@@ -1043,7 +1041,7 @@ class _HomeScreenState extends State<HomeScreen>
           const SizedBox(height: 24),
           Text(
             'Chưa có kỷ niệm nào',
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.quicksand(
               fontSize: 22,
               fontWeight: FontWeight.w700,
               color: Colors.white,
@@ -1053,7 +1051,7 @@ class _HomeScreenState extends State<HomeScreen>
           Text(
             'Hãy thêm những ngày quan trọng\ncủa bạn để không bao giờ quên!',
             textAlign: TextAlign.center,
-            style: GoogleFonts.outfit(fontSize: 15, color: Colors.white38),
+            style: GoogleFonts.quicksand(fontSize: 15, color: Colors.white38),
           ),
           const SizedBox(height: 32),
           GestureDetector(
@@ -1075,7 +1073,7 @@ class _HomeScreenState extends State<HomeScreen>
               ),
               child: Text(
                 '+ Thêm ngay',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.quicksand(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: Colors.white,
@@ -1097,7 +1095,7 @@ class _HomeScreenState extends State<HomeScreen>
           const SizedBox(height: 20),
           Text(
             'Không có sự kiện sắp tới',
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.quicksand(
               fontSize: 20,
               fontWeight: FontWeight.w700,
               color: Colors.white,
@@ -1107,7 +1105,7 @@ class _HomeScreenState extends State<HomeScreen>
           Text(
             'Tất cả sự kiện đã diễn ra.\nThêm sự kiện mới hoặc xem tab Tất cả.',
             textAlign: TextAlign.center,
-            style: GoogleFonts.outfit(fontSize: 14, color: Colors.white38),
+            style: GoogleFonts.quicksand(fontSize: 14, color: Colors.white38),
           ),
           const SizedBox(height: 24),
           GestureDetector(
@@ -1122,7 +1120,7 @@ class _HomeScreenState extends State<HomeScreen>
               ),
               child: Text(
                 'Xem tất cả sự kiện →',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.quicksand(
                     fontSize: 14, color: Colors.white70),
               ),
             ),

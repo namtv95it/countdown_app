@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'screens/home_screen.dart';
@@ -38,14 +38,14 @@ class MyApp extends StatelessWidget {
         onSecondary: Colors.white,
         onSurface: Colors.white,
       ),
-      textTheme: GoogleFonts.outfitTextTheme(base.textTheme).apply(
+      textTheme: GoogleFonts.quicksandTextTheme(base.textTheme).apply(
         bodyColor: Colors.white,
         displayColor: Colors.white,
       ),
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        titleTextStyle: GoogleFonts.outfit(
+        titleTextStyle: GoogleFonts.quicksand(
           fontSize: 22,
           fontWeight: FontWeight.w700,
           color: Colors.white,

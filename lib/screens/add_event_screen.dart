@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../models/anniversary.dart';
@@ -86,7 +86,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: Colors.red.shade800,
-          content: Text('Vui lòng chọn ngày!', style: GoogleFonts.outfit()),
+          content: Text('Vui lòng chọn ngày!', style: GoogleFonts.quicksand()),
           behavior: SnackBarBehavior.floating,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -114,7 +114,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
         ),
         title: Text(
           'Thêm Kỷ niệm',
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.quicksand(
             fontSize: 20,
             fontWeight: FontWeight.w700,
             color: Colors.white,
@@ -127,15 +127,15 @@ class _AddEventScreenState extends State<AddEventScreen> {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            _buildPreviewCard(),
-            const SizedBox(height: 16),
+            // _buildPreviewCard(),
+            // const SizedBox(height: 16),
             _buildPresetButton(),
             const SizedBox(height: 24),
             _buildSectionLabel('Tên kỷ niệm'),
             const SizedBox(height: 8),
             _buildTextField(
               controller: _titleController,
-              hint: 'VD: Sinh nhật bạn thân...',
+              hint: 'VD: Sinh nhật vợ yêu...',
               icon: Icons.edit_rounded,
               validator: (v) =>
                   (v == null || v.trim().isEmpty) ? 'Vui lòng nhập tên' : null,
@@ -200,7 +200,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                   _titleController.text.isEmpty
                       ? 'Tên kỷ niệm...'
                       : _titleController.text,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.quicksand(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: _titleController.text.isEmpty
@@ -213,7 +213,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                   _selectedDate == null
                       ? 'Chưa chọn ngày'
                       : DateFormat('dd/MM/yyyy').format(_selectedDate!),
-                  style: GoogleFonts.outfit(fontSize: 13, color: Colors.white54),
+                  style: GoogleFonts.quicksand(fontSize: 13, color: Colors.white54),
                 ),
               ],
             ),
@@ -226,7 +226,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
             ),
             child: Text(
               'Preview',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.quicksand(
                 fontSize: 11,
                 color: cardColor,
                 fontWeight: FontWeight.w600,
@@ -241,7 +241,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
   Widget _buildSectionLabel(String label) {
     return Text(
       label,
-      style: GoogleFonts.outfit(
+      style: GoogleFonts.quicksand(
         fontSize: 14,
         fontWeight: FontWeight.w600,
         color: Colors.white54,
@@ -262,10 +262,10 @@ class _AddEventScreenState extends State<AddEventScreen> {
       maxLines: maxLines,
       onChanged: (_) => setState(() {}),
       validator: validator,
-      style: GoogleFonts.outfit(color: Colors.white),
+      style: GoogleFonts.quicksand(color: Colors.white),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: GoogleFonts.outfit(color: Colors.white30),
+        hintStyle: GoogleFonts.quicksand(color: Colors.white30),
         prefixIcon: Icon(icon, color: Colors.white38, size: 20),
         filled: true,
         fillColor: Colors.white.withValues(alpha: 0.07),
@@ -316,7 +316,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                   ? 'Chọn ngày...'
                   : DateFormat('EEEE, dd MMMM yyyy', 'vi')
                       .format(_selectedDate!),
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.quicksand(
                 fontSize: 15,
                 color: _selectedDate == null ? Colors.white30 : Colors.white,
                 fontWeight: _selectedDate != null
@@ -373,7 +373,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                   const SizedBox(width: 6),
                   Text(
                     cat.name,
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.quicksand(
                       fontSize: 13,
                       fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                       color: selected ? Colors.white : Colors.white60,
@@ -451,7 +451,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
               children: [
                 Text(
                   'Lặp lại hàng năm',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.quicksand(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
@@ -459,7 +459,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 ),
                 Text(
                   'Tự động cập nhật sang năm tiếp theo',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.quicksand(
                     fontSize: 12,
                     color: Colors.white38,
                   ),
@@ -500,7 +500,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
         child: Center(
           child: Text(
             'Lưu Kỷ niệm ✨',
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.quicksand(
               fontSize: 18,
               fontWeight: FontWeight.w700,
               color: Colors.white,
@@ -528,7 +528,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
             const SizedBox(width: 8),
             Text(
               'Chọn từ ngày lễ có sẵn',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.quicksand(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
                 color: const Color(0xFF7C3AED),
@@ -570,7 +570,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                   const SizedBox(height: 16),
                   Text(
                     'Ngày lễ phổ biến',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.quicksand(
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
@@ -585,7 +585,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                         ActionChip(
                           label: const Text('🇻🇳 Chọn Việt Nam'),
                           backgroundColor: Colors.white.withValues(alpha: 0.1),
-                          labelStyle: GoogleFonts.outfit(color: Colors.white, fontSize: 13),
+                          labelStyle: GoogleFonts.quicksand(color: Colors.white, fontSize: 13),
                           side: BorderSide.none,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                           onPressed: () {
@@ -602,7 +602,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                         ActionChip(
                           label: const Text('🌍 Chọn Quốc tế'),
                           backgroundColor: Colors.white.withValues(alpha: 0.1),
-                          labelStyle: GoogleFonts.outfit(color: Colors.white, fontSize: 13),
+                          labelStyle: GoogleFonts.quicksand(color: Colors.white, fontSize: 13),
                           side: BorderSide.none,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                           onPressed: () {
@@ -619,7 +619,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                         ActionChip(
                           label: const Text('✕ Bỏ chọn tất cả'),
                           backgroundColor: Colors.white.withValues(alpha: 0.05),
-                          labelStyle: GoogleFonts.outfit(color: Colors.white70, fontSize: 13),
+                          labelStyle: GoogleFonts.quicksand(color: Colors.white70, fontSize: 13),
                           side: BorderSide.none,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                           onPressed: () {
@@ -660,7 +660,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                         Expanded(
                           child: Text(
                             'Đã chọn: ${selectedHolidays.length}',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.quicksand(
                               fontSize: 16,
                               color: Colors.white70,
                             ),
@@ -702,7 +702,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                           ),
                           child: Text(
                             'Thêm ${selectedHolidays.length} ngày',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.quicksand(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
                               color: selectedHolidays.isEmpty ? Colors.white38 : Colors.white,
@@ -728,7 +728,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
       children: [
         Text(
           title,
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.quicksand(
             fontSize: 16,
             fontWeight: FontWeight.w700,
             color: Colors.white54,
@@ -782,7 +782,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
         ),
         title: Text(
           h.title,
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.quicksand(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: isAlreadyAdded ? Colors.white38 : Colors.white,
@@ -794,7 +794,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
             children: [
               Text(
                 h.isLunar ? '${h.day}/${h.month} (Âm lịch)' : '${h.day}/${h.month}',
-                style: GoogleFonts.outfit(color: Colors.white54, fontSize: 13),
+                style: GoogleFonts.quicksand(color: Colors.white54, fontSize: 13),
               ),
               const SizedBox(width: 8),
               Container(
@@ -810,7 +810,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 ),
                 child: Text(
                   h.badge,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.quicksand(
                     color: h.isLunar ? const Color(0xFFF59E0B) : Colors.white70,
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
@@ -829,7 +829,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 ),
                 child: Text(
                   'Đã thêm',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.quicksand(
                     color: Colors.white38,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,

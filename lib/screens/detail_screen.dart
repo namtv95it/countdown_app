@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -70,26 +70,26 @@ class _DetailScreenState extends State<DetailScreen>
           ),
           title: Text(
             'Xóa kỷ niệm?',
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.quicksand(
               fontWeight: FontWeight.w700,
               color: Colors.white,
             ),
           ),
           content: Text(
             'Bạn có chắc muốn xóa "${widget.anniversary.title}" không?',
-            style: GoogleFonts.outfit(color: Colors.white70),
+            style: GoogleFonts.quicksand(color: Colors.white70),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
               child:
-                  Text('Hủy', style: GoogleFonts.outfit(color: Colors.white54)),
+                  Text('Hủy', style: GoogleFonts.quicksand(color: Colors.white54)),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
               child: Text(
                 'Xóa',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.quicksand(
                   color: Colors.red.shade400,
                   fontWeight: FontWeight.w700,
                 ),
@@ -202,7 +202,7 @@ class _DetailScreenState extends State<DetailScreen>
                       padding: const EdgeInsets.symmetric(horizontal: 24),
                       child: Text(
                         ann.title,
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.quicksand(
                           fontSize: 26,
                           fontWeight: FontWeight.w800,
                           color: Colors.white,
@@ -213,7 +213,7 @@ class _DetailScreenState extends State<DetailScreen>
                     const SizedBox(height: 6),
                     Text(
                       DateFormat('EEEE, dd MMMM yyyy', 'vi').format(displayDate),
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.quicksand(
                         fontSize: 14,
                         color: Colors.white54,
                       ),
@@ -256,7 +256,7 @@ class _DetailScreenState extends State<DetailScreen>
                           : isPast
                               ? '✓ Đã diễn ra ${-days} ngày trước'
                               : '⏳ Còn $days ngày nữa',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.quicksand(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
@@ -284,7 +284,7 @@ class _DetailScreenState extends State<DetailScreen>
                         const SizedBox(height: 12),
                         Text(
                           'Chúc mừng',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.quicksand(
                             fontSize: 20,
                             fontWeight: FontWeight.w600,
                             color: Colors.amber,
@@ -293,7 +293,7 @@ class _DetailScreenState extends State<DetailScreen>
                         ),
                         Text(
                           ann.title,
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.quicksand(
                             fontSize: 26,
                             fontWeight: FontWeight.w800,
                             color: Colors.amber,
@@ -303,7 +303,7 @@ class _DetailScreenState extends State<DetailScreen>
                         const SizedBox(height: 8),
                         Text(
                           'Chúc bạn một ngày thật ý nghĩa và tràn đầy niềm vui.',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.quicksand(
                             fontSize: 16,
                             color: Colors.white70,
                           ),
@@ -316,7 +316,7 @@ class _DetailScreenState extends State<DetailScreen>
                 ] else if (!isPast) ...[
                   Text(
                     'ĐẾM NGƯỢC',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.quicksand(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                       color: Colors.white38,
@@ -337,7 +337,7 @@ class _DetailScreenState extends State<DetailScreen>
                         padding: const EdgeInsets.symmetric(horizontal: 6),
                         child: Text(
                           ':',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.quicksand(
                             fontSize: 28,
                             fontWeight: FontWeight.w800,
                             color: cardColor,
@@ -353,7 +353,7 @@ class _DetailScreenState extends State<DetailScreen>
                         padding: const EdgeInsets.symmetric(horizontal: 6),
                         child: Text(
                           ':',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.quicksand(
                             fontSize: 28,
                             fontWeight: FontWeight.w800,
                             color: cardColor,
@@ -369,7 +369,7 @@ class _DetailScreenState extends State<DetailScreen>
                         padding: const EdgeInsets.symmetric(horizontal: 6),
                         child: Text(
                           ':',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.quicksand(
                             fontSize: 28,
                             fontWeight: FontWeight.w800,
                             color: cardColor,
@@ -438,7 +438,7 @@ class _DetailScreenState extends State<DetailScreen>
             children: [
               Text(
                 'Vị trí trong năm ${displayDate.year}',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.quicksand(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: Colors.white70,
@@ -446,7 +446,7 @@ class _DetailScreenState extends State<DetailScreen>
               ),
               Text(
                 '${(yearProgress * 100).toStringAsFixed(0)}%',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.quicksand(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                   color: cardColor,
@@ -470,11 +470,11 @@ class _DetailScreenState extends State<DetailScreen>
             children: [
               Text(
                 '1 tháng 1',
-                style: GoogleFonts.outfit(fontSize: 11, color: Colors.white30),
+                style: GoogleFonts.quicksand(fontSize: 11, color: Colors.white30),
               ),
               Text(
                 '${displayDate.day}/${displayDate.month}',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.quicksand(
                   fontSize: 11,
                   color: cardColor.withValues(alpha: 0.8),
                   fontWeight: FontWeight.w600,
@@ -482,7 +482,7 @@ class _DetailScreenState extends State<DetailScreen>
               ),
               Text(
                 '31 tháng 12',
-                style: GoogleFonts.outfit(fontSize: 11, color: Colors.white30),
+                style: GoogleFonts.quicksand(fontSize: 11, color: Colors.white30),
               ),
             ],
           ),
@@ -527,7 +527,7 @@ class _DetailScreenState extends State<DetailScreen>
                         const SizedBox(width: 4),
                         Text(
                           'Có thể gợi ý quà',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.quicksand(
                             fontSize: 11,
                             color: const Color(0xFF10B981),
                             fontWeight: FontWeight.w600,
@@ -576,12 +576,12 @@ class _DetailScreenState extends State<DetailScreen>
         const SizedBox(width: 12),
         Text(
           label,
-          style: GoogleFonts.outfit(fontSize: 14, color: Colors.white54),
+          style: GoogleFonts.quicksand(fontSize: 14, color: Colors.white54),
         ),
         const Spacer(),
         Text(
           value,
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.quicksand(
             fontSize: 14,
             fontWeight: FontWeight.w600,
             color: Colors.white,
@@ -607,7 +607,7 @@ class _DetailScreenState extends State<DetailScreen>
           Expanded(
             child: Text(
               ann.note,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.quicksand(
                 fontSize: 14,
                 color: Colors.white70,
                 height: 1.5,
@@ -660,7 +660,7 @@ class _DetailScreenState extends State<DetailScreen>
                     children: [
                       Text(
                         'Gợi ý quà tặng',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.quicksand(
                           color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -669,7 +669,7 @@ class _DetailScreenState extends State<DetailScreen>
                       const SizedBox(height: 2),
                       Text(
                         'Tìm món quà ý nghĩa nhất',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.quicksand(
                           color: Colors.white70,
                           fontSize: 13,
                         ),
