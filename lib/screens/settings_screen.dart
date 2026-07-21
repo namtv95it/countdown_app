@@ -9,7 +9,8 @@ import '../services/ad_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   final ValueChanged<String>? onEffectChanged;
-  const SettingsScreen({super.key, this.onEffectChanged});
+  final ValueChanged<bool>? onPremiumChanged;
+  const SettingsScreen({super.key, this.onEffectChanged, this.onPremiumChanged});
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -51,7 +52,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final effect = await StorageService().getSelectedEffect();
     // Pre-load trạng thái mở khóa
     final storage = StorageService();
-    final effectIds = ['bubbles', 'hearts', 'snow', 'stars'];
+    final effectIds = ['bubbles', 'hearts', 'snow', 'stars', 'meteor'];
     final unlockResults = await Future.wait(
       effectIds.map((id) => storage.isFeatureUnlocked('${id}_effect_unlocked')),
     );
@@ -73,6 +74,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     });
     AdService.isPremium = value;
     await StorageService().setPremium(value);
+    widget.onPremiumChanged?.call(value);
     _showMessage(value ? 'Đã bật tài khoản Premium!' : 'Đã tắt tài khoản Premium!');
   }
 
@@ -452,6 +454,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _buildEffectChip('hearts', 'Trái tim', Icons.favorite),
                 _buildEffectChip('snow', 'Tuyết rơi', Icons.ac_unit),
                 _buildEffectChip('stars', 'Ngôi sao', Icons.star),
+                _buildEffectChip('meteor', 'Sao băng', Icons.auto_awesome),
               ],
             ),
 
@@ -587,7 +590,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
         boxShadow: [
@@ -602,29 +604,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
         borderRadius: BorderRadius.circular(16),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        title: Text(
-          title,
-          style: GoogleFonts.quicksand(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
+          child: Material(
+            color: Colors.white.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(16),
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              title: Text(
+                title,
+                style: GoogleFonts.quicksand(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+              subtitle: Text(
+                subtitle,
+                style: GoogleFonts.quicksand(
+                  fontSize: 13,
+                  color: Colors.white54,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              trailing: trailing,
+              onTap: onTap,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
           ),
-        ),
-        subtitle: Text(
-          subtitle,
-          style: GoogleFonts.quicksand(
-            fontSize: 13,
-            color: Colors.white54,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        trailing: trailing,
-        onTap: onTap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      ),
         ),
       ),
     );

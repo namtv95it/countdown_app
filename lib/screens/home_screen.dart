@@ -470,6 +470,9 @@ class _HomeScreenState extends State<HomeScreen>
           onEffectChanged: (effect) {
             setState(() => _selectedEffect = effect);
           },
+          onPremiumChanged: (isPremium) {
+            setState(() {}); // Rebuild để ẩn/hiện banner
+          },
         ),
       ],
     );
@@ -1196,7 +1199,7 @@ class _HomeScreenState extends State<HomeScreen>
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (_isBannerAdReady && _bannerAd != null)
+        if (_isBannerAdReady && _bannerAd != null && !AdService.isPremium)
           SafeArea(
             top: false,
             bottom: false,

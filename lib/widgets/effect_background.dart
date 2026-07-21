@@ -2,7 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 class EffectBackground extends StatefulWidget {
-  final String effectType; // 'none', 'bubbles', 'hearts', 'snow', 'stars'
+  final String effectType; // 'none', 'bubbles', 'hearts', 'snow', 'stars', 'meteor'
 
   const EffectBackground({
     super.key,
@@ -67,6 +67,7 @@ class _EffectBackgroundState extends State<EffectBackground>
       case 'hearts': return 25;
       case 'snow': return 50;
       case 'stars': return 40;
+      case 'meteor': return 15;
       default: return 0;
     }
   }
@@ -121,6 +122,22 @@ class _EffectBackgroundState extends State<EffectBackground>
           spin: (_random.nextDouble() - 0.5) * 0.02,
           life: _random.nextDouble() * pi * 2, // Used for twinkling phase
         );
+      case 'meteor':
+        // Mưa sao băng: xuất phát từ trên xuống vỏ góc chéo sang phải
+        double startX = _random.nextDouble() * size.width * 1.5 - size.width * 0.25;
+        double startY = _random.nextDouble() * size.height * 0.4 - size.height * 0.1;
+        double speed = _random.nextDouble() * 8 + 5; // Tốc độ rơi
+        return Particle(
+          x: startX,
+          y: startY,
+          size: _random.nextDouble() * 2.5 + 1.0, // Đường kính nhỏ
+          speedX: speed * 0.6, // Lao sang phải
+          speedY: speed,       // Lao xuống
+          color: Colors.white.withValues(alpha: _random.nextDouble() * 0.6 + 0.4),
+          angle: atan2(speed, speed * 0.6), // Góc chéo
+          spin: 0,
+          life: _random.nextDouble() * 80 + 40, // Độ dài đuôi sơ
+        );
       default:
         return Particle(x: 0, y: 0, size: 0, speedY: 0, speedX: 0, color: Colors.transparent, angle: 0, spin: 0);
     }
@@ -156,7 +173,17 @@ class _EffectBackgroundState extends State<EffectBackground>
           }
 
           // Reset particle if it goes out of bounds
-          if (p.speedY < 0 && p.y < -p.size) { // Moving up
+          if (_currentEffect == 'meteor') {
+            // Sao băng re-spawn từ góc trên bên trái khi ra khỏi màn hình
+            if (p.x > size.width + 50 || p.y > size.height + 50) {
+              final speed = _random.nextDouble() * 8 + 5;
+              p.x = _random.nextDouble() * size.width * 1.0 - size.width * 0.4;
+              p.y = _random.nextDouble() * size.height * 0.3 - size.height * 0.1;
+              p.speedX = speed * 0.6;
+              p.speedY = speed;
+              p.life = _random.nextDouble() * 80 + 40;
+            }
+          } else if (p.speedY < 0 && p.y < -p.size) { // Moving up
             p.y = size.height + p.size;
             p.x = _random.nextDouble() * size.width;
           } else if (p.speedY > 0 && p.y > size.height + p.size) { // Moving down
@@ -223,6 +250,8 @@ class EffectPainter extends CustomPainter {
         double opacity = (sin(p.life) + 1) / 2; // 0.0 to 1.0
         paint.color = p.color.withValues(alpha: p.color.a * opacity);
         _drawStar(canvas, p, paint);
+      } else if (effectType == 'meteor') {
+        _drawMeteor(canvas, p, paint);
       }
     }
   }
@@ -275,4 +304,43 @@ class EffectPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+
+  void _drawMeteor(Canvas canvas, Particle p, Paint paint) {
+    // Vẽ đuôi sơ (gradient từ đầu sáng đến đuôi mờ)
+    final double tailLength = p.life; // Độ dài đuôi sơ
+    final double angle = atan2(p.speedY, p.speedX);
+
+    // Hướng ngược lại với chiều bay
+    final double dx = -cos(angle) * tailLength;
+    final double dy = -sin(angle) * tailLength;
+
+    final tailPaint = Paint()
+      ..shader = LinearGradient(
+        colors: [
+          Colors.white.withValues(alpha: 0.0),
+          Colors.cyanAccent.withValues(alpha: 0.6),
+          Colors.white.withValues(alpha: 0.95),
+        ],
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+      ).createShader(Rect.fromPoints(
+        Offset(p.x + dx, p.y + dy),
+        Offset(p.x, p.y),
+      ))
+      ..strokeWidth = p.size * 2
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+
+    canvas.drawLine(
+      Offset(p.x + dx, p.y + dy),
+      Offset(p.x, p.y),
+      tailPaint,
+    );
+
+    // Vẽ đầu sao băng (hạt sáng nhỏ)
+    final headPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.95)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
+    canvas.drawCircle(Offset(p.x, p.y), p.size + 1.5, headPaint);
+  }
 }
