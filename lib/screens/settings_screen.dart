@@ -460,6 +460,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _buildEffectChip('rain', 'Mưa rơi', Icons.water_drop_rounded),
                 _buildEffectChip('rain_ripple', 'Mặt nước', Icons.track_changes_rounded),
                 _buildEffectChip('rainbow', 'Cầu vồng', Icons.palette_rounded),
+                _buildEffectChip('waves', 'Sóng biển', Icons.waves_rounded),
+                _buildEffectChip('leaves', 'Lá rơi', Icons.eco_rounded),
+                _buildEffectChip('sunset_birds', 'Hoàng hôn', Icons.wb_twilight_rounded),
               ],
             ),
 
