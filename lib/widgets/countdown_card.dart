@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../models/anniversary.dart';
+import '../services/font_service.dart';
 
 /// Card hiển thị một kỷ niệm trong danh sách
 class CountdownCard extends StatelessWidget {
@@ -100,7 +101,7 @@ class CountdownCard extends StatelessWidget {
                             children: [
                               Text(
                                 anniversary.title,
-                                style: GoogleFonts.quicksand(
+                                style: FontService.getStyle(
                                   fontSize: isFeatured ? 20 : 16,
                                   fontWeight: FontWeight.w700,
                                   color: Colors.white,

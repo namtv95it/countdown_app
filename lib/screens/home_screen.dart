@@ -13,6 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:gal/gal.dart';
 import '../models/anniversary.dart';
 import '../services/storage_service.dart';
+import '../services/font_service.dart';
 import '../services/ad_service.dart';
 import '../services/notification_service.dart';
 import '../widgets/countdown_card.dart';
@@ -695,7 +696,7 @@ class _HomeScreenState extends State<HomeScreen>
                           // ── Tên sự kiện ──
                           Text(
                             item.title,
-                            style: GoogleFonts.quicksand(
+                            style: FontService.getStyle(
                               fontSize: 30,
                               fontWeight: FontWeight.w800,
                               color: Colors.white,

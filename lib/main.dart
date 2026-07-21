@@ -5,10 +5,12 @@ import 'screens/home_screen.dart';
 import 'services/ad_service.dart';
 import 'services/widget_service.dart';
 import 'services/notification_service.dart';
+import 'services/font_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('vi', null);
+  await FontService.init();
   await AdService.init();
   await WidgetService.initialize();
   await NotificationService().initialize();

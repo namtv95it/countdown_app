@@ -6,6 +6,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../services/notification_service.dart';
 import '../services/storage_service.dart';
 import '../services/ad_service.dart';
+import '../services/font_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   final ValueChanged<String>? onEffectChanged;
@@ -463,7 +464,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
 
             const SizedBox(height: 24),
-            _buildSectionHeader('🛍️ Quà tặng & Lời chúc'),
+            Text(
+              'Font chữ',
+              style: GoogleFonts.quicksand(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                'Quicksand',
+                'Roboto',
+                'Nunito',
+                'Montserrat',
+                'Pacifico',
+                'Dancing Script',
+              ].map((fontName) => _buildFontChip(fontName)).toList(),
+            ),
+
+            const SizedBox(height: 24),
+            _buildSectionHeader('🎁 Quà tặng & Lời chúc'),
             _buildListTile(
               title: 'Cửa hàng của tôi',
               subtitle: _shopUrl,
@@ -566,6 +590,53 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _changeFont(String fontName) async {
+    setState(() {
+      FontService.currentFont = fontName;
+    });
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('app_font', fontName);
+    widget.onEffectChanged?.call(fontName); // Trigger rebuild in home screen
+  }
+
+  Widget _buildFontChip(String fontName) {
+    final isSelected = FontService.currentFont == fontName;
+    return InkWell(
+      onTap: () => _changeFont(fontName),
+      borderRadius: BorderRadius.circular(16),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF7C3AED) : Colors.white12,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? const Color(0xFFA78BFA) : Colors.transparent,
+            width: 1.5,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF7C3AED).withValues(alpha: 0.4),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  )
+                ]
+              : [],
+        ),
+        child: Text(
+          fontName,
+          style: FontService.getStyleForFont(
+            fontName,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: isSelected ? Colors.white : Colors.white70,
+          ),
         ),
       ),
     );
