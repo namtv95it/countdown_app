@@ -32,6 +32,7 @@ class _GiftScreenState extends State<GiftScreen>
 
   // ── Gợi ý quà ──
   String? _filterCategoryId;
+  final _giftScrollController = ScrollController();
 
   @override
   void initState() {
@@ -52,6 +53,7 @@ class _GiftScreenState extends State<GiftScreen>
     _senderController.dispose();
     _receiverController.dispose();
     _wishScrollController.dispose();
+    _giftScrollController.dispose();
     super.dispose();
   }
 
@@ -580,6 +582,7 @@ class _GiftScreenState extends State<GiftScreen>
           child: products.isEmpty
               ? _buildNoProducts()
               : CustomScrollView(
+                  controller: _giftScrollController,
                   slivers: [
                     SliverPadding(
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
@@ -611,7 +614,17 @@ class _GiftScreenState extends State<GiftScreen>
   Widget _buildFilterChip(String? categoryId, String label) {
     final isSelected = _filterCategoryId == categoryId;
     return GestureDetector(
-      onTap: () => setState(() => _filterCategoryId = categoryId),
+      onTap: () {
+        setState(() => _filterCategoryId = categoryId);
+        // Scroll lên đầu danh sách khi đổi danh mục
+        if (_giftScrollController.hasClients) {
+          _giftScrollController.animateTo(
+            0,
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeOut,
+          );
+        }
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.only(right: 8),
