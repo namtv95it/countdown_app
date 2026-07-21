@@ -13,6 +13,7 @@ import '../widgets/time_unit_box.dart';
 
 import 'add_event_screen.dart';
 import 'detail_screen.dart';
+import 'gift_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -244,7 +245,7 @@ class _HomeScreenState extends State<HomeScreen>
       index: _currentTab,
       children: [
         _buildHeroTab(),
-        _buildPlaceholderTab('Quà tặng'),
+        const GiftScreen(),
         _buildAllEventsTab(),
         _buildPlaceholderTab('Cài đặt'),
       ],
@@ -630,7 +631,26 @@ class _HomeScreenState extends State<HomeScreen>
                               if (item.category.canSuggestProducts) ...[
                                 GestureDetector(
                                   onTap: () {
-                                    // TODO: Mở tính năng gợi ý quà tặng
+                                    setState(() => _currentTab = 1);
+                                    // Navigate to gift tab with category filter
+                                    Navigator.of(context).push(
+                                      PageRouteBuilder(
+                                        pageBuilder: (_, a1, a2) => GiftScreen(
+                                          initialCategoryId: item.categoryId,
+                                        ),
+                                        transitionsBuilder: (_, anim, __, child) {
+                                          return SlideTransition(
+                                            position: Tween<Offset>(
+                                              begin: const Offset(0, 1),
+                                              end: Offset.zero,
+                                            ).animate(CurvedAnimation(
+                                                parent: anim,
+                                                curve: Curves.easeOut)),
+                                            child: child,
+                                          );
+                                        },
+                                      ),
+                                    );
                                   },
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(
