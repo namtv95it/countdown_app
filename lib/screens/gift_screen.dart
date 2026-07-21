@@ -32,8 +32,6 @@ class _GiftScreenState extends State<GiftScreen>
 
   // ── Gợi ý quà ──
   String? _filterCategoryId;
-  String _searchQuery = '';
-  final _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -53,7 +51,6 @@ class _GiftScreenState extends State<GiftScreen>
     _tabController.dispose();
     _senderController.dispose();
     _receiverController.dispose();
-    _searchController.dispose();
     _wishScrollController.dispose();
     super.dispose();
   }
@@ -130,18 +127,8 @@ class _GiftScreenState extends State<GiftScreen>
   }
 
   List<GiftProduct> get _filteredProducts {
-    var list = _filterCategoryId != null
-        ? GiftProducts.byCategory(_filterCategoryId)
-        : GiftProducts.all;
-    if (_searchQuery.isNotEmpty) {
-      final q = _searchQuery.toLowerCase();
-      list = list
-          .where((p) =>
-              p.name.toLowerCase().contains(q) ||
-              p.description.toLowerCase().contains(q))
-          .toList();
-    }
-    return list;
+    if (_filterCategoryId == null) return GiftProducts.all;
+    return GiftProducts.byCategory(_filterCategoryId);
   }
 
   // ──────────────────────────────────────────────────────────────
@@ -172,6 +159,7 @@ class _GiftScreenState extends State<GiftScreen>
   }
 
   Widget _buildHeader() {
+    const shopUrl = 'https://shopee.vn/shop/your_shop_id';
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
       child: Row(
@@ -193,6 +181,43 @@ class _GiftScreenState extends State<GiftScreen>
               fontSize: 22,
               fontWeight: FontWeight.w800,
               color: Colors.white,
+            ),
+          ),
+          const Spacer(),
+          // Nút Shop
+          GestureDetector(
+            onTap: () => _openUrl(shopUrl),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF7C3AED), Color(0xFFEC4899)],
+                ),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF7C3AED).withValues(alpha: 0.35),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.storefront_rounded,
+                      color: Colors.white, size: 15),
+                  const SizedBox(width: 5),
+                  Text(
+                    'Cửa hàng của tôi',
+                    style: GoogleFonts.quicksand(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -226,7 +251,7 @@ class _GiftScreenState extends State<GiftScreen>
         labelColor: Colors.white,
         unselectedLabelColor: Colors.white54,
         tabs: const [
-          Tab(text: '🛍️ Gợi ý quà'),
+          Tab(text: '🎁 Gợi ý quà'),
           Tab(text: '💌 Lời chúc'),
         ],
       ),
@@ -533,52 +558,15 @@ class _GiftScreenState extends State<GiftScreen>
 
     return Column(
       children: [
-        // Search
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-          child: Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFF1A1A2E),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.white12),
-            ),
-            child: TextField(
-              controller: _searchController,
-              style: GoogleFonts.quicksand(
-                  fontSize: 14, color: Colors.white),
-              onChanged: (v) => setState(() => _searchQuery = v),
-              decoration: InputDecoration(
-                hintText: 'Tìm kiếm quà tặng...',
-                hintStyle: GoogleFonts.quicksand(
-                    fontSize: 14, color: Colors.white38),
-                prefixIcon: const Icon(Icons.search_rounded,
-                    color: Colors.white38, size: 20),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? GestureDetector(
-                        onTap: () {
-                          _searchController.clear();
-                          setState(() => _searchQuery = '');
-                        },
-                        child: const Icon(Icons.close_rounded,
-                            color: Colors.white38, size: 18),
-                      )
-                    : null,
-                border: InputBorder.none,
-                contentPadding:
-                    const EdgeInsets.symmetric(vertical: 13),
-              ),
-            ),
-          ),
-        ),
-
         // Category filter chips
+        const SizedBox(height: 12),
         SizedBox(
           height: 48,
           child: ListView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 20),
             children: [
-              _buildFilterChip(null, '🛍️ Tất cả'),
+              _buildFilterChip(null, 'Tất cả'),
               ...giftCategories
                   .map((c) => _buildFilterChip(c.id, '${c.emoji} ${c.name}')),
             ],
@@ -591,20 +579,31 @@ class _GiftScreenState extends State<GiftScreen>
         Expanded(
           child: products.isEmpty
               ? _buildNoProducts()
-              : GridView.builder(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 80),
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    mainAxisExtent: 290,
-                  ),
-                  itemCount: products.length,
-                  itemBuilder: (ctx, i) =>
-                      _buildProductCard(products[i]),
+              : CustomScrollView(
+                  slivers: [
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                      sliver: SliverGrid(
+                        delegate: SliverChildBuilderDelegate(
+                          (ctx, i) => _buildProductCard(products[i]),
+                          childCount: products.length,
+                        ),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          mainAxisExtent: 290,
+                        ),
+                      ),
+                    ),
+                    const SliverToBoxAdapter(
+                      child: SizedBox(height: 80),
+                    ),
+                  ],
                 ),
         ),
+
       ],
     );
   }
