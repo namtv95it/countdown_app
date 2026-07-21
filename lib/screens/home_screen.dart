@@ -433,6 +433,7 @@ class _HomeScreenState extends State<HomeScreen>
                 child: PageView.builder(
                   controller: _pageController,
                   physics: const BouncingScrollPhysics(),
+                  clipBehavior: Clip.none,
                   onPageChanged: (index) {
                     setState(() {
                       _featuredIndex = index;
