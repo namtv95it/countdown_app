@@ -733,7 +733,7 @@ class _HomeScreenState extends State<HomeScreen>
                               ),
                             ],
                           ),
-                          const SizedBox(height: 80), // space for FAB + nav (moved here to allow swipe at bottom)
+                          const SizedBox(height: 200), // space for FAB + nav + banner ad
                         ],
                       ),
                     );
@@ -931,7 +931,7 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ],
 
-          const SliverToBoxAdapter(child: SizedBox(height: 80)),
+          const SliverToBoxAdapter(child: SizedBox(height: 200)), // Tăng khoảng trống tránh đè quảng cáo
         ],
       ],
     ),
