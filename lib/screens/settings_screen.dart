@@ -433,7 +433,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _buildSectionHeader('🎨 Giao diện'),
             const SizedBox(height: 8),
             Text(
-              'Hiệu ứng trang chủ',
+              'Hiệu ứng',
               style: GoogleFonts.quicksand(
                 color: Colors.white,
                 fontSize: 16,
