@@ -39,5 +39,14 @@ class StorageService {
     list.removeWhere((a) => a.id == id);
     await saveAnniversaries(list);
   }
-}
 
+  Future<void> clearAll() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_key);
+    try {
+      await WidgetService.updateWidgetWithClosestEvent([]);
+    } catch (e) {
+      print('Failed to update widget: $e');
+    }
+  }
+}

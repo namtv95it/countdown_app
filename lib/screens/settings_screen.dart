@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../services/notification_service.dart';
+import '../services/storage_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -311,21 +312,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               subtitle: _shopUrl,
               trailing: const Icon(Icons.edit_rounded, color: Colors.white54),
               onTap: _editShopUrl,
-            ),
-
-            const SizedBox(height: 24),
-            _buildSectionHeader('💾 Dữ liệu'),
-            _buildListTile(
-              title: 'Sao lưu dữ liệu',
-              subtitle: 'Lưu các sự kiện ra file (JSON)',
-              trailing: const Icon(Icons.download_rounded, color: Colors.white54),
-              onTap: () => _showMessage('Đã tải xuống file sao lưu!'),
-            ),
-            _buildListTile(
-              title: 'Khôi phục dữ liệu',
-              subtitle: 'Nhập các sự kiện từ file',
-              trailing: const Icon(Icons.upload_rounded, color: Colors.white54),
-              onTap: () => _showMessage('Đã khôi phục dữ liệu thành công!'),
             ),
 
             const SizedBox(height: 24),
