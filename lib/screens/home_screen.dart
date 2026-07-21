@@ -924,11 +924,7 @@ class _HomeScreenState extends State<HomeScreen>
                                 AdService.showRewardedAd(
                                   onEarnedReward: () {
                                     if (mounted) {
-                                      setState(() {
-                                        _isFullscreenMode = true;
-                                        _showFullscreenExitButton = true;
-                                      });
-                                      _scheduleHideExitButton();
+                                      setState(() { _isFullscreenMode = true; _showFullscreenExitButton = false; });
                                     }
                                   },
                                 );
@@ -1423,3 +1419,4 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 }
+
