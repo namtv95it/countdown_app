@@ -1,15 +1,17 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'screens/home_screen.dart';
 import 'services/ad_service.dart';
 import 'services/widget_service.dart';
+import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('vi', null);
   await AdService.init();
   await WidgetService.initialize();
+  await NotificationService().initialize();
   runApp(const MyApp());
 }
 

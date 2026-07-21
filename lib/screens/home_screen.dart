@@ -5,15 +5,18 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/anniversary.dart';
 import '../services/storage_service.dart';
 import '../services/ad_service.dart';
+import '../services/notification_service.dart';
 import '../widgets/countdown_card.dart';
 import '../widgets/time_unit_box.dart';
 
 import 'add_event_screen.dart';
 import 'detail_screen.dart';
 import 'gift_screen.dart';
+import 'settings_screen.dart' hide GoogleFonts;
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -40,9 +43,20 @@ class _HomeScreenState extends State<HomeScreen>
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: 0);
+    _checkFirstLaunchPermissions();
     _loadAnniversaries();
     _startTimer();
     _loadBannerAd();
+  }
+
+  Future<void> _checkFirstLaunchPermissions() async {
+    final prefs = await SharedPreferences.getInstance();
+    final bool hasRequested = prefs.getBool('has_requested_notification_permission') ?? false;
+    
+    if (!hasRequested) {
+      await NotificationService().requestPermissions();
+      await prefs.setBool('has_requested_notification_permission', true);
+    }
   }
 
   void _startTimer() {
@@ -247,7 +261,7 @@ class _HomeScreenState extends State<HomeScreen>
         _buildHeroTab(),
         const GiftScreen(),
         _buildAllEventsTab(),
-        _buildPlaceholderTab('Cài đặt'),
+        const SettingsScreen(),
       ],
     );
   }
