@@ -22,6 +22,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   String _shopUrl = 'https://shopee.vn/';
   bool _bubbleEffectEnabled = false;
+  bool _isPremium = false;
   bool _isLoading = true;
 
   @override
@@ -48,9 +49,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (mounted) {
       setState(() {
         _bubbleEffectEnabled = bubbleEnabled;
+        _isPremium = AdService.isPremium;
         _isLoading = false;
       });
     }
+  }
+
+  Future<void> _togglePremium(bool value) async {
+    setState(() {
+      _isPremium = value;
+    });
+    AdService.isPremium = value;
+    await StorageService().setPremium(value);
+    _showMessage(value ? 'Đã bật tài khoản Premium!' : 'Đã tắt tài khoản Premium!');
   }
 
   Future<void> _toggleNotifications(bool value) async {
@@ -342,6 +353,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 fontSize: 28,
                 fontWeight: FontWeight.w800,
                 color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 24),
+            
+            _buildSectionHeader('💎 Tài khoản Premium'),
+            _buildListTile(
+              title: 'Nâng cấp Premium',
+              subtitle: 'Ẩn tất cả quảng cáo & mở khóa tính năng',
+              trailing: Switch(
+                value: _isPremium,
+                onChanged: _togglePremium,
+                activeColor: Colors.amber,
+                activeTrackColor: Colors.amber.withValues(alpha: 0.3),
               ),
             ),
             const SizedBox(height: 24),

@@ -1,9 +1,13 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'storage_service.dart';
 
 class AdService {
+  static bool isPremium = false;
+
   static Future<void> init() async {
+    isPremium = await StorageService().getIsPremium();
     await MobileAds.instance.initialize();
   }
 
@@ -39,7 +43,7 @@ class AdService {
 
   // Hiển thị quảng cáo toàn màn hình (Interstitial)
   static void showInterstitialAd() {
-    if (kIsWeb) return;
+    if (kIsWeb || isPremium) return;
     InterstitialAd.load(
       adUnitId: interstitialAdUnitId,
       request: const AdRequest(),
@@ -64,7 +68,7 @@ class AdService {
 
   // Hiển thị quảng cáo có thưởng (Rewarded Ad)
   static void showRewardedAd({required VoidCallback onEarnedReward}) {
-    if (kIsWeb) {
+    if (kIsWeb || isPremium) {
       onEarnedReward();
       return;
     }

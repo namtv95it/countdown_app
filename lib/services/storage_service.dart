@@ -6,6 +6,17 @@ class StorageService {
   static const String _key = 'anniversaries_list_v2';
   static const String _oldKey = 'anniversaries_list';
   static const String _bubbleEffectKey = 'bubble_effect_enabled';
+  static const String _premiumKey = 'is_premium_account';
+
+  Future<bool> getIsPremium() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_premiumKey) ?? false;
+  }
+
+  Future<void> setPremium(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_premiumKey, value);
+  }
 
   Future<List<Anniversary>> getAnniversaries() async {
     final prefs = await SharedPreferences.getInstance();

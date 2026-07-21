@@ -88,6 +88,9 @@ class _HomeScreenState extends State<HomeScreen>
       await Gal.putImage(imgFile.path);
       
       if (mounted) {
+        setState(() {
+          _showFullscreenExitButton = false;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -152,7 +155,7 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _loadBannerAd() {
-    if (kIsWeb) return;
+    if (kIsWeb || AdService.isPremium) return;
     _bannerAd = BannerAd(
       adUnitId: AdService.bannerAdUnitId,
       request: const AdRequest(),
@@ -186,7 +189,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _scheduleHideExitButton() {
     _hideExitButtonTimer?.cancel();
-    _hideExitButtonTimer = Timer(const Duration(milliseconds: 1500), () {
+    _hideExitButtonTimer = Timer(const Duration(milliseconds: 3000), () {
       if (mounted && _isFullscreenMode) {
         setState(() {
           _showFullscreenExitButton = false;
@@ -352,23 +355,28 @@ class _HomeScreenState extends State<HomeScreen>
           ? const Center(
               child: CircularProgressIndicator(color: Color(0xFF7C3AED)),
             )
-          : RepaintBoundary(
-              key: _repaintBoundaryKey,
-              child: Stack(
-                children: [
-                  if (_bubbleEffectEnabled) const BubbleBackground(),
-                  GestureDetector(
-                    behavior: HitTestBehavior.translucent,
-                    onTap: () {
-                      if (_isFullscreenMode) {
-                        setState(() {
-                          _showFullscreenExitButton = true;
-                        });
-                        _scheduleHideExitButton();
-                      }
-                    },
-                    child: _buildCurrentTab(),
+          : Stack(
+              children: [
+                RepaintBoundary(
+                  key: _repaintBoundaryKey,
+                  child: Stack(
+                    children: [
+                      if (_bubbleEffectEnabled) const BubbleBackground(),
+                      GestureDetector(
+                        behavior: HitTestBehavior.translucent,
+                        onTap: () {
+                          if (_isFullscreenMode) {
+                            setState(() {
+                              _showFullscreenExitButton = true;
+                            });
+                            _scheduleHideExitButton();
+                          }
+                        },
+                        child: _buildCurrentTab(),
+                      ),
+                    ],
                   ),
+                ),
                 if (_isFullscreenMode) ...[
                   Positioned(
                     top: 40,
@@ -402,9 +410,7 @@ class _HomeScreenState extends State<HomeScreen>
                           ignoring: !_showFullscreenExitButton,
                           child: GestureDetector(
                             onTap: _isCapturing ? null : () async {
-                              setState(() {
-                                _showFullscreenExitButton = false;
-                              });
+                              // Không ẩn nút ngay lập tức để hiển thị chữ "Đang chụp..."
                               await _captureAndShareScreenshot();
                             },
                             child: Container(
@@ -417,10 +423,21 @@ class _HomeScreenState extends State<HomeScreen>
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 24),
+                                  if (_isCapturing) ...[
+                                    const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                      ),
+                                    ),
+                                  ] else ...[
+                                    const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 24),
+                                  ],
                                   const SizedBox(width: 8),
                                   Text(
-                                    'Chụp màn hình',
+                                    _isCapturing ? 'Đang chụp...' : 'Chụp màn hình',
                                     style: GoogleFonts.quicksand(
                                       color: Colors.white,
                                       fontSize: 16,
@@ -438,7 +455,6 @@ class _HomeScreenState extends State<HomeScreen>
                 ],
               ],
             ),
-          ),
       bottomNavigationBar: _isFullscreenMode ? const SizedBox.shrink() : _buildBottomNav(),
     );
   }
