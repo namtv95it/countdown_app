@@ -340,12 +340,12 @@ class _EffectBackgroundState extends State<EffectBackground>
             double dy = p.y - centerY;
             double dist = sqrt(dx*dx + dy*dy);
             if (dist == 0) dist = 1;
-            p.x += (dx / dist) * (dist * 0.02 + 0.5);
-            p.y += (dy / dist) * (dist * 0.02 + 0.5);
-            p.size = (dist / size.width) * 4 + 0.5;
+            p.x += (dx / dist) * (dist * 0.03 + 0.6);
+            p.y += (dy / dist) * (dist * 0.03 + 0.6);
+            p.size = (dist / size.width) * 2.2 + 0.3;
             if (p.x < 0 || p.x > size.width || p.y < 0 || p.y > size.height) {
-              p.x = centerX + (_random.nextDouble() - 0.5) * 20;
-              p.y = centerY + (_random.nextDouble() - 0.5) * 20;
+              p.x = centerX + (_random.nextDouble() - 0.5) * 10;
+              p.y = centerY + (_random.nextDouble() - 0.5) * 10;
             }
           } else if (_currentEffect == 'fireworks') {
             if (p.speedY < 0 && p.life == 0) {
@@ -652,11 +652,17 @@ class EffectPainter extends CustomPainter {
       ).createShader(rect);
     canvas.drawRect(rect, bgPaint);
     
-    canvas.drawCircle(
-      Offset(size.width/2, size.height/2), 
-      size.width * 0.3, 
-      Paint()..color = Colors.white.withValues(alpha: 0.1)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 40)
-    );
+    final Offset center = Offset(size.width / 2, size.height / 2);
+    final Paint coreGlow = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          const Color(0xFF9C27B0).withValues(alpha: 0.15),
+          const Color(0xFF00E5FF).withValues(alpha: 0.08),
+          Colors.transparent,
+        ],
+        stops: const [0.0, 0.5, 1.0],
+      ).createShader(Rect.fromCircle(center: center, radius: size.width * 0.25));
+    canvas.drawCircle(center, size.width * 0.25, coreGlow);
   }
 
   @override
