@@ -8,7 +8,8 @@ import '../services/storage_service.dart';
 import '../services/ad_service.dart';
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key});
+  final ValueChanged<String>? onEffectChanged;
+  const SettingsScreen({super.key, this.onEffectChanged});
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -24,6 +25,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String _selectedEffect = 'none';
   bool _isPremium = false;
   bool _isLoading = true;
+  // Lưu trạng thái mở khóa của từng hiệu ứng để tránh FutureBuilder gây flicker
+  final Map<String, bool> _effectUnlocked = {};
 
   @override
   void initState() {
@@ -46,10 +49,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
     });
     
     final effect = await StorageService().getSelectedEffect();
+    // Pre-load trạng thái mở khóa
+    final storage = StorageService();
+    final effectIds = ['bubbles', 'hearts', 'snow', 'stars'];
+    final unlockResults = await Future.wait(
+      effectIds.map((id) => storage.isFeatureUnlocked('${id}_effect_unlocked')),
+    );
     if (mounted) {
       setState(() {
         _selectedEffect = effect;
         _isPremium = AdService.isPremium;
+        for (int i = 0; i < effectIds.length; i++) {
+          _effectUnlocked[effectIds[i]] = unlockResults[i];
+        }
         _isLoading = false;
       });
     }
@@ -248,6 +260,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (effectId == 'none') {
       setState(() => _selectedEffect = 'none');
       await StorageService().setSelectedEffect('none');
+      widget.onEffectChanged?.call('none');
       return;
     }
 
@@ -257,6 +270,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         setState(() => _selectedEffect = effectId);
       }
       await StorageService().setSelectedEffect(effectId);
+      widget.onEffectChanged?.call(effectId);
       return;
     }
 
@@ -306,6 +320,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   await StorageService().setSelectedEffect(effectId);
                   if (mounted) {
                     setState(() => _selectedEffect = effectId);
+                    widget.onEffectChanged?.call(effectId);
                     _showMessage('🎉 Đã mở khóa vĩnh viễn hiệu ứng $effectName!');
                   }
                 },
@@ -423,17 +438,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _buildEffectChip('none', 'Không có', Icons.block),
-                  _buildEffectChip('bubbles', 'Bong bóng', Icons.bubble_chart),
-                  _buildEffectChip('hearts', 'Trái tim', Icons.favorite),
-                  _buildEffectChip('snow', 'Tuyết rơi', Icons.ac_unit),
-                  _buildEffectChip('stars', 'Ngôi sao', Icons.star),
-                ],
-              ),
+            // Grid 3 cột
+            GridView.count(
+              crossAxisCount: 3,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              childAspectRatio: 1.1,
+              children: [
+                _buildEffectChip('none', 'Không có', Icons.block),
+                _buildEffectChip('bubbles', 'Bong bóng', Icons.bubble_chart),
+                _buildEffectChip('hearts', 'Trái tim', Icons.favorite),
+                _buildEffectChip('snow', 'Tuyết rơi', Icons.ac_unit),
+                _buildEffectChip('stars', 'Ngôi sao', Icons.star),
+              ],
             ),
 
             const SizedBox(height: 24),
@@ -494,49 +513,54 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildEffectChip(String id, String name, IconData icon) {
     final isSelected = _selectedEffect == id;
+    final isUnlocked = id == 'none' || (_effectUnlocked[id] ?? false) || _isPremium;
     
-    return FutureBuilder<bool>(
-      future: id == 'none' ? Future.value(true) : StorageService().isFeatureUnlocked('${id}_effect_unlocked'),
-      builder: (context, snapshot) {
-        final isUnlocked = (snapshot.data ?? false) || _isPremium;
-        
-        return Padding(
-          padding: const EdgeInsets.only(right: 12),
-          child: InkWell(
-            onTap: () => _selectEffect(id, name),
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFF7C3AED) : Colors.white.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: isSelected ? const Color(0xFF7C3AED) : Colors.white12,
-                  width: 2,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    isUnlocked ? icon : Icons.lock_rounded,
-                    color: isSelected ? Colors.white : Colors.white70,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    name,
-                    style: GoogleFonts.quicksand(
-                      color: isSelected ? Colors.white : Colors.white70,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
+    return InkWell(
+      onTap: () => _selectEffect(id, name),
+      borderRadius: BorderRadius.circular(16),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? const Color(0xFF7C3AED).withValues(alpha: 0.9)
+              : Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF7C3AED) : Colors.white12,
+            width: 2,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF7C3AED).withValues(alpha: 0.4),
+                    blurRadius: 10,
+                    spreadRadius: 1,
+                  )
+                ]
+              : [],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              isUnlocked ? icon : Icons.lock_rounded,
+              color: isSelected ? Colors.white : Colors.white60,
+              size: 26,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              name,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.quicksand(
+                color: isSelected ? Colors.white : Colors.white60,
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
               ),
             ),
-          ),
-        );
-      },
+          ],
+        ),
+      ),
     );
   }
 

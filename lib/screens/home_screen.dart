@@ -466,7 +466,11 @@ class _HomeScreenState extends State<HomeScreen>
         _buildHeroTab(),
         _buildAllEventsTab(),
         const GiftScreen(),
-        const SettingsScreen(),
+        SettingsScreen(
+          onEffectChanged: (effect) {
+            setState(() => _selectedEffect = effect);
+          },
+        ),
       ],
     );
   }
