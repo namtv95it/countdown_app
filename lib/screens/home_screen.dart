@@ -1,11 +1,16 @@
 import 'dart:async';
-import 'dart:ui';
+import 'dart:io';
+import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:gal/gal.dart';
 import '../models/anniversary.dart';
 import '../services/storage_service.dart';
 import '../services/ad_service.dart';
@@ -41,6 +46,84 @@ class _HomeScreenState extends State<HomeScreen>
   late PageController _pageController;
   final ScrollController _eventsScrollController = ScrollController();
   bool _bubbleEffectEnabled = false;
+  bool _isFullscreenMode = false;
+  bool _showFullscreenExitButton = false;
+  Timer? _hideExitButtonTimer;
+  final GlobalKey _repaintBoundaryKey = GlobalKey();
+  bool _isCapturing = false;
+
+  Future<void> _captureAndShareScreenshot() async {
+    if (_isCapturing) return;
+    setState(() => _isCapturing = true);
+    
+    try {
+      // Đợi 350ms để hiệu ứng AnimatedOpacity (300ms) mờ hẳn, tránh dính nút vào ảnh
+      await Future.delayed(const Duration(milliseconds: 350));
+      
+      final RenderRepaintBoundary? boundary = _repaintBoundaryKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      if (boundary == null) {
+        throw Exception("Không tìm thấy RenderRepaintBoundary");
+      }
+      
+      final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+      final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData == null) {
+        throw Exception("Lỗi khi chuyển đổi ảnh (ByteData null)");
+      }
+      
+      final Uint8List pngBytes = byteData.buffer.asUint8List();
+      final directory = (await getApplicationDocumentsDirectory()).path;
+      final imgFile = File('$directory/screenshot.png');
+      await imgFile.writeAsBytes(pngBytes);
+      
+      bool hasAccess = await Gal.hasAccess();
+      if (!hasAccess) {
+        hasAccess = await Gal.requestAccess();
+      }
+      
+      if (!hasAccess) {
+        throw Exception("Bạn chưa cấp quyền lưu ảnh. Vui lòng cấp quyền trong Cài đặt.");
+      }
+      
+      await Gal.putImage(imgFile.path);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle_rounded, color: Colors.white),
+                const SizedBox(width: 8),
+                Text('Đã lưu ảnh vào thư viện', style: GoogleFonts.quicksand(fontWeight: FontWeight.w600, color: Colors.white)),
+              ],
+            ),
+            backgroundColor: const Color(0xFF10B981),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error capturing screenshot: $e');
+      if (mounted) {
+        setState(() {
+          _showFullscreenExitButton = true;
+        });
+        _scheduleHideExitButton();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lỗi khi lưu ảnh: $e', style: GoogleFonts.quicksand(color: Colors.white)),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isCapturing = false);
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -96,8 +179,20 @@ class _HomeScreenState extends State<HomeScreen>
     _pageController.dispose();
     _eventsScrollController.dispose();
     _timer?.cancel();
+    _hideExitButtonTimer?.cancel();
     _bannerAd?.dispose();
     super.dispose();
+  }
+
+  void _scheduleHideExitButton() {
+    _hideExitButtonTimer?.cancel();
+    _hideExitButtonTimer = Timer(const Duration(milliseconds: 1500), () {
+      if (mounted && _isFullscreenMode) {
+        setState(() {
+          _showFullscreenExitButton = false;
+        });
+      }
+    });
   }
 
   Future<void> _loadAnniversaries() async {
@@ -204,7 +299,7 @@ class _HomeScreenState extends State<HomeScreen>
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        filter: ui.ImageFilter.blur(sigmaX: 5, sigmaY: 5),
         child: AlertDialog(
           backgroundColor: const Color(0xFF1A1A2E),
           shape: RoundedRectangleBorder(
@@ -257,13 +352,94 @@ class _HomeScreenState extends State<HomeScreen>
           ? const Center(
               child: CircularProgressIndicator(color: Color(0xFF7C3AED)),
             )
-          : Stack(
-              children: [
-                if (_bubbleEffectEnabled) const BubbleBackground(),
-                _buildCurrentTab(),
+          : RepaintBoundary(
+              key: _repaintBoundaryKey,
+              child: Stack(
+                children: [
+                  if (_bubbleEffectEnabled) const BubbleBackground(),
+                  GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onTap: () {
+                      if (_isFullscreenMode) {
+                        setState(() {
+                          _showFullscreenExitButton = true;
+                        });
+                        _scheduleHideExitButton();
+                      }
+                    },
+                    child: _buildCurrentTab(),
+                  ),
+                if (_isFullscreenMode) ...[
+                  Positioned(
+                    top: 40,
+                    right: 20,
+                    child: AnimatedOpacity(
+                      opacity: _showFullscreenExitButton ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 300),
+                      child: IgnorePointer(
+                        ignoring: !_showFullscreenExitButton,
+                        child: IconButton(
+                          icon: const Icon(Icons.fullscreen_exit_rounded, color: Colors.white, size: 30),
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.black45,
+                          ),
+                          onPressed: () {
+                            setState(() => _isFullscreenMode = false);
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 40,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: AnimatedOpacity(
+                        opacity: _showFullscreenExitButton ? 1.0 : 0.0,
+                        duration: const Duration(milliseconds: 300),
+                        child: IgnorePointer(
+                          ignoring: !_showFullscreenExitButton,
+                          child: GestureDetector(
+                            onTap: _isCapturing ? null : () async {
+                              setState(() {
+                                _showFullscreenExitButton = false;
+                              });
+                              await _captureAndShareScreenshot();
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                              decoration: BoxDecoration(
+                                color: Colors.black45,
+                                borderRadius: BorderRadius.circular(25),
+                                border: Border.all(color: Colors.white24, width: 1),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 24),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Chụp màn hình',
+                                    style: GoogleFonts.quicksand(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
-      bottomNavigationBar: _buildBottomNav(),
+          ),
+      bottomNavigationBar: _isFullscreenMode ? const SizedBox.shrink() : _buildBottomNav(),
     );
   }
 
@@ -353,10 +529,11 @@ class _HomeScreenState extends State<HomeScreen>
           child: Column(
             children: [
               // ── App Bar ──
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                child: Row(
+              if (!_isFullscreenMode)
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  child: Row(
                   children: [
                     Container(
                       padding: const EdgeInsets.all(6),
@@ -652,96 +829,138 @@ class _HomeScreenState extends State<HomeScreen>
 
                           const SizedBox(height: 16),
 
-                          // ── Các nút hành động ──
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              if (item.category.canSuggestProducts) ...[
-                                GestureDetector(
-                                  onTap: () {
-                                    setState(() => _currentTab = 1);
-                                    // Navigate to gift tab with category filter
-                                    Navigator.of(context).push(
-                                      PageRouteBuilder(
-                                        pageBuilder: (_, a1, a2) => GiftScreen(
-                                          initialCategoryId: item.categoryId,
+                          if (!_isFullscreenMode) ...[
+                            // ── Các nút hành động ──
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                if (item.category.canSuggestProducts) ...[
+                                  GestureDetector(
+                                    onTap: () {
+                                      setState(() => _currentTab = 1);
+                                      // Navigate to gift tab with category filter
+                                      Navigator.of(context).push(
+                                        PageRouteBuilder(
+                                          pageBuilder: (_, a1, a2) => GiftScreen(
+                                            initialCategoryId: item.categoryId,
+                                          ),
+                                          transitionsBuilder: (_, anim, __, child) {
+                                            return SlideTransition(
+                                              position: Tween<Offset>(
+                                                begin: const Offset(0, 1),
+                                                end: Offset.zero,
+                                              ).animate(CurvedAnimation(
+                                                  parent: anim,
+                                                  curve: Curves.easeOut)),
+                                              child: child,
+                                            );
+                                          },
                                         ),
-                                        transitionsBuilder: (_, anim, __, child) {
-                                          return SlideTransition(
-                                            position: Tween<Offset>(
-                                              begin: const Offset(0, 1),
-                                              end: Offset.zero,
-                                            ).animate(CurvedAnimation(
-                                                parent: anim,
-                                                curve: Curves.easeOut)),
-                                            child: child,
-                                          );
-                                        },
+                                      );
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 20, vertical: 14),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF10B981)
+                                            .withValues(alpha: 0.15),
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(
+                                            color: const Color(0xFF10B981)
+                                                .withValues(alpha: 0.5)),
                                       ),
-                                    );
-                                  },
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Text('🛍️', style: TextStyle(fontSize: 14)),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            'Gợi ý quà',
+                                            style: GoogleFonts.quicksand(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w700,
+                                              color: const Color(0xFF10B981),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                ],
+                                GestureDetector(
+                                  onTap: () => _navigateToDetail(item),
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 20, vertical: 14),
+                                        horizontal: 24, vertical: 14),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF10B981)
-                                          .withValues(alpha: 0.15),
+                                      color: itemColor.withValues(alpha: 0.2),
                                       borderRadius: BorderRadius.circular(16),
                                       border: Border.all(
-                                          color: const Color(0xFF10B981)
-                                              .withValues(alpha: 0.5)),
+                                          color: itemColor.withValues(alpha: 0.5)),
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        const Text('🛍️', style: TextStyle(fontSize: 14)),
-                                        const SizedBox(width: 6),
                                         Text(
-                                          'Gợi ý quà',
+                                          'Xem chi tiết',
                                           style: GoogleFonts.quicksand(
                                             fontSize: 15,
                                             fontWeight: FontWeight.w700,
-                                            color: const Color(0xFF10B981),
+                                            color: Colors.white,
                                           ),
                                         ),
+                                        const SizedBox(width: 6),
+                                        const Icon(Icons.arrow_forward_ios_rounded,
+                                            color: Colors.white, size: 14),
                                       ],
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 12),
                               ],
-                              GestureDetector(
-                                onTap: () => _navigateToDetail(item),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 24, vertical: 14),
-                                  decoration: BoxDecoration(
-                                    color: itemColor.withValues(alpha: 0.2),
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(
-                                        color: itemColor.withValues(alpha: 0.5)),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        'Xem chi tiết',
-                                        style: GoogleFonts.quicksand(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w700,
-                                          color: Colors.white,
-                                        ),
+                            ),
+                            const SizedBox(height: 16),
+                            // Nút Xem toàn màn hình
+                            GestureDetector(
+                              onTap: () {
+                                AdService.showRewardedAd(
+                                  onEarnedReward: () {
+                                    if (mounted) {
+                                      setState(() {
+                                        _isFullscreenMode = true;
+                                        _showFullscreenExitButton = true;
+                                      });
+                                      _scheduleHideExitButton();
+                                    }
+                                  },
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.05),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: Colors.white12),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.play_circle_filled_rounded, color: Color(0xFFF59E0B), size: 18),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Xem toàn màn hình',
+                                      style: GoogleFonts.quicksand(
+                                        color: Colors.white70,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
                                       ),
-                                      const SizedBox(width: 6),
-                                      const Icon(Icons.arrow_forward_ios_rounded,
-                                          color: Colors.white, size: 14),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 200), // space for FAB + nav + banner ad
+                            ),
+                          ],
+                          const SizedBox(height: 120), // space for FAB + nav + banner ad
                         ],
                       ),
                     );
