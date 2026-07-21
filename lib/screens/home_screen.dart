@@ -653,8 +653,11 @@ class _HomeScreenState extends State<HomeScreen>
 
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      child: Center(
+                        child: SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           // ── Emoji lớn với glow ──
                           TweenAnimationBuilder<double>(
@@ -787,36 +790,7 @@ class _HomeScreenState extends State<HomeScreen>
                                 ],
                               )
                           else ...[
-                            // ── Badge ngày ──
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 300),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 24, vertical: 12),
-                              decoration: BoxDecoration(
-                                color: itemColor.withValues(alpha: 0.25),
-                                borderRadius: BorderRadius.circular(30),
-                                border: Border.all(
-                                  color: itemColor.withValues(alpha: 0.6),
-                                  width: 1.5,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: itemColor.withValues(alpha: 0.3),
-                                    blurRadius: 20,
-                                  ),
-                                ],
-                              ),
-                              child: Text(
-                                '⏳ Còn $daysLeft ngày nữa',
-                                style: GoogleFonts.quicksand(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
 
-                            const SizedBox(height: 16),
 
                             // ── Countdown boxes ──
                             Row(
@@ -985,6 +959,8 @@ class _HomeScreenState extends State<HomeScreen>
                           ],
                           const SizedBox(height: 120), // space for FAB + nav + banner ad
                         ],
+                      ),
+                        ),
                       ),
                     );
                   },

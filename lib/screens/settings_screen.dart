@@ -52,7 +52,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final effect = await StorageService().getSelectedEffect();
     // Pre-load trạng thái mở khóa
     final storage = StorageService();
-    final effectIds = ['bubbles', 'hearts', 'snow', 'stars', 'meteor'];
+    final effectIds = ['bubbles', 'hearts', 'snow', 'stars', 'meteor', 'rain', 'rain_ripple', 'rainbow'];
     final unlockResults = await Future.wait(
       effectIds.map((id) => storage.isFeatureUnlocked('${id}_effect_unlocked')),
     );
@@ -363,6 +363,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: SafeArea(
+        bottom: false,
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           children: [
@@ -455,6 +456,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _buildEffectChip('snow', 'Tuyết rơi', Icons.ac_unit),
                 _buildEffectChip('stars', 'Ngôi sao', Icons.star),
                 _buildEffectChip('meteor', 'Sao băng', Icons.auto_awesome),
+                _buildEffectChip('rain', 'Mưa rơi', Icons.water_drop_rounded),
+                _buildEffectChip('rain_ripple', 'Mặt nước', Icons.track_changes_rounded),
+                _buildEffectChip('rainbow', 'Cầu vồng', Icons.palette_rounded),
               ],
             ),
 

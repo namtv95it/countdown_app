@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../models/anniversary.dart';
@@ -234,9 +234,22 @@ class CountdownCard extends StatelessWidget {
     return card.withValues(alpha: 0.4);
   }
 
-  String _countdownText(int days) {
-    if (days == 0) return '🎊 Hôm nay!';
-    if (days > 0) return '⏳ Còn $days ngày';
-    return '✓ Đã qua ${-days} ngày';
+  String _countdownText(int calendarDays) {
+    if (calendarDays == 0) return '🎊 Hôm nay!';
+    if (calendarDays > 0) {
+      final now = DateTime.now();
+      final target = DateTime(
+        anniversary.displayDate.year,
+        anniversary.displayDate.month,
+        anniversary.displayDate.day,
+      );
+      final diff = target.difference(now);
+      if (diff.inDays > 0) {
+        return '⏳ Còn ${diff.inDays} ngày';
+      } else {
+        return '⏳ Ngày mai';
+      }
+    }
+    return '✓ Đã qua ${-calendarDays} ngày';
   }
 }

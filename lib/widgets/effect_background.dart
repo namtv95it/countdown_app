@@ -68,6 +68,9 @@ class _EffectBackgroundState extends State<EffectBackground>
       case 'snow': return 50;
       case 'stars': return 40;
       case 'meteor': return 15;
+      case 'rain': return 70;
+      case 'rain_ripple': return 40;
+      case 'rainbow': return 25;
       default: return 0;
     }
   }
@@ -136,7 +139,42 @@ class _EffectBackgroundState extends State<EffectBackground>
           color: Colors.white.withValues(alpha: _random.nextDouble() * 0.6 + 0.4),
           angle: atan2(speed, speed * 0.6), // Góc chéo
           spin: 0,
-          life: _random.nextDouble() * 80 + 40, // Độ dài đuôi sơ
+          life: _random.nextDouble() * 80 + 40, // Độ dài đuôi sao
+        );
+      case 'rain':
+        return Particle(
+          x: x,
+          y: y,
+          size: _random.nextDouble() * 1.5 + 1.0,
+          speedX: _random.nextDouble() * 2.0 + 1.0,
+          speedY: _random.nextDouble() * 15 + 15,
+          color: Colors.white.withValues(alpha: _random.nextDouble() * 0.4 + 0.2),
+          angle: 0,
+          spin: 0,
+        );
+      case 'rain_ripple':
+        return Particle(
+          x: x,
+          y: y,
+          size: 0,
+          speedX: 0,
+          speedY: 0,
+          color: Colors.white.withValues(alpha: 0.6),
+          angle: 0,
+          spin: 0,
+          life: _random.nextDouble() * 5, // Khởi tạo thời điểm xuất hiện ngẫu nhiên
+        );
+      case 'rainbow':
+        return Particle(
+          x: x,
+          y: y,
+          size: _random.nextDouble() * 5 + 3,
+          speedX: _random.nextDouble() * 0.2 - 0.1,
+          speedY: _random.nextDouble() * 0.2 - 0.1,
+          color: HSLColor.fromAHSL(1.0, _random.nextDouble() * 360, 1.0, 0.7).toColor(),
+          angle: _random.nextDouble() * pi * 2,
+          spin: (_random.nextDouble() - 0.5) * 0.02,
+          life: _random.nextDouble() * pi * 2,
         );
       default:
         return Particle(x: 0, y: 0, size: 0, speedY: 0, speedX: 0, color: Colors.transparent, angle: 0, spin: 0);
@@ -170,6 +208,15 @@ class _EffectBackgroundState extends State<EffectBackground>
             p.x += sin(p.y * 0.02) * 0.5;
           } else if (_currentEffect == 'stars') {
             p.life += 0.05; // Twinkle phase speed
+          } else if (_currentEffect == 'rain_ripple') {
+            p.life += 0.04;
+            if (p.life > 5) {
+              p.life = 0;
+              p.x = _random.nextDouble() * size.width;
+              p.y = _random.nextDouble() * size.height;
+            }
+          } else if (_currentEffect == 'rainbow') {
+            p.life += 0.03;
           }
 
           // Reset particle if it goes out of bounds
@@ -252,6 +299,53 @@ class EffectPainter extends CustomPainter {
         _drawStar(canvas, p, paint);
       } else if (effectType == 'meteor') {
         _drawMeteor(canvas, p, paint);
+      } else if (effectType == 'rain') {
+        paint.strokeWidth = p.size;
+        paint.strokeCap = StrokeCap.round;
+        canvas.drawLine(
+          Offset(p.x, p.y),
+          Offset(p.x - p.speedX * 1.5, p.y - p.speedY * 1.5),
+          paint,
+        );
+      } else if (effectType == 'rain_ripple') {
+        double maxRadius = 40.0;
+        double radius = p.life * 12;
+        if (radius > 0 && radius < maxRadius) {
+          double opacity = 1.0 - (radius / maxRadius);
+          if (opacity < 0) opacity = 0;
+          paint.style = PaintingStyle.stroke;
+          paint.strokeWidth = 1.5;
+          paint.color = p.color.withValues(alpha: opacity * p.color.a);
+          canvas.drawOval(Rect.fromCenter(center: Offset(p.x, p.y), width: radius * 2, height: radius), paint);
+        }
+      } else if (effectType == 'rainbow') {
+        if (p == particles.first) {
+           double baseRadius = size.width * 0.8;
+           Offset center = Offset(size.width * 0.5, size.height * 0.7);
+           double pulse = (sin(p.life) + 1.0) / 2.0; 
+           double baseAlpha = 0.3 + pulse * 0.3;
+           
+           List<Color> colors = [
+             Colors.red, Colors.orange, Colors.yellow, Colors.green, Colors.blue, Colors.indigo, Colors.purple
+           ];
+           
+           for (int i = 0; i < colors.length; i++) {
+             double currentRadius = baseRadius - (i * 12.0);
+             Rect rect = Rect.fromCircle(center: center, radius: currentRadius);
+             final rainbowPaint = Paint()
+               ..style = PaintingStyle.stroke
+               ..strokeWidth = 14.0
+               ..strokeCap = StrokeCap.round
+               ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10.0)
+               ..color = colors[i].withValues(alpha: baseAlpha);
+               
+             canvas.drawArc(rect, pi * 1.1, pi * 0.8, false, rainbowPaint);
+           }
+        } else {
+           double opacity = (sin(p.life) + 1) / 2;
+           paint.color = p.color.withValues(alpha: p.color.a * opacity);
+           _drawStar(canvas, p, paint);
+        }
       }
     }
   }
@@ -318,7 +412,7 @@ class EffectPainter extends CustomPainter {
       ..shader = LinearGradient(
         colors: [
           Colors.white.withValues(alpha: 0.0),
-          Colors.cyanAccent.withValues(alpha: 0.6),
+          Colors.purpleAccent.withValues(alpha: 0.6),
           Colors.white.withValues(alpha: 0.95),
         ],
         begin: Alignment.centerLeft,
