@@ -62,14 +62,25 @@ class StorageService {
     }
   }
 
-  Future<bool> getBubbleEffectEnabled() async {
+  static const String _effectKey = 'selected_effect_id';
+
+  Future<String> getSelectedEffect() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_bubbleEffectKey) ?? false;
+    // Default fallback logic for old users
+    if (prefs.containsKey(_bubbleEffectKey)) {
+      bool oldBubble = prefs.getBool(_bubbleEffectKey) ?? false;
+      if (oldBubble) {
+        prefs.remove(_bubbleEffectKey);
+        await setSelectedEffect('bubbles');
+        return 'bubbles';
+      }
+    }
+    return prefs.getString(_effectKey) ?? 'none';
   }
 
-  Future<void> setBubbleEffectEnabled(bool value) async {
+  Future<void> setSelectedEffect(String effect) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_bubbleEffectKey, value);
+    await prefs.setString(_effectKey, effect);
   }
 
   Future<bool> isFeatureUnlocked(String featureKey) async {

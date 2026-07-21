@@ -17,7 +17,7 @@ import '../services/ad_service.dart';
 import '../services/notification_service.dart';
 import '../widgets/countdown_card.dart';
 import '../widgets/time_unit_box.dart';
-import '../widgets/bubble_background.dart';
+import '../widgets/effect_background.dart';
 
 import 'add_event_screen.dart';
 import 'detail_screen.dart';
@@ -45,7 +45,7 @@ class _HomeScreenState extends State<HomeScreen>
   bool _isBannerAdReady = false;
   late PageController _pageController;
   final ScrollController _eventsScrollController = ScrollController();
-  bool _bubbleEffectEnabled = false;
+  String _selectedEffect = 'none';
   bool _isFullscreenMode = false;
   bool _showFullscreenExitButton = false;
   Timer? _hideExitButtonTimer;
@@ -201,11 +201,11 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _loadAnniversaries() async {
     try {
       final list = await _storageService.getAnniversaries();
-      final bubbleEnabled = await _storageService.getBubbleEffectEnabled();
+      final effect = await _storageService.getSelectedEffect();
       if (mounted) {
         setState(() {
           _anniversaries = list;
-          _bubbleEffectEnabled = bubbleEnabled;
+          _selectedEffect = effect;
           _isLoading = false;
           _sortAnniversaries();
         });
@@ -361,7 +361,7 @@ class _HomeScreenState extends State<HomeScreen>
                   key: _repaintBoundaryKey,
                   child: Stack(
                     children: [
-                      if (_bubbleEffectEnabled) const BubbleBackground(),
+                      EffectBackground(effectType: _selectedEffect),
                       GestureDetector(
                         behavior: HitTestBehavior.translucent,
                         onTap: () {
@@ -1286,10 +1286,10 @@ class _HomeScreenState extends State<HomeScreen>
           }
         }
         
-        // Khi quay lại từ Cài đặt hoặc các tab khác, update lại giao diện (vì có thể họ vừa bật bong bóng)
-        _storageService.getBubbleEffectEnabled().then((val) {
-          if (mounted && _bubbleEffectEnabled != val) {
-            setState(() => _bubbleEffectEnabled = val);
+        // Khi quay lại từ Cài đặt hoặc các tab khác, update lại giao diện
+        _storageService.getSelectedEffect().then((val) {
+          if (mounted && _selectedEffect != val) {
+            setState(() => _selectedEffect = val);
           }
         });
 

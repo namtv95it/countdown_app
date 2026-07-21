@@ -21,7 +21,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _soundEnabled = true;
 
   String _shopUrl = 'https://shopee.vn/';
-  bool _bubbleEffectEnabled = false;
+  String _selectedEffect = 'none';
   bool _isPremium = false;
   bool _isLoading = true;
 
@@ -45,10 +45,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _shopUrl = prefs.getString('shop_url') ?? 'https://shopee.vn/';
     });
     
-    final bubbleEnabled = await StorageService().getBubbleEffectEnabled();
+    final effect = await StorageService().getSelectedEffect();
     if (mounted) {
       setState(() {
-        _bubbleEffectEnabled = bubbleEnabled;
+        _selectedEffect = effect;
         _isPremium = AdService.isPremium;
         _isLoading = false;
       });
@@ -244,75 +244,77 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Future<void> _toggleBubbleEffect(bool value) async {
-    if (value) {
-      final isUnlocked = await StorageService().isFeatureUnlocked('bubble_effect_unlocked');
-      if (isUnlocked) {
-        if (mounted) {
-          setState(() => _bubbleEffectEnabled = true);
-        }
-        await StorageService().setBubbleEffectEnabled(true);
-        return;
-      }
+  Future<void> _selectEffect(String effectId, String effectName) async {
+    if (effectId == 'none') {
+      setState(() => _selectedEffect = 'none');
+      await StorageService().setSelectedEffect('none');
+      return;
+    }
 
-      // Bật hiệu ứng -> Yêu cầu xem quảng cáo
-      if (!mounted) return;
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          backgroundColor: const Color(0xFF1A1A2E),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: const BorderSide(color: Colors.white12),
-          ),
-          title: Row(
-            children: [
-              const Icon(Icons.auto_awesome_rounded, color: Colors.amber),
-              const SizedBox(width: 10),
-              Text('Hiệu ứng Bong bóng',
+    final isUnlocked = await StorageService().isFeatureUnlocked('${effectId}_effect_unlocked');
+    if (isUnlocked || _isPremium) {
+      if (mounted) {
+        setState(() => _selectedEffect = effectId);
+      }
+      await StorageService().setSelectedEffect(effectId);
+      return;
+    }
+
+    // Yêu cầu xem quảng cáo
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A2E),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: Colors.white12),
+        ),
+        title: Row(
+          children: [
+            const Icon(Icons.auto_awesome_rounded, color: Colors.amber),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text('Hiệu ứng $effectName',
                   style: GoogleFonts.quicksand(
                       color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
-            ],
-          ),
-          content: Text(
-            'Xem 1 đoạn video quảng cáo ngắn để mở khóa vĩnh viễn hiệu ứng bong bóng tuyệt đẹp cho Trang chủ nhé!',
-            style: GoogleFonts.quicksand(color: Colors.white70),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Hủy', style: GoogleFonts.quicksand(color: Colors.white54)),
-            ),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.play_circle_filled_rounded),
-              label: Text('Xem Video', style: GoogleFonts.quicksand(fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF7C3AED),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              onPressed: () {
-                Navigator.pop(context); // Đóng dialog
-                AdService.showRewardedAd(
-                  onEarnedReward: () async {
-                    await StorageService().unlockFeature('bubble_effect_unlocked');
-                    await StorageService().setBubbleEffectEnabled(true);
-                    if (mounted) {
-                      setState(() => _bubbleEffectEnabled = true);
-                      _showMessage('🎉 Đã mở khóa vĩnh viễn hiệu ứng Bong bóng!');
-                    }
-                  },
-                );
-              },
             ),
           ],
         ),
-      );
-    } else {
-      // Tắt hiệu ứng
-      setState(() => _bubbleEffectEnabled = false);
-      await StorageService().setBubbleEffectEnabled(false);
-    }
+        content: Text(
+          'Xem 1 đoạn video quảng cáo ngắn để mở khóa vĩnh viễn hiệu ứng $effectName tuyệt đẹp cho Trang chủ nhé!',
+          style: GoogleFonts.quicksand(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Hủy', style: GoogleFonts.quicksand(color: Colors.white54)),
+          ),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.play_circle_filled_rounded),
+            label: Text('Xem Video', style: GoogleFonts.quicksand(fontWeight: FontWeight.bold)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF7C3AED),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () {
+              Navigator.pop(context); // Đóng dialog
+              AdService.showRewardedAd(
+                onEarnedReward: () async {
+                  await StorageService().unlockFeature('${effectId}_effect_unlocked');
+                  await StorageService().setSelectedEffect(effectId);
+                  if (mounted) {
+                    setState(() => _selectedEffect = effectId);
+                    _showMessage('🎉 Đã mở khóa vĩnh viễn hiệu ứng $effectName!');
+                  }
+                },
+              );
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   void _showMessage(String message, {bool isError = false}) {
@@ -411,13 +413,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             const SizedBox(height: 24),
             _buildSectionHeader('🎨 Giao diện'),
-            _buildListTile(
-              title: 'Hiệu ứng trang chủ',
-              subtitle: 'Bong bóng lơ lửng mượt mà',
-              trailing: Switch(
-                value: _bubbleEffectEnabled,
-                onChanged: _toggleBubbleEffect,
-                activeColor: const Color(0xFF7C3AED),
+            const SizedBox(height: 8),
+            Text(
+              'Hiệu ứng trang chủ',
+              style: GoogleFonts.quicksand(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _buildEffectChip('none', 'Không có', Icons.block),
+                  _buildEffectChip('bubbles', 'Bong bóng', Icons.bubble_chart),
+                  _buildEffectChip('hearts', 'Trái tim', Icons.favorite),
+                  _buildEffectChip('snow', 'Tuyết rơi', Icons.ac_unit),
+                  _buildEffectChip('stars', 'Ngôi sao', Icons.star),
+                ],
               ),
             ),
 
@@ -474,6 +489,54 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildEffectChip(String id, String name, IconData icon) {
+    final isSelected = _selectedEffect == id;
+    
+    return FutureBuilder<bool>(
+      future: id == 'none' ? Future.value(true) : StorageService().isFeatureUnlocked('${id}_effect_unlocked'),
+      builder: (context, snapshot) {
+        final isUnlocked = (snapshot.data ?? false) || _isPremium;
+        
+        return Padding(
+          padding: const EdgeInsets.only(right: 12),
+          child: InkWell(
+            onTap: () => _selectEffect(id, name),
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: isSelected ? const Color(0xFF7C3AED) : Colors.white.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isSelected ? const Color(0xFF7C3AED) : Colors.white12,
+                  width: 2,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    isUnlocked ? icon : Icons.lock_rounded,
+                    color: isSelected ? Colors.white : Colors.white70,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    name,
+                    style: GoogleFonts.quicksand(
+                      color: isSelected ? Colors.white : Colors.white70,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
