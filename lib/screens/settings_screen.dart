@@ -463,10 +463,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _buildEffectChip('waves', 'Sóng biển', Icons.waves_rounded),
                 _buildEffectChip('leaves', 'Lá rơi', Icons.eco_rounded),
                 _buildEffectChip('sunset_birds', 'Hoàng hôn', Icons.wb_twilight_rounded),
+                _buildEffectChip('aurora', 'Cực quang', Icons.lens_blur_rounded),
+                _buildEffectChip('fireflies', 'Đom đóm', Icons.lightbulb_outline_rounded),
+                _buildEffectChip('fireworks', 'Pháo hoa', Icons.celebration_rounded),
+                _buildEffectChip('cherry_blossom', 'Hoa đào', Icons.filter_vintage_rounded),
+                _buildEffectChip('galaxy', 'Ngân hà', Icons.dark_mode_rounded),
               ],
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 12),
             Text(
               'Font chữ',
               style: GoogleFonts.quicksand(
