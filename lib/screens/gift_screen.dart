@@ -148,6 +148,7 @@ class _GiftScreenState extends State<GiftScreen>
             Expanded(
               child: TabBarView(
                 controller: _tabController,
+                physics: const NeverScrollableScrollPhysics(),
                 children: [
                   _buildGiftTab(),
                   _buildWishTab(),

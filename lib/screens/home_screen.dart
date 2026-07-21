@@ -39,6 +39,7 @@ class _HomeScreenState extends State<HomeScreen>
   BannerAd? _bannerAd;
   bool _isBannerAdReady = false;
   late PageController _pageController;
+  final ScrollController _eventsScrollController = ScrollController();
 
   @override
   void initState() {
@@ -92,6 +93,7 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void dispose() {
     _pageController.dispose();
+    _eventsScrollController.dispose();
     _timer?.cancel();
     _bannerAd?.dispose();
     super.dispose();
@@ -265,8 +267,8 @@ class _HomeScreenState extends State<HomeScreen>
       index: _currentTab,
       children: [
         _buildHeroTab(),
-        const GiftScreen(),
         _buildAllEventsTab(),
+        const GiftScreen(),
         const SettingsScreen(),
       ],
     );
@@ -773,6 +775,7 @@ class _HomeScreenState extends State<HomeScreen>
       children: [
         Expanded(
           child: CustomScrollView(
+            controller: _eventsScrollController,
             slivers: [
         SliverAppBar(
           pinned: true,
@@ -984,9 +987,9 @@ class _HomeScreenState extends State<HomeScreen>
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     _buildNavIcon(0, Icons.home_rounded, 'Trang chủ'),
-                    _buildNavIcon(1, Icons.card_giftcard_rounded, 'Quà tặng'),
+                    _buildNavIcon(1, Icons.event_note_rounded, 'Sự kiện'),
                     const SizedBox(width: 60), // Không gian cho nút giữa
-                    _buildNavIcon(2, Icons.event_note_rounded, 'Sự kiện'),
+                    _buildNavIcon(2, Icons.card_giftcard_rounded, 'Quà tặng'),
                     _buildNavIcon(3, Icons.settings_rounded, 'Cài đặt'),
                   ],
                 ),
@@ -1025,7 +1028,24 @@ class _HomeScreenState extends State<HomeScreen>
     final accent = _accentColor;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () => setState(() => _currentTab = index),
+      onTap: () {
+        if (_currentTab == 1 && index == 1) {
+          // Nếu đang ở tab Sự kiện và bấm lại, cuộn mượt mà lên đầu
+          if (_eventsScrollController.hasClients) {
+            _eventsScrollController.animateTo(
+              0,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+        } else if (index == 1) {
+          // Nếu chuyển sang tab Sự kiện từ tab khác, lập tức nhảy lên đầu
+          if (_eventsScrollController.hasClients) {
+            _eventsScrollController.jumpTo(0);
+          }
+        }
+        setState(() => _currentTab = index);
+      },
       child: SizedBox(
         width: 60,
         child: Column(
