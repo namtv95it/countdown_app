@@ -40,6 +40,7 @@ class _HomeScreenState extends State<HomeScreen>
   bool _isBannerAdReady = false;
   late PageController _pageController;
   final ScrollController _eventsScrollController = ScrollController();
+  bool _bubbleEffectEnabled = false;
 
   @override
   void initState() {
@@ -101,12 +102,16 @@ class _HomeScreenState extends State<HomeScreen>
 
   Future<void> _loadAnniversaries() async {
     try {
-      final data = await _storageService.getAnniversaries();
-      setState(() {
-        _anniversaries = data;
-        _sortAnniversaries();
-        _isLoading = false;
-      });
+      final list = await _storageService.getAnniversaries();
+      final bubbleEnabled = await _storageService.getBubbleEffectEnabled();
+      if (mounted) {
+        setState(() {
+          _anniversaries = list;
+          _bubbleEffectEnabled = bubbleEnabled;
+          _isLoading = false;
+          _sortAnniversaries();
+        });
+      }
     } catch (e) {
       debugPrint('Error loading anniversaries: $e');
       setState(() {
@@ -254,7 +259,7 @@ class _HomeScreenState extends State<HomeScreen>
             )
           : Stack(
               children: [
-                const BubbleBackground(),
+                if (_bubbleEffectEnabled) const BubbleBackground(),
                 _buildCurrentTab(),
               ],
             ),
@@ -1044,6 +1049,14 @@ class _HomeScreenState extends State<HomeScreen>
             _eventsScrollController.jumpTo(0);
           }
         }
+        
+        // Khi quay lại từ Cài đặt hoặc các tab khác, update lại giao diện (vì có thể họ vừa bật bong bóng)
+        _storageService.getBubbleEffectEnabled().then((val) {
+          if (mounted && _bubbleEffectEnabled != val) {
+            setState(() => _bubbleEffectEnabled = val);
+          }
+        });
+
         setState(() => _currentTab = index);
       },
       child: SizedBox(

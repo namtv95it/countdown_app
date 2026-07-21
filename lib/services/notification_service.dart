@@ -157,6 +157,54 @@ class NotificationService {
     });
   }
 
+  Future<void> showPinnedNotification(Anniversary event) async {
+    final prefs = await SharedPreferences.getInstance();
+    final bool soundEnabled = prefs.getBool('sound_enabled') ?? true;
+
+    final daysDiff = event.daysRemaining;
+    String bodyText;
+    if (daysDiff == 0) {
+      bodyText = 'Hôm nay là ngày kỷ niệm!';
+    } else if (daysDiff > 0) {
+      bodyText = 'Còn $daysDiff ngày nữa';
+    } else {
+      bodyText = 'Đã qua ${daysDiff.abs()} ngày';
+    }
+
+    final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      'countdown_pinned_channel',
+      'Sự kiện được ghim',
+      channelDescription: 'Thông báo cố định trên thanh trạng thái',
+      importance: Importance.defaultImportance,
+      priority: Priority.low, // Để không kêu vang liên tục khi update
+      ongoing: true,          // Thông báo dính
+      autoCancel: false,      // Không tự xóa khi bấm
+      showWhen: false,        // Bỏ thời gian mặc định
+      playSound: false,       // Ghim thì không nên phát tiếng
+    );
+
+    final DarwinNotificationDetails darwinDetails = DarwinNotificationDetails(
+      presentSound: false,
+    );
+
+    final NotificationDetails platformDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: darwinDetails,
+    );
+
+    // Dùng id riêng (ví dụ 9999) cho thông báo được ghim để có thể đè lên / xóa
+    await _notificationsPlugin.show(
+      id: 9999,
+      title: '${event.emoji} ${event.title}',
+      body: bodyText,
+      notificationDetails: platformDetails,
+    );
+  }
+
+  Future<void> cancelPinnedNotification() async {
+    await _notificationsPlugin.cancel(id: 9999);
+  }
+
   Future<void> _scheduleNotification({
     required int id,
     required String title,

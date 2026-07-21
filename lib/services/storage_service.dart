@@ -5,6 +5,7 @@ import 'widget_service.dart';
 class StorageService {
   static const String _key = 'anniversaries_list_v2';
   static const String _oldKey = 'anniversaries_list';
+  static const String _bubbleEffectKey = 'bubble_effect_enabled';
 
   Future<List<Anniversary>> getAnniversaries() async {
     final prefs = await SharedPreferences.getInstance();
@@ -48,5 +49,25 @@ class StorageService {
     } catch (e) {
       print('Failed to update widget: $e');
     }
+  }
+
+  Future<bool> getBubbleEffectEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_bubbleEffectKey) ?? false;
+  }
+
+  Future<void> setBubbleEffectEnabled(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_bubbleEffectKey, value);
+  }
+
+  Future<bool> isFeatureUnlocked(String featureKey) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(featureKey) ?? false;
+  }
+
+  Future<void> unlockFeature(String featureKey) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(featureKey, true);
   }
 }

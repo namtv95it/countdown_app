@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,6 +6,8 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/anniversary.dart';
 import '../services/storage_service.dart';
+import '../services/notification_service.dart';
+import '../services/ad_service.dart';
 import '../widgets/time_unit_box.dart';
 
 
@@ -105,6 +107,20 @@ class _DetailScreenState extends State<DetailScreen>
     }
   }
 
+  Future<void> _pinEvent() async {
+    await NotificationService().showPinnedNotification(widget.anniversary);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('📌 Đã ghim sự kiện lên thanh thông báo!'),
+          backgroundColor: const Color(0xFF10B981),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final ann = widget.anniversary;
@@ -145,6 +161,13 @@ class _DetailScreenState extends State<DetailScreen>
               onPressed: () => Navigator.pop(context, ann),
             ),
             actions: [
+              IconButton(
+                icon: const Icon(
+                  Icons.push_pin_rounded,
+                  color: Colors.white,
+                ),
+                onPressed: _pinEvent,
+              ),
               IconButton(
                 icon: Icon(
                   Icons.delete_outline_rounded,

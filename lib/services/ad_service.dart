@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
@@ -27,6 +27,16 @@ class AdService {
     throw UnsupportedError('Unsupported platform');
   }
 
+  // Lấy Rewarded Ad Unit ID (Test)
+  static String get rewardedAdUnitId {
+    if (Platform.isAndroid) {
+      return 'ca-app-pub-3940256099942544/5224354917';
+    } else if (Platform.isIOS) {
+      return 'ca-app-pub-3940256099942544/1712485313';
+    }
+    throw UnsupportedError('Unsupported platform');
+  }
+
   // Hiển thị quảng cáo toàn màn hình (Interstitial)
   static void showInterstitialAd() {
     if (kIsWeb) return;
@@ -47,6 +57,38 @@ class AdService {
         },
         onAdFailedToLoad: (LoadAdError error) {
           debugPrint('InterstitialAd failed to load: $error');
+        },
+      ),
+    );
+  }
+
+  // Hiển thị quảng cáo có thưởng (Rewarded Ad)
+  static void showRewardedAd({required VoidCallback onEarnedReward}) {
+    if (kIsWeb) {
+      onEarnedReward();
+      return;
+    }
+    RewardedAd.load(
+      adUnitId: rewardedAdUnitId,
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (RewardedAd ad) {
+          ad.fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (RewardedAd ad) {
+              ad.dispose();
+            },
+            onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
+              ad.dispose();
+            },
+          );
+          ad.show(onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
+            onEarnedReward();
+          });
+        },
+        onAdFailedToLoad: (LoadAdError error) {
+          debugPrint('RewardedAd failed to load: $error');
+          // Fallback: nếu lỗi mạng hoặc không có ads, vẫn cho họ phần thưởng
+          onEarnedReward();
         },
       ),
     );

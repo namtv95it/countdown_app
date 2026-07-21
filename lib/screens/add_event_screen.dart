@@ -1,9 +1,11 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../models/anniversary.dart';
 import '../models/event_category.dart';
 import '../data/preset_holidays.dart';
+import '../services/ad_service.dart';
+import '../services/storage_service.dart';
 
 class AddEventScreen extends StatefulWidget {
   final List<Anniversary> existingEvents;
@@ -26,8 +28,24 @@ class _AddEventScreenState extends State<AddEventScreen> {
   String _selectedCategoryId = 'other';
   int _selectedColorValue = 0xFF64748B;
   bool _isYearly = false;
+  bool _isPremiumColorsUnlocked = false;
 
   String get _selectedEmoji => EventCategory.findById(_selectedCategoryId).emoji;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPremiumStatus();
+  }
+
+  Future<void> _loadPremiumStatus() async {
+    final unlocked = await StorageService().isFeatureUnlocked('premium_colors');
+    if (mounted) {
+      setState(() {
+        _isPremiumColorsUnlocked = unlocked;
+      });
+    }
+  }
 
   static const List<int> _colorOptions = [
     0xFF7C3AED,
@@ -71,6 +89,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
   void _saveEvent() {
     if (_formKey.currentState!.validate() && _selectedDate != null) {
+      // Hiển thị quảng cáo toàn màn hình khi lưu sự kiện thành công
+      AdService.showInterstitialAd();
+      
       final event = Anniversary(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         title: _titleController.text.trim(),
@@ -396,36 +417,125 @@ class _AddEventScreenState extends State<AddEventScreen> {
     return Wrap(
       spacing: 10,
       runSpacing: 10,
-      children: _colorOptions.map((colorVal) {
+      children: List.generate(_colorOptions.length, (index) {
+        final colorVal = _colorOptions[index];
         final selected = colorVal == _selectedColorValue;
+        final isPremium = index >= 5;
+        final isLocked = isPremium && !_isPremiumColorsUnlocked;
+
         return GestureDetector(
-          onTap: () => setState(() => _selectedColorValue = colorVal),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: Color(colorVal),
-              shape: BoxShape.circle,
-              border: selected
-                  ? Border.all(color: Colors.white, width: 2.5)
-                  : Border.all(color: Colors.transparent, width: 2.5),
-              boxShadow: selected
-                  ? [
-                      BoxShadow(
-                        color: Color(colorVal).withValues(alpha: 0.6),
-                        blurRadius: 10,
-                        spreadRadius: 2,
-                      ),
-                    ]
-                  : null,
-            ),
-            child: selected
-                ? const Icon(Icons.check_rounded, color: Colors.white, size: 18)
-                : null,
+          onTap: () {
+            if (isLocked) {
+              _showUnlockColorsDialog(colorVal);
+            } else {
+              setState(() => _selectedColorValue = colorVal);
+            }
+          },
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: Color(colorVal),
+                  shape: BoxShape.circle,
+                  border: selected
+                      ? Border.all(color: Colors.white, width: 2.5)
+                      : Border.all(color: Colors.transparent, width: 2.5),
+                  boxShadow: selected
+                      ? [
+                          BoxShadow(
+                            color: Color(colorVal).withValues(alpha: 0.6),
+                            blurRadius: 10,
+                            spreadRadius: 2,
+                          ),
+                        ]
+                      : null,
+                ),
+                child: selected
+                    ? const Icon(Icons.check_rounded, color: Colors.white, size: 18)
+                    : null,
+              ),
+              if (isLocked)
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.black.withValues(alpha: 0.4),
+                  ),
+                  child: const Icon(Icons.lock_rounded, color: Colors.white, size: 18),
+                ),
+            ],
           ),
         );
-      }).toList(),
+      }),
+    );
+  }
+
+  void _showUnlockColorsDialog(int targetColor) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A2E),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: Colors.white12),
+        ),
+        title: Row(
+          children: [
+            const Icon(Icons.stars_rounded, color: Colors.amber),
+            const SizedBox(width: 10),
+            Text('Mở khóa Màu Premium',
+                style: GoogleFonts.quicksand(
+                    color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+          ],
+        ),
+        content: Text(
+          'Xem 1 đoạn video ngắn để mở khóa vĩnh viễn trọn bộ màu nền đặc biệt cho sự kiện này nhé!',
+          style: GoogleFonts.quicksand(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Hủy', style: GoogleFonts.quicksand(color: Colors.white54)),
+          ),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.play_circle_filled_rounded),
+            label: Text('Xem Video', style: GoogleFonts.quicksand(fontWeight: FontWeight.bold)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF7C3AED),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () {
+              Navigator.pop(context); // Đóng dialog
+              // Gọi dịch vụ hiển thị quảng cáo
+              AdService.showRewardedAd(
+                onEarnedReward: () async {
+                  await StorageService().unlockFeature('premium_colors');
+                  if (mounted) {
+                    setState(() {
+                      _isPremiumColorsUnlocked = true;
+                      _selectedColorValue = targetColor;
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text('🎉 Đã mở khóa vĩnh viễn bộ màu Premium!'),
+                        backgroundColor: const Color(0xFF10B981),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    );
+                  }
+                },
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 

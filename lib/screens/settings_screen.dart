@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../services/notification_service.dart';
 import '../services/storage_service.dart';
+import '../services/ad_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -20,6 +21,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _soundEnabled = true;
 
   String _shopUrl = 'https://shopee.vn/';
+  bool _bubbleEffectEnabled = false;
   bool _isLoading = true;
 
   @override
@@ -39,10 +41,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _notificationTime = TimeOfDay(hour: hour, minute: minute);
       
       _soundEnabled = prefs.getBool('sound_enabled') ?? true;
-
       _shopUrl = prefs.getString('shop_url') ?? 'https://shopee.vn/';
-      _isLoading = false;
     });
+    
+    final bubbleEnabled = await StorageService().getBubbleEffectEnabled();
+    if (mounted) {
+      setState(() {
+        _bubbleEffectEnabled = bubbleEnabled;
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _toggleNotifications(bool value) async {
@@ -225,6 +233,77 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Future<void> _toggleBubbleEffect(bool value) async {
+    if (value) {
+      final isUnlocked = await StorageService().isFeatureUnlocked('bubble_effect_unlocked');
+      if (isUnlocked) {
+        if (mounted) {
+          setState(() => _bubbleEffectEnabled = true);
+        }
+        await StorageService().setBubbleEffectEnabled(true);
+        return;
+      }
+
+      // Bật hiệu ứng -> Yêu cầu xem quảng cáo
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: const Color(0xFF1A1A2E),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: const BorderSide(color: Colors.white12),
+          ),
+          title: Row(
+            children: [
+              const Icon(Icons.auto_awesome_rounded, color: Colors.amber),
+              const SizedBox(width: 10),
+              Text('Hiệu ứng Bong bóng',
+                  style: GoogleFonts.quicksand(
+                      color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+            ],
+          ),
+          content: Text(
+            'Xem 1 đoạn video quảng cáo ngắn để mở khóa vĩnh viễn hiệu ứng bong bóng tuyệt đẹp cho Trang chủ nhé!',
+            style: GoogleFonts.quicksand(color: Colors.white70),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Hủy', style: GoogleFonts.quicksand(color: Colors.white54)),
+            ),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.play_circle_filled_rounded),
+              label: Text('Xem Video', style: GoogleFonts.quicksand(fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF7C3AED),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: () {
+                Navigator.pop(context); // Đóng dialog
+                AdService.showRewardedAd(
+                  onEarnedReward: () async {
+                    await StorageService().unlockFeature('bubble_effect_unlocked');
+                    await StorageService().setBubbleEffectEnabled(true);
+                    if (mounted) {
+                      setState(() => _bubbleEffectEnabled = true);
+                      _showMessage('🎉 Đã mở khóa vĩnh viễn hiệu ứng Bong bóng!');
+                    }
+                  },
+                );
+              },
+            ),
+          ],
+        ),
+      );
+    } else {
+      // Tắt hiệu ứng
+      setState(() => _bubbleEffectEnabled = false);
+      await StorageService().setBubbleEffectEnabled(false);
+    }
+  }
+
   void _showMessage(String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -305,6 +384,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ],
 
+
+            const SizedBox(height: 24),
+            _buildSectionHeader('🎨 Giao diện'),
+            _buildListTile(
+              title: 'Hiệu ứng trang chủ',
+              subtitle: 'Bong bóng lơ lửng mượt mà',
+              trailing: Switch(
+                value: _bubbleEffectEnabled,
+                onChanged: _toggleBubbleEffect,
+                activeColor: const Color(0xFF7C3AED),
+              ),
+            ),
 
             const SizedBox(height: 24),
             _buildSectionHeader('🛍️ Quà tặng & Lời chúc'),
