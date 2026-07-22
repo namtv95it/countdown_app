@@ -5,6 +5,7 @@ import '../models/anniversary.dart';
 import '../models/event_category.dart';
 import '../data/preset_holidays.dart';
 import '../services/ad_service.dart';
+import '../widgets/emoji_picker_sheet.dart';
 import '../services/storage_service.dart';
 
 class AddEventScreen extends StatefulWidget {
@@ -29,8 +30,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
   int _selectedColorValue = 0xFF64748B;
   bool _isYearly = false;
   bool _isLunar = false;
+  String? _customEmoji;
 
-  String get _selectedEmoji => EventCategory.findById(_selectedCategoryId).emoji;
+  String get _selectedEmoji => _customEmoji ?? EventCategory.findById(_selectedCategoryId).emoji;
 
   @override
   void initState() {
@@ -80,21 +82,34 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
   void _saveEvent() {
     if (_formKey.currentState!.validate() && _selectedDate != null) {
-      // Hiển thị quảng cáo toàn màn hình khi lưu sự kiện thành công
-      AdService.showInterstitialAd();
-      
-      final event = Anniversary(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        title: _titleController.text.trim(),
-        date: _selectedDate!,
-        emoji: _selectedEmoji,
-        colorValue: _selectedColorValue,
-        isYearly: _isYearly,
-        isLunar: _isLunar,
-        note: _noteController.text.trim(),
-        categoryId: _selectedCategoryId,
-      );
-      Navigator.pop(context, event);
+      if (_customEmoji != null && !AdService.isPremium) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            backgroundColor: const Color(0xFF1A1A2E),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Text('Yêu cầu xem quảng cáo', style: GoogleFonts.quicksand(color: Colors.white, fontWeight: FontWeight.bold)),
+            content: Text('Bạn đã thay đổi biểu tượng. Vui lòng xem một quảng cáo ngắn để lưu lại thay đổi này nhé!', style: GoogleFonts.quicksand(color: Colors.white70)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Hủy', style: GoogleFonts.quicksand(color: Colors.white54)),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  AdService.showRewardedAd(
+                    onEarnedReward: () => _performSave(),
+                  );
+                },
+                child: Text('Xem ngay', style: GoogleFonts.quicksand(color: const Color(0xFFEC4899), fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        );
+      } else {
+        _performSave();
+      }
     } else if (_selectedDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -106,6 +121,23 @@ class _AddEventScreenState extends State<AddEventScreen> {
         ),
       );
     }
+  }
+
+  void _performSave() {
+    AdService.showInterstitialAd();
+    
+    final event = Anniversary(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      title: _titleController.text.trim(),
+      date: _selectedDate!,
+      emoji: _selectedEmoji,
+      colorValue: _selectedColorValue,
+      isYearly: _isYearly,
+      isLunar: _isLunar,
+      note: _noteController.text.trim(),
+      categoryId: _selectedCategoryId,
+    );
+    Navigator.pop(context, event);
   }
 
   @override
@@ -140,8 +172,6 @@ class _AddEventScreenState extends State<AddEventScreen> {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            // _buildPreviewCard(),
-            // const SizedBox(height: 16),
             _buildPresetButton(),
             const SizedBox(height: 24),
             _buildSectionLabel('Tên kỷ niệm'),
@@ -170,6 +200,19 @@ class _AddEventScreenState extends State<AddEventScreen> {
             const SizedBox(height: 8),
             _buildColorPicker(),
             const SizedBox(height: 20),
+            _buildSectionLabel('Biểu tượng'),
+            const SizedBox(height: 8),
+            _buildEmojiBox(),
+            if (!AdService.isPremium) ...[
+              const SizedBox(height: 4),
+              Center(
+                child: Text(
+                  '💡 Cần xem quảng cáo để thay đổi biểu tượng',
+                  style: GoogleFonts.quicksand(fontSize: 11, color: Colors.white54),
+                ),
+              ),
+            ],
+            const SizedBox(height: 20),
             _buildSectionLabel('Ghi chú (tùy chọn)'),
             const SizedBox(height: 8),
             _buildTextField(
@@ -183,72 +226,6 @@ class _AddEventScreenState extends State<AddEventScreen> {
             const SizedBox(height: 20),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildPreviewCard() {
-    final cardColor = Color(_selectedColorValue);
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            cardColor.withValues(alpha: 0.3),
-            cardColor.withValues(alpha: 0.1),
-          ],
-        ),
-        border: Border.all(color: cardColor.withValues(alpha: 0.5), width: 1.5),
-      ),
-      child: Row(
-        children: [
-          Text(_selectedEmoji, style: const TextStyle(fontSize: 36)),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _titleController.text.isEmpty
-                      ? 'Tên kỷ niệm...'
-                      : _titleController.text,
-                  style: GoogleFonts.quicksand(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: _titleController.text.isEmpty
-                        ? Colors.white38
-                        : Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _selectedDate == null
-                      ? 'Chưa chọn ngày'
-                      : DateFormat('dd/MM/yyyy').format(_selectedDate!),
-                  style: GoogleFonts.quicksand(fontSize: 13, color: Colors.white54),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: cardColor.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              'Preview',
-              style: GoogleFonts.quicksand(
-                fontSize: 11,
-                color: cardColor,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -374,6 +351,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
             onTap: () => setState(() {
               _selectedCategoryId = cat.id;
               _selectedColorValue = cat.colorValue;
+              _customEmoji = null;
             }),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
@@ -415,6 +393,52 @@ class _AddEventScreenState extends State<AddEventScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildEmojiBox() {
+    return GestureDetector(
+      onTap: () {
+        EmojiPickerSheet.show(context, onEmojiSelected: (emoji) {
+          setState(() {
+            _customEmoji = emoji;
+          });
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.07),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.white12),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: Color(_selectedColorValue).withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Text(_selectedEmoji, style: const TextStyle(fontSize: 20)),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Thay đổi biểu tượng',
+              style: GoogleFonts.quicksand(
+                fontSize: 15,
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const Spacer(),
+            const Icon(Icons.chevron_right_rounded, color: Colors.white30, size: 22),
+          ],
+        ),
       ),
     );
   }

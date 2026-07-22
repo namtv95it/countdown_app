@@ -7,7 +7,9 @@ import '../models/anniversary.dart';
 import '../models/event_category.dart';
 import '../services/storage_service.dart';
 import '../services/notification_service.dart';
+import '../services/ad_service.dart';
 import '../widgets/time_unit_box.dart';
+import '../widgets/emoji_picker_sheet.dart';
 
 
 class DetailScreen extends StatefulWidget {
@@ -200,32 +202,52 @@ class _DetailScreenState extends State<DetailScreen>
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const SizedBox(height: 60),
-                    ScaleTransition(
-                      scale: _pulseAnimation,
-                      child: Container(
-                        width: 90,
-                        height: 90,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: cardColor.withValues(alpha: 0.2),
-                          border: Border.all(
-                            color: cardColor.withValues(alpha: 0.5),
-                            width: 2,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: cardColor.withValues(alpha: 0.4),
-                              blurRadius: 30,
-                              spreadRadius: 5,
+                    GestureDetector(
+                      onTap: _editEmoji,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          ScaleTransition(
+                            scale: _pulseAnimation,
+                            child: Container(
+                              width: 90,
+                              height: 90,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: cardColor.withValues(alpha: 0.2),
+                                border: Border.all(
+                                  color: cardColor.withValues(alpha: 0.5),
+                                  width: 2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: cardColor.withValues(alpha: 0.4),
+                                    blurRadius: 30,
+                                    spreadRadius: 5,
+                                  ),
+                                ],
+                              ),
+                              child: Center(
+                                child: Text(
+                                  ann.emoji,
+                                  style: const TextStyle(fontSize: 42),
+                                ),
+                              ),
                             ),
-                          ],
-                        ),
-                        child: Center(
-                          child: Text(
-                            ann.emoji,
-                            style: const TextStyle(fontSize: 42),
                           ),
-                        ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF1A1A2E),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.edit_rounded, color: Colors.white70, size: 16),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -744,6 +766,57 @@ class _DetailScreenState extends State<DetailScreen>
         ),
       ),
     );
+  }
+
+  void _editEmoji() {
+    EmojiPickerSheet.show(context, onEmojiSelected: (emoji) {
+      if (emoji == _currentAnniversary.emoji) return;
+      
+      void applyEmoji() {
+        setState(() {
+          _currentAnniversary = Anniversary(
+            id: _currentAnniversary.id,
+            title: _currentAnniversary.title,
+            date: _currentAnniversary.date,
+            emoji: emoji,
+            colorValue: _currentAnniversary.colorValue,
+            isYearly: _currentAnniversary.isYearly,
+            isLunar: _currentAnniversary.isLunar,
+            note: _currentAnniversary.note,
+            categoryId: _currentAnniversary.categoryId,
+          );
+          _hasChanged = true;
+          _updateRemaining();
+        });
+      }
+
+      if (!AdService.isPremium) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            backgroundColor: const Color(0xFF1A1A2E),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Text('Yêu cầu xem quảng cáo', style: GoogleFonts.quicksand(color: Colors.white, fontWeight: FontWeight.bold)),
+            content: Text('Bạn cần xem một quảng cáo ngắn để thay đổi biểu tượng. Xem ngay?', style: GoogleFonts.quicksand(color: Colors.white70)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Hủy', style: GoogleFonts.quicksand(color: Colors.white54)),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  AdService.showRewardedAd(onEarnedReward: applyEmoji);
+                },
+                child: Text('Xem ngay', style: GoogleFonts.quicksand(color: const Color(0xFFEC4899), fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        );
+      } else {
+        applyEmoji();
+      }
+    });
   }
 
   Future<void> _editTitle() async {
