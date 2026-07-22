@@ -30,6 +30,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String _shopUrl = 'https://shopee.vn/';
   bool _isPremium = false;
   bool _isLoading = true;
+  String _language = 'vi'; // 'vi' or 'en'
+
   // Lưu trạng thái mở khóa của từng hiệu ứng để tránh FutureBuilder gây flicker
   final Map<String, bool> _effectUnlocked = {};
 
@@ -51,7 +53,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       
       _soundEnabled = prefs.getBool('sound_enabled') ?? true;
       _shopUrl = prefs.getString('shop_url') ?? 'https://shopee.vn/';
+      _language = prefs.getString('language') ?? 'vi';
     });
+
     
     final effect = await StorageService().getSelectedEffect();
     // Pre-load trạng thái mở khóa
@@ -277,6 +281,77 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await prefs.setString('shop_url', result.trim());
     }
   }
+
+  Future<void> _toggleLanguage(String lang) async {
+    setState(() {
+      _language = lang;
+    });
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('language', lang);
+    _showMessage(lang == 'vi' ? 'Đã đổi ngôn ngữ sang Tiếng Việt' : 'Changed language to English');
+  }
+
+  Widget _buildLanguageToggle() {
+    bool isVi = _language == 'vi';
+    return GestureDetector(
+      onTap: () {
+        _toggleLanguage(isVi ? 'en' : 'vi');
+      },
+      child: Container(
+        width: 64,
+        height: 32,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          color: Colors.white.withValues(alpha: 0.1),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+        ),
+        child: Stack(
+          children: [
+            // Cờ không được chọn
+            Positioned(
+              left: isVi ? 6 : 36,
+              top: 4,
+              child: Opacity(
+                opacity: 0.5,
+                child: Text(
+                  isVi ? '🇬🇧' : '🇻🇳',
+                  style: const TextStyle(fontSize: 16),
+                ),
+              ),
+            ),
+            // Cờ được chọn (nằm trong hình tròn nổi)
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeInOut,
+              left: isVi ? 32 : 2,
+              top: 1,
+              child: Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFF7C3AED),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.2),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  isVi ? '🇻🇳' : '🇬🇧',
+                  style: const TextStyle(fontSize: 16),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
 
   void _showPromoCodeDialog() {
     final controller = TextEditingController();
@@ -608,7 +683,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
 
             const SizedBox(height: 24),
-            _buildSectionHeader('🎨 Giao diện'),
+            _buildSectionHeader('🎨 Giao diện & Ngôn ngữ'),
+            _buildListTile(
+              title: 'Ngôn ngữ',
+              subtitle: _language == 'vi' ? 'Tiếng Việt' : 'English',
+              trailing: _buildLanguageToggle(),
+            ),
             _buildListTile(
               title: 'Tùy chỉnh Giao diện',
               subtitle: 'Đổi hiệu ứng nền và font chữ',
