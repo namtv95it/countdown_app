@@ -28,6 +28,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
   String _selectedCategoryId = 'other';
   int _selectedColorValue = 0xFF64748B;
   bool _isYearly = false;
+  bool _isLunar = false;
 
   String get _selectedEmoji => EventCategory.findById(_selectedCategoryId).emoji;
 
@@ -89,6 +90,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
         emoji: _selectedEmoji,
         colorValue: _selectedColorValue,
         isYearly: _isYearly,
+        isLunar: _isLunar,
         note: _noteController.text.trim(),
         categoryId: _selectedCategoryId,
       );
@@ -155,6 +157,10 @@ class _AddEventScreenState extends State<AddEventScreen> {
             _buildSectionLabel('Ngày'),
             const SizedBox(height: 8),
             _buildDatePicker(),
+            const SizedBox(height: 16),
+            _buildYearlyToggle(),
+            const SizedBox(height: 12),
+            _buildLunarToggle(),
             const SizedBox(height: 20),
             _buildSectionLabel('Danh mục sự kiện'),
             const SizedBox(height: 8),
@@ -163,8 +169,6 @@ class _AddEventScreenState extends State<AddEventScreen> {
             _buildSectionLabel('Màu sắc'),
             const SizedBox(height: 8),
             _buildColorPicker(),
-            const SizedBox(height: 20),
-            _buildYearlyToggle(),
             const SizedBox(height: 20),
             _buildSectionLabel('Ghi chú (tùy chọn)'),
             const SizedBox(height: 8),
@@ -348,13 +352,22 @@ class _AddEventScreenState extends State<AddEventScreen> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: const Border.fromBorderSide(BorderSide(color: Colors.white12)),
       ),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: EventCategory.all.map((cat) {
+      child: GridView.builder(
+        shrinkWrap: true,
+        padding: EdgeInsets.zero,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+          mainAxisExtent: 48,
+        ),
+        itemCount: EventCategory.all.length,
+        itemBuilder: (context, index) {
+          final cat = EventCategory.all[index];
           final selected = cat.id == _selectedCategoryId;
           final catColor = Color(cat.colorValue);
           return GestureDetector(
@@ -364,7 +377,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
             }),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
                 color: selected
                     ? catColor.withValues(alpha: 0.25)
@@ -378,27 +391,30 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 ),
               ),
               child: Row(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(cat.emoji, style: const TextStyle(fontSize: 18)),
-                  const SizedBox(width: 6),
-                  Text(
-                    cat.name,
-                    style: GoogleFonts.quicksand(
-                      fontSize: 13,
-                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                      color: selected ? Colors.white : Colors.white60,
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      cat.name,
+                      style: GoogleFonts.quicksand(
+                        fontSize: 13,
+                        fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                        color: selected ? Colors.white : Colors.white70,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   if (cat.canSuggestProducts) ...[
                     const SizedBox(width: 4),
-                    Text('🛍️', style: const TextStyle(fontSize: 10)),
+                    const Text('🛍️', style: TextStyle(fontSize: 10)),
                   ],
                 ],
               ),
             ),
           );
-        }).toList(),
+        },
       ),
     );
   }
@@ -490,6 +506,56 @@ class _AddEventScreenState extends State<AddEventScreen> {
           Switch(
             value: _isYearly,
             onChanged: (v) => setState(() => _isYearly = v),
+            activeThumbColor: Colors.white,
+            activeTrackColor: const Color(0xFF7C3AED),
+            inactiveTrackColor: Colors.white12,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLunarToggle() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(14),
+        border: const Border.fromBorderSide(BorderSide(color: Colors.white12)),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.nightlight_round,
+            color: Color(0xFF7C3AED),
+            size: 22,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Tính theo Âm lịch',
+                  style: GoogleFonts.quicksand(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  'Dành cho ngày lễ truyền thống',
+                  style: GoogleFonts.quicksand(
+                    fontSize: 12,
+                    color: Colors.white38,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: _isLunar,
+            onChanged: (v) => setState(() => _isLunar = v),
             activeThumbColor: Colors.white,
             activeTrackColor: const Color(0xFF7C3AED),
             inactiveTrackColor: Colors.white12,
