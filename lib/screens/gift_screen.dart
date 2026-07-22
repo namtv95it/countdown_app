@@ -82,8 +82,8 @@ class _GiftScreenState extends State<GiftScreen> {
       );
       return;
     }
-    // Ẩn bàn phím
-    FocusScope.of(context).unfocus();
+    // Ẩn bàn phím triệt để
+    FocusManager.instance.primaryFocus?.unfocus();
     setState(() => _isGenerating = true);
     Future.delayed(const Duration(milliseconds: 600), () {
       if (!mounted) return;
@@ -167,12 +167,13 @@ class _GiftScreenState extends State<GiftScreen> {
               showModalBottomSheet(
                 context: context,
                 isScrollControlled: true,
+                showDragHandle: true,
                 backgroundColor: const Color(0xFF1A1A2E),
                 shape: const RoundedRectangleBorder(
                   borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                 ),
                 builder: (context) => FractionallySizedBox(
-                  heightFactor: 0.85,
+                  heightFactor: 0.95,
                   child: _buildWishTab(),
                 ),
               );
@@ -206,6 +207,15 @@ class _GiftScreenState extends State<GiftScreen> {
       controller: _wishScrollController,
       padding: const EdgeInsets.all(20),
       children: [
+        Text(
+          '💌 Tạo lời chúc',
+          style: GoogleFonts.quicksand(
+            fontSize: 26, 
+            fontWeight: FontWeight.w900, 
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 20),
         _buildWishForm(),
         const SizedBox(height: 24),
         if (_isGenerating) _buildShimmerWishes(),
@@ -281,13 +291,6 @@ class _GiftScreenState extends State<GiftScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('💌 Tạo lời chúc',
-              style: GoogleFonts.quicksand(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white)),
-          const SizedBox(height: 16),
-
           // Tên bạn
           Text('Tên bạn (xưng)',
               style: GoogleFonts.quicksand(
