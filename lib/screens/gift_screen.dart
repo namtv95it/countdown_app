@@ -369,7 +369,7 @@ class _GiftScreenState extends State<GiftScreen> {
               items: wishCategories
                   .map((c) => DropdownMenuItem(
                         value: c.id,
-                        child: Text('${c.emoji}  ${c.name}'),
+                        child: Text('${c.emoji}  ${t('cat_${c.id}')}'),
                       ))
                   .toList(),
               onChanged: (v) {

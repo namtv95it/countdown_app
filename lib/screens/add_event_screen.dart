@@ -360,7 +360,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                   const SizedBox(width: 8),
                   Flexible(
                     child: Text(
-                      cat.name,
+                      t('cat_${cat.id}'),
                       style: GoogleFonts.quicksand(
                         fontSize: 13,
                         fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
