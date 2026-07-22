@@ -209,6 +209,7 @@ class LocalizationService {
       'card_days_left': '⏳ Còn {days} ngày',
       'card_tomorrow': '⏳ Ngày mai',
       'card_days_passed': '✓ Đã qua {days} ngày',
+      'loading_gifts': 'Đang tải danh sách quà...',
       // Event Categories
       'cat_love': 'Tình yêu',
       'cat_wedding': 'Cưới xin',
@@ -427,6 +428,7 @@ class LocalizationService {
       'card_days_left': '⏳ {days} days left',
       'card_tomorrow': '⏳ Tomorrow',
       'card_days_passed': '✓ Passed {days} days',
+      'loading_gifts': 'Loading gift list...',
       // Event Categories
       'cat_love': 'Love',
       'cat_wedding': 'Wedding',

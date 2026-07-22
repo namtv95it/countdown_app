@@ -291,7 +291,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
             Text(
               _selectedDate == null
                   ? t('select_date_hint')
-                  : DateFormat('EEEE, dd MMMM yyyy', 'vi')
+                  : DateFormat('EEEE, dd MMMM yyyy', LocalizationService.languageNotifier.value)
                       .format(_selectedDate!),
               style: GoogleFonts.quicksand(
                 fontSize: 15,

@@ -1013,7 +1013,7 @@ class _HomeScreenState extends State<HomeScreen>
                                   size: 14, color: Colors.white54),
                               const SizedBox(width: 6),
                               Text(
-                                DateFormat('dd MMMM yyyy', 'vi')
+                                DateFormat('dd MMMM yyyy', LocalizationService.languageNotifier.value)
                                     .format(item.displayDate),
                                 style: GoogleFonts.quicksand(
                                     fontSize: 15, color: Colors.white54),

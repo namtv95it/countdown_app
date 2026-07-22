@@ -289,7 +289,7 @@ class _DetailScreenState extends State<DetailScreen>
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      DateFormat('EEEE, dd MMMM yyyy', 'vi').format(displayDate),
+                      DateFormat('EEEE, dd MMMM yyyy', LocalizationService.languageNotifier.value).format(displayDate),
                       style: GoogleFonts.quicksand(
                         fontSize: 14,
                         color: Colors.white54,

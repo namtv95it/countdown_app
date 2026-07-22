@@ -535,7 +535,7 @@ class _GiftScreenState extends State<GiftScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Đang tải danh sách quà...',
+                    t('loading_gifts'),
                     style: GoogleFonts.quicksand(
                       color: Colors.white,
                       fontSize: 14,
