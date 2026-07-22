@@ -186,7 +186,7 @@ function renderProducts() {
 
     // Thêm các thẻ sản phẩm
     filteredProducts.forEach(product => {
-        const cat = categories.find(c => c.id === product.categoryId) || categories[1];
+        const cat = categories.find(c => product.categoryIds && product.categoryIds.includes(c.id)) || categories[1];
         const catColorRgb = hexToRgb(cat.color || '#7C3AED');
 
         const card = document.createElement('a');
