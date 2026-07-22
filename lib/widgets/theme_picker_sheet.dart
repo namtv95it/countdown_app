@@ -192,7 +192,8 @@ class _ThemePickerSheetState extends State<ThemePickerSheet> with SingleTickerPr
     });
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('app_font', fontName);
-    widget.onEffectChanged?.call(fontName); // Trigger rebuild
+    // Gửi lại effect hiện hành để kích hoạt setState ở màn hình chính, giúp cập nhật font
+    widget.onEffectChanged?.call(_selectedEffect);
   }
 
   Widget _buildEffectChip(String id, String name, IconData icon) {
