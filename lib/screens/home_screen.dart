@@ -1036,8 +1036,8 @@ class _HomeScreenState extends State<HomeScreen>
                             // ── Countdown boxes ──
                             StreamBuilder<DateTime>(
                               stream: Stream.periodic(const Duration(seconds: 1), (_) => DateTime.now()),
-                              builder: (context, snapshot) {
-                                final now = snapshot.data ?? DateTime.now();
+                                builder: (context, snapshot) {
+                                  final now = DateTime.now();
                                 final targetDt = (_isFullscreenMode && _customCountdownTarget != null)
                                     ? _customCountdownTarget!
                                     : DateTime(
@@ -1053,37 +1053,77 @@ class _HomeScreenState extends State<HomeScreen>
                                   return CongratulationsView(title: item.title);
                                 }
 
-                                final daysLeft = remaining.inDays;
-                                final hours = remaining.inHours % 24;
-                                final minutes = remaining.inMinutes % 60;
-                                final seconds = remaining.inSeconds % 60;
+                                final int totalSeconds = (remaining.inMilliseconds / 1000).ceil();
+                                final daysLeft = totalSeconds ~/ 86400;
+                                final hours = (totalSeconds ~/ 3600) % 24;
+                                final minutes = (totalSeconds ~/ 60) % 60;
+                                final seconds = totalSeconds % 60;
+                                
+                                final bool showDays = daysLeft > 0;
+                                final bool showHours = showDays || hours > 0;
+                                final bool showMinutes = showHours || minutes > 0;
+                                final bool highlightSeconds = !showMinutes;
 
                                 return Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    TimeUnitBox(
-                                      value: daysLeft.toString().padLeft(2, '0'),
-                                      label: 'Ngày',
-                                      color: itemColor,
-                                    ),
-                                    _separator(itemColor),
-                                    TimeUnitBox(
-                                      value: hours.toString().padLeft(2, '0'),
-                                      label: 'Giờ',
-                                      color: itemColor,
-                                    ),
-                                    _separator(itemColor),
-                                    TimeUnitBox(
-                                      value: minutes.toString().padLeft(2, '0'),
-                                      label: 'Phút',
-                                      color: itemColor,
-                                    ),
-                                    _separator(itemColor),
-                                    TimeUnitBox(
-                                      value: seconds.toString().padLeft(2, '0'),
-                                      label: 'Giây',
-                                      color: itemColor,
-                                    ),
+                                    if (showDays) ...[
+                                      TimeUnitBox(
+                                        value: daysLeft.toString().padLeft(2, '0'),
+                                        label: 'Ngày',
+                                        color: itemColor,
+                                      ),
+                                      _separator(itemColor),
+                                    ],
+                                    if (showHours) ...[
+                                      TimeUnitBox(
+                                        value: hours.toString().padLeft(2, '0'),
+                                        label: 'Giờ',
+                                        color: itemColor,
+                                      ),
+                                      _separator(itemColor),
+                                    ],
+                                    if (showMinutes) ...[
+                                      TimeUnitBox(
+                                        value: minutes.toString().padLeft(2, '0'),
+                                        label: 'Phút',
+                                        color: itemColor,
+                                      ),
+                                      _separator(itemColor),
+                                    ],
+                                    if (highlightSeconds)
+                                      TweenAnimationBuilder<double>(
+                                        key: ValueKey(seconds),
+                                        tween: Tween(begin: 1.3, end: 1.0),
+                                        duration: const Duration(milliseconds: 500),
+                                        curve: Curves.easeOutBack,
+                                        builder: (context, scale, child) {
+                                          return Transform.scale(
+                                            scale: scale,
+                                            child: Text(
+                                              seconds.toString(),
+                                              style: GoogleFonts.quicksand(
+                                                fontSize: 120, // Kích thước chữ rất lớn
+                                                fontWeight: FontWeight.w900,
+                                                color: itemColor,
+                                                height: 1.0,
+                                                shadows: [
+                                                  Shadow(
+                                                    color: itemColor.withValues(alpha: 0.8),
+                                                    blurRadius: 30 * scale,
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      )
+                                    else
+                                      TimeUnitBox(
+                                        value: seconds.toString().padLeft(2, '0'),
+                                        label: 'Giây',
+                                        color: itemColor,
+                                      ),
                                   ],
                                 );
                               },
@@ -1188,7 +1228,7 @@ class _HomeScreenState extends State<HomeScreen>
                             GestureDetector(
                               onTap: () {
                                 if (AdService.isPremium) {
-                                  setState(() { _isFullscreenMode = true; _showFullscreenExitButton = false; });
+                                  setState(() { _isFullscreenMode = true; _showFullscreenExitButton = false; _customCountdownTarget = null; });
                                   return;
                                 }
                                 showDialog(
@@ -1274,7 +1314,7 @@ class _HomeScreenState extends State<HomeScreen>
                                               AdService.showRewardedAd(
                                                 onEarnedReward: () {
                                                   if (mounted) {
-                                                    setState(() { _isFullscreenMode = true; _showFullscreenExitButton = false; });
+                                                    setState(() { _isFullscreenMode = true; _showFullscreenExitButton = false; _customCountdownTarget = null; });
                                                   }
                                                 },
                                               );

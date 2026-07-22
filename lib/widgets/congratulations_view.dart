@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -30,8 +29,6 @@ class _CongratulationsViewState extends State<CongratulationsView> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-
     return Stack(
       clipBehavior: Clip.none,
       alignment: Alignment.topCenter,
