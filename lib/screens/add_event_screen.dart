@@ -1,3 +1,4 @@
+import '../services/localization_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -86,8 +87,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
       if (_customEmoji != null && !AdService.isPremium) {
         AdPremiumDialog.show(
           context,
-          title: 'Biểu tượng tùy chỉnh',
-          message: 'Xem 1 đoạn video quảng cáo ngắn hoặc Nâng cấp Premium để lưu lại thay đổi biểu tượng tuyệt đẹp nhé!',
+          title: t('custom_icon'),
+          message: t('custom_icon_add_desc'),
           icon: Icons.auto_awesome_rounded,
           onAdWatched: () => _performSave(),
         );
@@ -98,7 +99,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: Colors.red.shade800,
-          content: Text('Vui lòng chọn ngày!', style: GoogleFonts.quicksand()),
+          content: Text(t('select_date_warning'), style: GoogleFonts.quicksand()),
           behavior: SnackBarBehavior.floating,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -142,7 +143,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Thêm Kỷ niệm',
+          t('add_anniversary'),
           style: GoogleFonts.quicksand(
             fontSize: 20,
             fontWeight: FontWeight.w700,
@@ -158,17 +159,17 @@ class _AddEventScreenState extends State<AddEventScreen> {
           children: [
             _buildPresetButton(),
             const SizedBox(height: 24),
-            _buildSectionLabel('Tên kỷ niệm'),
+            _buildSectionLabel(t('anniversary_name')),
             const SizedBox(height: 8),
             _buildTextField(
               controller: _titleController,
-              hint: 'VD: Sinh nhật vợ yêu...',
+              hint: t('anniversary_name_hint'),
               icon: Icons.edit_rounded,
               validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Vui lòng nhập tên' : null,
+                  (v == null || v.trim().isEmpty) ? t('please_enter_name') : null,
             ),
             const SizedBox(height: 20),
-            _buildSectionLabel('Ngày'),
+            _buildSectionLabel(t('days')),
             const SizedBox(height: 8),
             _buildDatePicker(),
             const SizedBox(height: 16),
@@ -176,32 +177,32 @@ class _AddEventScreenState extends State<AddEventScreen> {
             const SizedBox(height: 12),
             _buildLunarToggle(),
             const SizedBox(height: 20),
-            _buildSectionLabel('Danh mục sự kiện'),
+            _buildSectionLabel(t('event_category')),
             const SizedBox(height: 8),
             _buildCategoryPicker(),
             const SizedBox(height: 20),
-            _buildSectionLabel('Màu sắc'),
+            _buildSectionLabel(t('event_color')),
             const SizedBox(height: 8),
             _buildColorPicker(),
             const SizedBox(height: 20),
-            _buildSectionLabel('Biểu tượng'),
+            _buildSectionLabel(t('event_icon')),
             const SizedBox(height: 8),
             _buildEmojiBox(),
             if (!AdService.isPremium) ...[
               const SizedBox(height: 4),
               Center(
                 child: Text(
-                  '💡 Cần xem quảng cáo để thay đổi biểu tượng',
+                  t('need_ad_for_icon'),
                   style: GoogleFonts.quicksand(fontSize: 11, color: Colors.white54),
                 ),
               ),
             ],
             const SizedBox(height: 20),
-            _buildSectionLabel('Ghi chú (tùy chọn)'),
+            _buildSectionLabel(t('notes')),
             const SizedBox(height: 8),
             _buildTextField(
               controller: _noteController,
-              hint: 'Thêm ghi chú cho kỷ niệm này...',
+              hint: t('notes_hint'),
               icon: Icons.notes_rounded,
               maxLines: 3,
             ),
@@ -289,7 +290,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
             const SizedBox(width: 12),
             Text(
               _selectedDate == null
-                  ? 'Chọn ngày...'
+                  ? t('select_date_hint')
                   : DateFormat('EEEE, dd MMMM yyyy', 'vi')
                       .format(_selectedDate!),
               style: GoogleFonts.quicksand(
@@ -412,7 +413,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
             ),
             const SizedBox(width: 12),
             Text(
-              'Thay đổi biểu tượng',
+              t('change_icon'),
               style: GoogleFonts.quicksand(
                 fontSize: 15,
                 color: Colors.white,
@@ -494,7 +495,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Lặp lại hàng năm',
+                  t('repeat_yearly'),
                   style: GoogleFonts.quicksand(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
@@ -502,7 +503,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                   ),
                 ),
                 Text(
-                  'Tự động cập nhật sang năm tiếp theo',
+                  t('auto_update_yearly'),
                   style: GoogleFonts.quicksand(
                     fontSize: 12,
                     color: Colors.white38,
@@ -552,7 +553,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Tính theo Âm lịch',
+                  t('use_lunar_calendar'),
                   style: GoogleFonts.quicksand(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
@@ -560,7 +561,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                   ),
                 ),
                 Text(
-                  'Dành cho ngày lễ truyền thống',
+                  t('for_traditional_holidays'),
                   style: GoogleFonts.quicksand(
                     fontSize: 12,
                     color: Colors.white38,
@@ -609,7 +610,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
         ),
         child: Center(
           child: Text(
-            'Lưu Kỷ niệm ✨',
+            t('save_anniversary'),
             style: GoogleFonts.quicksand(
               fontSize: 18,
               fontWeight: FontWeight.w700,
@@ -637,7 +638,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
             const Text('🌟', style: TextStyle(fontSize: 18)),
             const SizedBox(width: 8),
             Text(
-              'Chọn từ ngày lễ có sẵn',
+              t('select_from_presets'),
               style: GoogleFonts.quicksand(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
@@ -679,7 +680,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Ngày lễ phổ biến',
+                    t('popular_holidays'),
                     style: GoogleFonts.quicksand(
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
@@ -693,14 +694,14 @@ class _AddEventScreenState extends State<AddEventScreen> {
                     child: Row(
                       children: [
                         ActionChip(
-                          label: const Text('🇻🇳 Chọn Việt Nam'),
+                          label: Text(t('select_vn')),
                           backgroundColor: Colors.white.withValues(alpha: 0.1),
                           labelStyle: GoogleFonts.quicksand(color: Colors.white, fontSize: 13),
                           side: BorderSide.none,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                           onPressed: () {
                             setModalState(() {
-                              for (var h in PresetHolidays.all.where((h) => h.badge == 'Việt Nam')) {
+                              for (var h in PresetHolidays.all.where((h) => h.badge == t('vietnam'))) {
                                 if (!widget.existingEvents.any((e) => e.title == h.title)) {
                                   selectedHolidays.add(h);
                                 }
@@ -710,14 +711,14 @@ class _AddEventScreenState extends State<AddEventScreen> {
                         ),
                         const SizedBox(width: 8),
                         ActionChip(
-                          label: const Text('🌍 Chọn Quốc tế'),
+                          label: Text(t('select_intl')),
                           backgroundColor: Colors.white.withValues(alpha: 0.1),
                           labelStyle: GoogleFonts.quicksand(color: Colors.white, fontSize: 13),
                           side: BorderSide.none,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                           onPressed: () {
                             setModalState(() {
-                              for (var h in PresetHolidays.all.where((h) => h.badge == 'Quốc tế')) {
+                              for (var h in PresetHolidays.all.where((h) => h.badge == t('international'))) {
                                 if (!widget.existingEvents.any((e) => e.title == h.title)) {
                                   selectedHolidays.add(h);
                                 }
@@ -727,7 +728,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                         ),
                         const SizedBox(width: 8),
                         ActionChip(
-                          label: const Text('✕ Bỏ chọn tất cả'),
+                          label: Text(t('deselect_all')),
                           backgroundColor: Colors.white.withValues(alpha: 0.05),
                           labelStyle: GoogleFonts.quicksand(color: Colors.white70, fontSize: 13),
                           side: BorderSide.none,
@@ -746,7 +747,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                     child: ListView(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       children: [
-                        _buildPresetSection('Tất cả ngày lễ', PresetHolidays.all, selectedHolidays, setModalState),
+                        _buildPresetSection(t('all_holidays'), PresetHolidays.all, selectedHolidays, setModalState),
                         const SizedBox(height: 100), // padding for bottom bar
                       ],
                     ),
@@ -769,7 +770,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                       children: [
                         Expanded(
                           child: Text(
-                            'Đã chọn: ${selectedHolidays.length}',
+                            t('selected_count', params: {'count': selectedHolidays.length.toString()}),
                             style: GoogleFonts.quicksand(
                               fontSize: 16,
                               color: Colors.white70,
@@ -811,7 +812,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
                           child: Text(
-                            'Thêm ${selectedHolidays.length} ngày',
+                            t('add_count_days', params: {'count': selectedHolidays.length.toString()}),
                             style: GoogleFonts.quicksand(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
@@ -903,7 +904,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
           child: Row(
             children: [
               Text(
-                h.isLunar ? '${h.day}/${h.month} (Âm lịch)' : '${h.day}/${h.month}',
+                h.isLunar ? t('lunar_date_display', params: {'day': h.day.toString(), 'month': h.month.toString()}) : '${h.day}/${h.month}',
                 style: GoogleFonts.quicksand(color: Colors.white54, fontSize: 13),
               ),
               const SizedBox(width: 8),
@@ -938,7 +939,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  'Đã thêm',
+                  t('added'),
                   style: GoogleFonts.quicksand(
                     color: Colors.white38,
                     fontSize: 12,

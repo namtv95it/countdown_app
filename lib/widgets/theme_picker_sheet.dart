@@ -1,3 +1,4 @@
+import '../services/localization_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -90,7 +91,7 @@ class _ThemePickerSheetState extends State<ThemePickerSheet> with SingleTickerPr
             const Icon(Icons.auto_awesome_rounded, color: Colors.amber),
             const SizedBox(width: 10),
             Expanded(
-              child: Text('Hiệu ứng $effectName',
+              child: Text(t('effect_prefix', params: {'effect': effectName}),
                   style: GoogleFonts.quicksand(
                       color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
             ),
@@ -165,7 +166,7 @@ class _ThemePickerSheetState extends State<ThemePickerSheet> with SingleTickerPr
                         });
                         widget.onEffectChanged?.call(effectId);
                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text('🎉 Đã mở khóa vĩnh viễn hiệu ứng $effectName!', style: GoogleFonts.quicksand()),
+                          content: Text(t('premium_effect_unlocked', params: {'effect': effectName}), style: GoogleFonts.quicksand()),
                           backgroundColor: const Color(0xFF10B981),
                         ));
                       }
@@ -179,7 +180,7 @@ class _ThemePickerSheetState extends State<ThemePickerSheet> with SingleTickerPr
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Hủy', style: GoogleFonts.quicksand(color: Colors.white54)),
+            child: Text(t('cancel'), style: GoogleFonts.quicksand(color: Colors.white54)),
           ),
         ],
       ),
@@ -344,9 +345,9 @@ class _ThemePickerSheetState extends State<ThemePickerSheet> with SingleTickerPr
             labelColor: const Color(0xFFA78BFA),
             unselectedLabelColor: Colors.white54,
             labelStyle: GoogleFonts.quicksand(fontWeight: FontWeight.bold, fontSize: 16),
-            tabs: const [
-              Tab(text: 'Hiệu ứng nền'),
-              Tab(text: 'Font chữ'),
+            tabs: [
+              Tab(text: t('background_effect')),
+              Tab(text: t('font_style')),
             ],
           ),
           Expanded(
@@ -361,7 +362,7 @@ class _ThemePickerSheetState extends State<ThemePickerSheet> with SingleTickerPr
                     runSpacing: 10,
                     alignment: WrapAlignment.start,
                     children: [
-                      SizedBox(width: (MediaQuery.of(context).size.width - 40 - 20) / 3, child: _buildEffectChip('none', 'Không có', Icons.block)),
+                      SizedBox(width: (MediaQuery.of(context).size.width - 40 - 20) / 3, child: _buildEffectChip('none', t('none'), Icons.block)),
                       SizedBox(width: (MediaQuery.of(context).size.width - 40 - 20) / 3, child: _buildEffectChip('bubbles', 'Bong bóng', Icons.bubble_chart)),
                       SizedBox(width: (MediaQuery.of(context).size.width - 40 - 20) / 3, child: _buildEffectChip('hearts', 'Trái tim', Icons.favorite)),
                       SizedBox(width: (MediaQuery.of(context).size.width - 40 - 20) / 3, child: _buildEffectChip('snow', 'Tuyết rơi', Icons.ac_unit)),

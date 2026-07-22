@@ -1,4 +1,4 @@
-﻿class PresetHoliday {
+class PresetHoliday {
   final String title;
   final int month;
   final int day;

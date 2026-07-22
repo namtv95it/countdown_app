@@ -6,8 +6,8 @@ import 'package:permission_handler/permission_handler.dart';
 import '../services/notification_service.dart';
 import '../services/storage_service.dart';
 import '../services/ad_service.dart';
-import '../services/font_service.dart';
 import '../services/promo_service.dart';
+import '../services/localization_service.dart';
 import '../widgets/premium_dialog.dart';
 import '../widgets/success_promo_dialog.dart';
 import '../widgets/theme_picker_sheet.dart';
@@ -99,7 +99,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     AdService.isPremium = value;
     await StorageService().setPremium(value);
     widget.onPremiumChanged?.call(value);
-    _showMessage(value ? 'Đã bật tài khoản Premium!' : 'Đã tắt tài khoản Premium!');
+    _showMessage(value ? t('premium_unlocked_desc') : t('premium_locked_desc'));
   }
 
   Future<void> _toggleNotifications(bool value) async {
@@ -113,19 +113,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
             context: context,
             builder: (context) => AlertDialog(
               backgroundColor: const Color(0xFF1A1A2E),
-              title: Text('Cấp quyền thông báo', style: GoogleFonts.quicksand(color: Colors.white, fontWeight: FontWeight.bold)),
-              content: Text('Ứng dụng cần quyền thông báo để nhắc nhở sự kiện. Vui lòng cấp quyền trong phần Cài đặt của điện thoại.', style: GoogleFonts.quicksand(color: Colors.white70)),
+              title: Text(t('notifications'), style: GoogleFonts.quicksand(color: Colors.white, fontWeight: FontWeight.bold)),
+              content: Text(t('event_reminders_desc'), style: GoogleFonts.quicksand(color: Colors.white70)),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text('Hủy', style: GoogleFonts.quicksand(color: Colors.white54)),
+                  child: Text(t('cancel'), style: GoogleFonts.quicksand(color: Colors.white54)),
                 ),
                 TextButton(
                   onPressed: () {
                     Navigator.pop(context);
                     openAppSettings();
                   },
-                  child: Text('Mở Cài đặt', style: GoogleFonts.quicksand(color: const Color(0xFF7C3AED), fontWeight: FontWeight.bold)),
+                  child: Text(t('settings'), style: GoogleFonts.quicksand(color: const Color(0xFF7C3AED), fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
@@ -159,16 +159,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
         backgroundColor: const Color(0xFF1A1A2E),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
-          'Thời điểm nhắc',
+          t('reminder_time'),
           style: GoogleFonts.quicksand(
               fontWeight: FontWeight.w700, color: Colors.white),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildDialogOption('Trước 1 ngày', 1, _reminderDays),
-            _buildDialogOption('Trước 3 ngày', 3, _reminderDays),
-            _buildDialogOption('Trước 1 tuần', 7, _reminderDays),
+            _buildDialogOption(t('reminder_time_desc_days', params: {'days': '1'}), 1, _reminderDays),
+            _buildDialogOption(t('reminder_time_desc_days', params: {'days': '3'}), 3, _reminderDays),
+            _buildDialogOption(t('reminder_time_desc_7'), 7, _reminderDays),
           ],
         ),
       ),
@@ -283,12 +283,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _toggleLanguage(String lang) async {
+    await LocalizationService.changeLanguage(lang);
     setState(() {
       _language = lang;
     });
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('language', lang);
-    _showMessage(lang == 'vi' ? 'Đã đổi ngôn ngữ sang Tiếng Việt' : 'Changed language to English');
+    _showMessage(lang == 'vi' ? t('language_changed_vi') : t('language_changed_en'));
   }
 
   Widget _buildLanguageToggle() {
@@ -372,7 +371,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const Icon(Icons.vpn_key_rounded, color: Colors.amber),
               const SizedBox(width: 10),
               Text(
-                'Nhập Gift Code',
+                t('gift_code_title'),
                 style: GoogleFonts.quicksand(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -386,7 +385,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Nhập mã quà tặng VIP để mở khóa Premium hoặc Gift Code để mở hiệu ứng đặc biệt:',
+                t('gift_code_instruction'),
                 style: GoogleFonts.quicksand(color: Colors.white70, fontSize: 13),
               ),
               const SizedBox(height: 14),
@@ -395,7 +394,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 textCapitalization: TextCapitalization.characters,
                 style: GoogleFonts.quicksand(color: Colors.white, fontWeight: FontWeight.bold),
                 decoration: InputDecoration(
-                  hintText: 'Nhập Gift Code',
+                  hintText: t('enter_gift_code'),
                   hintStyle: GoogleFonts.quicksand(color: Colors.white38),
                   filled: true,
                   fillColor: Colors.white.withValues(alpha: 0.08),
@@ -429,7 +428,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Hủy', style: GoogleFonts.quicksand(color: Colors.white54)),
+              child: Text(t('cancel'), style: GoogleFonts.quicksand(color: Colors.white54)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -473,7 +472,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       height: 16,
                       child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                     )
-                  : Text('Kích hoạt', style: GoogleFonts.quicksand(fontWeight: FontWeight.bold)),
+                  : Text(t('activate'), style: GoogleFonts.quicksand(fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -515,7 +514,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           children: [
             Text(
-              'Cài đặt',
+              t('settings'),
               style: GoogleFonts.quicksand(
                 fontSize: 28,
                 fontWeight: FontWeight.w800,
@@ -524,7 +523,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 24),
             
-            _buildSectionHeader('💎 Tài khoản Premium'),
+            _buildSectionHeader('💎 ${t('premium_account')}'),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
@@ -590,7 +589,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               Row(
                                 children: [
                                   Text(
-                                    _isPremium ? 'Thành viên VIP Premium' : 'Nâng cấp Premium \$2.00',
+                                    _isPremium ? t('premium_member') : t('upgrade_premium'),
                                     style: GoogleFonts.quicksand(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
@@ -606,8 +605,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               const SizedBox(height: 2),
                               Text(
                                 _isPremium
-                                    ? 'Đã sở hữu trọn bộ đặc quyền vĩnh viễn'
-                                    : 'Ẩn quảng cáo, mở khóa tất cả hiệu ứng nền',
+                                    ? t('premium_unlocked_desc')
+                                    : t('premium_locked_desc'),
                                 style: GoogleFonts.quicksand(
                                   fontSize: 12,
                                   color: Colors.white70,
@@ -625,15 +624,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 10),
             _buildListTile(
-              title: 'Nhập gift code',
-              subtitle: 'Nhập mã quà tặng VIP hoặc Gift Code đặc biệt',
+              title: t('enter_gift_code'),
+              subtitle: t('enter_gift_code_desc'),
               trailing: const Icon(Icons.vpn_key_rounded, color: Colors.amber),
               onTap: _showPromoCodeDialog,
             ),
             const SizedBox(height: 10),
             _buildListTile(
-              title: 'Bật/Tắt Premium (Chế độ Test)',
-              subtitle: 'Chỉ dùng thử nghiệm: Tự do bật tắt để kiểm tra giao diện & quảng cáo',
+              title: t('test_premium'),
+              subtitle: t('test_premium_desc'),
               trailing: Switch(
                 value: _isPremium,
                 onChanged: _togglePremium,
@@ -643,10 +642,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 24),
 
-            _buildSectionHeader('🔔 Thông báo'),
+            _buildSectionHeader('🔔 ${t('notifications')}'),
             _buildListTile(
-              title: 'Nhắc nhở sự kiện',
-              subtitle: 'Nhận thông báo khi sắp đến ngày kỷ niệm',
+              title: t('event_reminders'),
+              subtitle: t('event_reminders_desc'),
               trailing: Switch(
                 value: _notificationsEnabled,
                 onChanged: _toggleNotifications,
@@ -655,24 +654,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             if (_notificationsEnabled) ...[
               _buildListTile(
-                title: 'Thời điểm nhắc',
+                title: t('reminder_time'),
                 subtitle: _reminderDays == 7
-                    ? 'Trước 1 tuần'
-                    : 'Trước $_reminderDays ngày',
+                    ? t('reminder_time_desc_7')
+                    : t('reminder_time_desc_days', params: {'days': _reminderDays.toString()}),
                 trailing: const Icon(Icons.chevron_right_rounded,
                     color: Colors.white54),
                 onTap: _selectReminderDays,
               ),
               _buildListTile(
-                title: 'Giờ gửi thông báo',
+                title: t('notification_hour'),
                 subtitle: _notificationTime.format(context),
                 trailing: const Icon(Icons.access_time_rounded,
                     color: Colors.white54),
                 onTap: _selectNotificationTime,
               ),
               _buildListTile(
-                title: 'Âm thanh thông báo',
-                subtitle: 'Phát âm thanh khi có thông báo',
+                title: t('notification_sound'),
+                subtitle: t('notification_sound_desc'),
                 trailing: Switch(
                   value: _soundEnabled,
                   onChanged: _toggleSound,
@@ -683,15 +682,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
 
             const SizedBox(height: 24),
-            _buildSectionHeader('🎨 Giao diện & Ngôn ngữ'),
+            _buildSectionHeader('🎨 ${t('ui_and_lang')}'),
             _buildListTile(
-              title: 'Ngôn ngữ',
-              subtitle: _language == 'vi' ? 'Tiếng Việt' : 'English',
+              title: t('language'),
+              subtitle: _language == 'vi' ? t('vietnamese') : t('english'),
               trailing: _buildLanguageToggle(),
             ),
             _buildListTile(
-              title: 'Tùy chỉnh Giao diện',
-              subtitle: 'Đổi hiệu ứng nền và font chữ',
+              title: t('customize_ui'),
+              subtitle: t('customize_ui_desc'),
               trailing: const Icon(Icons.palette_rounded, color: Colors.amber),
               onTap: () {
                 showModalBottomSheet(
@@ -715,15 +714,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
             // ),
 
             const SizedBox(height: 24),
-            _buildSectionHeader('ℹ️ Thông tin'),
+            _buildSectionHeader('ℹ️ ${t('info')}'),
             _buildListTile(
-              title: 'Đánh giá ứng dụng',
-              subtitle: 'Để lại nhận xét trên Store',
+              title: t('rate_app'),
+              subtitle: t('rate_app_desc'),
               trailing: const Icon(Icons.star_rounded, color: Colors.amber),
-              onTap: () => _showMessage('Cảm ơn bạn đã đánh giá!'),
+              onTap: () => _showMessage(t('thank_you_rating')),
             ),
             _buildListTile(
-              title: 'Phiên bản',
+              title: t('version'),
               subtitle: '1.0.0',
               trailing: const SizedBox(),
             ),
@@ -734,16 +733,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 try {
                   await NotificationService().scheduleTestNotification();
                   if (mounted) {
-                    _showMessage('Sẽ hiển thị thông báo sau 5 giây!');
+                    _showMessage(t('test_notification_msg'));
                   }
                 } catch (e) {
                   if (mounted) {
-                    _showMessage('Lỗi: $e', isError: true);
+                    _showMessage('${t('error')}: $e', isError: true);
                   }
                 }
               },
               icon: const Icon(Icons.timer),
-              label: const Text('Thử nghiệm thông báo (5s)'),
+              label: Text(t('test_notification_btn')),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF7C3AED),
                 foregroundColor: Colors.white,

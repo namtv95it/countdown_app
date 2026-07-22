@@ -1,3 +1,4 @@
+import '../services/localization_service.dart';
 import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -86,26 +87,26 @@ class _DetailScreenState extends State<DetailScreen>
             side: const BorderSide(color: Colors.white12),
           ),
           title: Text(
-            'Xóa kỷ niệm?',
+            t('delete_event_title'),
             style: GoogleFonts.quicksand(
               fontWeight: FontWeight.w700,
               color: Colors.white,
             ),
           ),
           content: Text(
-            'Bạn có chắc muốn xóa "${widget.anniversary.title}" không?',
+            t('delete_event_desc', params: {'title': widget.anniversary.title}),
             style: GoogleFonts.quicksand(color: Colors.white70),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
               child:
-                  Text('Hủy', style: GoogleFonts.quicksand(color: Colors.white54)),
+                  Text(t('cancel'), style: GoogleFonts.quicksand(color: Colors.white54)),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
               child: Text(
-                'Xóa',
+                t('delete'),
                 style: GoogleFonts.quicksand(
                   color: Colors.red.shade400,
                   fontWeight: FontWeight.w700,
@@ -127,7 +128,7 @@ class _DetailScreenState extends State<DetailScreen>
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('📌 Đã ghim sự kiện lên thanh thông báo!'),
+          content: Text(t('event_pinned')),
           backgroundColor: const Color(0xFF10B981),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -328,10 +329,10 @@ class _DetailScreenState extends State<DetailScreen>
                     ),
                     child: Text(
                       isToday
-                          ? '🎊 Hôm nay là ngày kỷ niệm!'
+                          ? t('today_is_anniversary')
                           : isPast
-                              ? '✓ Đã diễn ra ${-days} ngày trước'
-                              : '⏳ Còn $days ngày nữa',
+                              ? t('days_ago', params: {'days': (-days).toString()})
+                              : t('days_left', params: {'days': days.toString()}),
                       style: GoogleFonts.quicksand(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -378,7 +379,7 @@ class _DetailScreenState extends State<DetailScreen>
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Chúc bạn một ngày thật ý nghĩa và tràn đầy niềm vui.',
+                          t('congrats_desc'),
                           style: GoogleFonts.quicksand(
                             fontSize: 16,
                             color: Colors.white70,
@@ -391,7 +392,7 @@ class _DetailScreenState extends State<DetailScreen>
                   const SizedBox(height: 28),
                 ] else if (!isPast) ...[
                   Text(
-                    'ĐẾM NGƯỢC',
+                    t('countdown_label'),
                     style: GoogleFonts.quicksand(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -406,7 +407,7 @@ class _DetailScreenState extends State<DetailScreen>
                     children: [
                       TimeUnitBox(
                         value: daysLeft.toString().padLeft(2, '0'),
-                        label: 'Ngày',
+                        label: t('days'),
                         color: cardColor,
                       ),
                       Padding(
@@ -422,7 +423,7 @@ class _DetailScreenState extends State<DetailScreen>
                       ),
                       TimeUnitBox(
                         value: hours.toString().padLeft(2, '0'),
-                        label: 'Giờ',
+                        label: t('hours'),
                         color: cardColor,
                       ),
                       Padding(
@@ -438,7 +439,7 @@ class _DetailScreenState extends State<DetailScreen>
                       ),
                       TimeUnitBox(
                         value: minutes.toString().padLeft(2, '0'),
-                        label: 'Phút',
+                        label: t('minutes'),
                         color: cardColor,
                       ),
                       Padding(
@@ -454,7 +455,7 @@ class _DetailScreenState extends State<DetailScreen>
                       ),
                       TimeUnitBox(
                         value: seconds.toString().padLeft(2, '0'),
-                        label: 'Giây',
+                        label: t('seconds'),
                         color: cardColor,
                       ),
                     ],
@@ -513,7 +514,7 @@ class _DetailScreenState extends State<DetailScreen>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Vị trí trong năm ${displayDate.year}',
+                t('position_in_year', params: {'year': displayDate.year.toString()}),
                 style: GoogleFonts.quicksand(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -545,7 +546,7 @@ class _DetailScreenState extends State<DetailScreen>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '1 tháng 1',
+                t('jan_1'),
                 style: GoogleFonts.quicksand(fontSize: 11, color: Colors.white30),
               ),
               Text(
@@ -557,7 +558,7 @@ class _DetailScreenState extends State<DetailScreen>
                 ),
               ),
               Text(
-                '31 tháng 12',
+                t('dec_31'),
                 style: GoogleFonts.quicksand(fontSize: 11, color: Colors.white30),
               ),
             ],
@@ -582,7 +583,7 @@ class _DetailScreenState extends State<DetailScreen>
             borderRadius: BorderRadius.circular(16),
             child: _buildInfoRow(
               Icons.category_rounded,
-              'Danh mục',
+              t('category'),
               '${ann.category.emoji} ${ann.category.name}',
               cardColor,
               showEdit: true,
@@ -594,7 +595,7 @@ class _DetailScreenState extends State<DetailScreen>
             borderRadius: BorderRadius.circular(16),
             child: _buildInfoRow(
               Icons.calendar_today_rounded,
-              'Ngày gốc',
+              t('original_date'),
               DateFormat('dd/MM/yyyy').format(ann.date),
               cardColor,
               showEdit: true,
@@ -604,7 +605,7 @@ class _DetailScreenState extends State<DetailScreen>
             const Divider(color: Colors.white12, height: 24),
             _buildInfoRow(
               Icons.event_repeat_rounded,
-              'Lần kế tiếp',
+              t('next_occurrence'),
               DateFormat('dd/MM/yyyy').format(ann.nextOccurrence),
               cardColor,
             ),
@@ -614,7 +615,7 @@ class _DetailScreenState extends State<DetailScreen>
             children: [
               Icon(Icons.repeat_rounded, color: cardColor, size: 20),
               const SizedBox(width: 12),
-              Text('Lặp lại hàng năm', style: GoogleFonts.quicksand(fontSize: 14, color: Colors.white54)),
+              Text(t('repeat_yearly'), style: GoogleFonts.quicksand(fontSize: 14, color: Colors.white54)),
               const Spacer(),
               SizedBox(
                 height: 24,
@@ -647,7 +648,7 @@ class _DetailScreenState extends State<DetailScreen>
             children: [
               Icon(Icons.nights_stay_rounded, color: cardColor, size: 20),
               const SizedBox(width: 12),
-              Text('Tính theo Âm lịch', style: GoogleFonts.quicksand(fontSize: 14, color: Colors.white54)),
+              Text(t('use_lunar_calendar'), style: GoogleFonts.quicksand(fontSize: 14, color: Colors.white54)),
               const Spacer(),
               SizedBox(
                 height: 24,
@@ -683,7 +684,7 @@ class _DetailScreenState extends State<DetailScreen>
               children: [
                 Icon(Icons.palette_rounded, color: cardColor, size: 20),
                 const SizedBox(width: 12),
-                Text('Màu sắc', style: GoogleFonts.quicksand(fontSize: 14, color: Colors.white54)),
+                Text(t('event_color'), style: GoogleFonts.quicksand(fontSize: 14, color: Colors.white54)),
                 const Spacer(),
                 Container(
                   width: 22,
@@ -797,7 +798,7 @@ class _DetailScreenState extends State<DetailScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Gợi ý quà tặng',
+                        t('gift_suggestions_detail'),
                         style: GoogleFonts.quicksand(
                           color: Colors.white,
                           fontSize: 16,
@@ -806,7 +807,7 @@ class _DetailScreenState extends State<DetailScreen>
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Tìm món quà ý nghĩa nhất',
+                        t('find_meaningful_gift'),
                         style: GoogleFonts.quicksand(
                           color: Colors.white70,
                           fontSize: 13,
@@ -849,8 +850,8 @@ class _DetailScreenState extends State<DetailScreen>
       if (!AdService.isPremium) {
         AdPremiumDialog.show(
           context,
-          title: 'Biểu tượng tùy chỉnh',
-          message: 'Xem 1 đoạn video quảng cáo ngắn hoặc Nâng cấp Premium để sử dụng biểu tượng tuyệt đẹp nhé!',
+          title: t('custom_icon'),
+          message: t('custom_icon_ad_desc'),
           icon: Icons.auto_awesome_rounded,
           onAdWatched: applyEmoji,
         );
@@ -867,7 +868,7 @@ class _DetailScreenState extends State<DetailScreen>
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF1A1A2E),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Đổi tên sự kiện', style: GoogleFonts.quicksand(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text(t('rename_event'), style: GoogleFonts.quicksand(color: Colors.white, fontWeight: FontWeight.bold)),
         content: TextField(
           controller: controller,
           style: GoogleFonts.quicksand(color: Colors.white),
@@ -881,11 +882,11 @@ class _DetailScreenState extends State<DetailScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Hủy', style: GoogleFonts.quicksand(color: Colors.white54)),
+            child: Text(t('cancel'), style: GoogleFonts.quicksand(color: Colors.white54)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, controller.text.trim()),
-            child: Text('Lưu', style: GoogleFonts.quicksand(color: const Color(0xFFEC4899), fontWeight: FontWeight.bold)),
+            child: Text(t('save'), style: GoogleFonts.quicksand(color: const Color(0xFFEC4899), fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -961,7 +962,7 @@ class _DetailScreenState extends State<DetailScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Chọn danh mục', style: GoogleFonts.quicksand(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+            Text(t('select_category'), style: GoogleFonts.quicksand(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
             const SizedBox(height: 20),
             Flexible(
               child: ListView.builder(
@@ -1023,7 +1024,7 @@ class _DetailScreenState extends State<DetailScreen>
               decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
             ),
             const SizedBox(height: 20),
-            Text('Chọn màu sắc', style: GoogleFonts.quicksand(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+            Text(t('select_color'), style: GoogleFonts.quicksand(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
             const SizedBox(height: 24),
             Wrap(
               spacing: 14,

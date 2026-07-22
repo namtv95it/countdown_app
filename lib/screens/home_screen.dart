@@ -1,3 +1,4 @@
+import '../services/localization_service.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
@@ -65,14 +66,14 @@ class _HomeScreenState extends State<HomeScreen>
       builder: (context) {
         return AlertDialog(
           backgroundColor: const Color(0xFF1E1E2C),
-          title: Text('Cài đặt đếm ngược', style: GoogleFonts.quicksand(color: Colors.white)),
+          title: Text(t('timer_settings'), style: GoogleFonts.quicksand(color: Colors.white)),
           content: TextField(
             controller: controller,
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             style: const TextStyle(color: Colors.white),
-            decoration: const InputDecoration(
-              hintText: 'Nhập số giây (tối đa 60)',
+            decoration: InputDecoration(
+              hintText: t('enter_seconds'),
               hintStyle: TextStyle(color: Colors.white54),
               enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
               focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF7C3AED))),
@@ -81,7 +82,7 @@ class _HomeScreenState extends State<HomeScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Hủy', style: GoogleFonts.quicksand(color: Colors.white54)),
+              child: Text(t('cancel'), style: GoogleFonts.quicksand(color: Colors.white54)),
             ),
             TextButton(
               onPressed: () {
@@ -94,7 +95,7 @@ class _HomeScreenState extends State<HomeScreen>
                   Navigator.pop(context);
                 }
               },
-              child: Text('Bắt đầu', style: GoogleFonts.quicksand(color: const Color(0xFF7C3AED))),
+              child: Text(t('start'), style: GoogleFonts.quicksand(color: const Color(0xFF7C3AED))),
             ),
           ],
         );
@@ -147,7 +148,7 @@ class _HomeScreenState extends State<HomeScreen>
               children: [
                 const Icon(Icons.check_circle_rounded, color: Colors.white),
                 const SizedBox(width: 8),
-                Text('Đã lưu ảnh vào thư viện', style: GoogleFonts.quicksand(fontWeight: FontWeight.w600, color: Colors.white)),
+                Text(t('screenshot_saved'), style: GoogleFonts.quicksand(fontWeight: FontWeight.w600, color: Colors.white)),
               ],
             ),
             backgroundColor: const Color(0xFF10B981),
@@ -165,7 +166,7 @@ class _HomeScreenState extends State<HomeScreen>
         _scheduleHideExitButton();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Lỗi khi lưu ảnh: $e', style: GoogleFonts.quicksand(color: Colors.white)),
+            content: Text('${t('screenshot_error')} $e', style: GoogleFonts.quicksand(color: Colors.white)),
             backgroundColor: Colors.redAccent,
             behavior: SnackBarBehavior.floating,
           ),
@@ -392,24 +393,24 @@ class _HomeScreenState extends State<HomeScreen>
             side: const BorderSide(color: Colors.white12),
           ),
           title: Text(
-            'Xóa kỷ niệm?',
+            t('delete_event_title'),
             style: GoogleFonts.quicksand(
                 fontWeight: FontWeight.w700, color: Colors.white),
           ),
           content: Text(
-            'Bạn có chắc muốn xóa "${event.title}" không?',
+            t('delete_event_desc', params: {'title': event.title}),
             style: GoogleFonts.quicksand(color: Colors.white70),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
               child:
-                  Text('Hủy', style: GoogleFonts.quicksand(color: Colors.white54)),
+                  Text(t('cancel'), style: GoogleFonts.quicksand(color: Colors.white54)),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
               child: Text(
-                'Xóa',
+                t('delete'),
                 style: GoogleFonts.quicksand(
                     color: Colors.red.shade400, fontWeight: FontWeight.w700),
               ),
@@ -453,7 +454,7 @@ class _HomeScreenState extends State<HomeScreen>
             ),
             const SizedBox(width: 12),
             Text(
-              'Thoát ứng dụng',
+              t('exit_app_title'),
               style: GoogleFonts.quicksand(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -463,7 +464,7 @@ class _HomeScreenState extends State<HomeScreen>
           ],
         ),
         content: Text(
-          'Bạn có chắc chắn muốn thoát khỏi ứng dụng Đếm ngược Kỷ niệm không?',
+          t('exit_app_desc'),
           style: GoogleFonts.quicksand(
             color: Colors.white70,
             fontSize: 14,
@@ -478,7 +479,7 @@ class _HomeScreenState extends State<HomeScreen>
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             ),
             child: Text(
-              'Hủy',
+              t('cancel'),
               style: GoogleFonts.quicksand(
                 color: Colors.white54,
                 fontWeight: FontWeight.w600,
@@ -498,7 +499,7 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ),
             child: Text(
-              'Thoát',
+              t('exit'),
               style: GoogleFonts.quicksand(
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
@@ -645,7 +646,7 @@ class _HomeScreenState extends State<HomeScreen>
                                         const Icon(Icons.timer_outlined, color: Colors.white, size: 24),
                                         const SizedBox(width: 8),
                                         Text(
-                                          'Cài đặt bộ đếm',
+                                          t('timer_settings'),
                                           style: GoogleFonts.quicksand(
                                             color: Colors.white,
                                             fontSize: 16,
@@ -686,7 +687,7 @@ class _HomeScreenState extends State<HomeScreen>
                                         ],
                                         const SizedBox(width: 8),
                                         Text(
-                                          _isCapturing ? 'Đang chụp...' : 'Chụp màn hình',
+                                          _isCapturing ? t('capturing') : t('capture_screen'),
                                           style: GoogleFonts.quicksand(
                                             color: Colors.white,
                                             fontSize: 16,
@@ -796,7 +797,7 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                     const SizedBox(width: 10),
                     Text(
-                      'Sắp tới',
+                      t('upcoming'),
                       style: GoogleFonts.quicksand(
                           fontSize: 20,
                           fontWeight: FontWeight.w800,
@@ -825,7 +826,7 @@ class _HomeScreenState extends State<HomeScreen>
                                       const Icon(Icons.refresh_rounded, color: Colors.white, size: 14),
                                       const SizedBox(width: 4),
                                       Text(
-                                        'Gần nhất',
+                                        t('nearest'),
                                         style: GoogleFonts.quicksand(
                                           color: Colors.white,
                                           fontSize: 12,
@@ -887,7 +888,7 @@ class _HomeScreenState extends State<HomeScreen>
                             children: [
                               const Icon(Icons.auto_awesome_rounded, color: Colors.amber, size: 20),
                               const SizedBox(width: 12),
-                              Text('Hiệu ứng nền', style: GoogleFonts.quicksand(color: Colors.white)),
+                              Text(t('background_effect'), style: GoogleFonts.quicksand(color: Colors.white)),
                             ],
                           ),
                         ),
@@ -897,7 +898,7 @@ class _HomeScreenState extends State<HomeScreen>
                             children: [
                               const Icon(Icons.font_download_rounded, color: Colors.blueAccent, size: 20),
                               const SizedBox(width: 12),
-                              Text('Font chữ', style: GoogleFonts.quicksand(color: Colors.white)),
+                              Text(t('font_style'), style: GoogleFonts.quicksand(color: Colors.white)),
                             ],
                           ),
                         ),
@@ -908,7 +909,7 @@ class _HomeScreenState extends State<HomeScreen>
                             children: [
                               const Icon(Icons.image_rounded, color: Colors.greenAccent, size: 20),
                               const SizedBox(width: 12),
-                              Text('Chọn ảnh nền', style: GoogleFonts.quicksand(color: Colors.white)),
+                              Text(t('select_bg_image'), style: GoogleFonts.quicksand(color: Colors.white)),
                             ],
                           ),
                         ),
@@ -919,7 +920,7 @@ class _HomeScreenState extends State<HomeScreen>
                               children: [
                                 const Icon(Icons.delete_rounded, color: Colors.redAccent, size: 20),
                                 const SizedBox(width: 12),
-                                Text('Xóa ảnh nền', style: GoogleFonts.quicksand(color: Colors.redAccent)),
+                                Text(t('remove_bg_image'), style: GoogleFonts.quicksand(color: Colors.redAccent)),
                               ],
                             ),
                           ),
@@ -1027,7 +1028,7 @@ class _HomeScreenState extends State<HomeScreen>
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
-                                    '↺ hàng năm',
+                                    t('yearly'),
                                     style: GoogleFonts.quicksand(
                                         fontSize: 11,
                                         color: itemColor,
@@ -1041,7 +1042,7 @@ class _HomeScreenState extends State<HomeScreen>
                           if (item.isLunar) ...[
                             const SizedBox(height: 4),
                             Text(
-                              '(Ngày ${item.date.day} tháng ${item.date.month} Âm lịch)',
+                              t('lunar_date', params: {'day': item.date.day.toString(), 'month': item.date.month.toString()}),
                               style: GoogleFonts.quicksand(
                                 fontSize: 13,
                                 color: Colors.white54,
@@ -1093,7 +1094,7 @@ class _HomeScreenState extends State<HomeScreen>
                                     if (showDays) ...[
                                       TimeUnitBox(
                                         value: daysLeft.toString().padLeft(2, '0'),
-                                        label: 'Ngày',
+                                        label: t('days'),
                                         color: itemColor,
                                       ),
                                       _separator(itemColor),
@@ -1101,7 +1102,7 @@ class _HomeScreenState extends State<HomeScreen>
                                     if (showHours) ...[
                                       TimeUnitBox(
                                         value: hours.toString().padLeft(2, '0'),
-                                        label: 'Giờ',
+                                        label: t('hours'),
                                         color: itemColor,
                                       ),
                                       _separator(itemColor),
@@ -1109,7 +1110,7 @@ class _HomeScreenState extends State<HomeScreen>
                                     if (showMinutes) ...[
                                       TimeUnitBox(
                                         value: minutes.toString().padLeft(2, '0'),
-                                        label: 'Phút',
+                                        label: t('minutes'),
                                         color: itemColor,
                                       ),
                                       _separator(itemColor),
@@ -1144,7 +1145,7 @@ class _HomeScreenState extends State<HomeScreen>
                                     else
                                       TimeUnitBox(
                                         value: seconds.toString().padLeft(2, '0'),
-                                        label: 'Giây',
+                                        label: t('seconds'),
                                         color: itemColor,
                                       ),
                                   ],
@@ -1187,7 +1188,7 @@ class _HomeScreenState extends State<HomeScreen>
                                           const Text('🛍️', style: TextStyle(fontSize: 14)),
                                           const SizedBox(width: 6),
                                           Text(
-                                            'Gợi ý quà',
+                                            t('gift_suggestions'),
                                             style: GoogleFonts.quicksand(
                                               fontSize: 15,
                                               fontWeight: FontWeight.w700,
@@ -1215,7 +1216,7 @@ class _HomeScreenState extends State<HomeScreen>
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Text(
-                                          'Xem chi tiết',
+                                          t('view_detail'),
                                           style: GoogleFonts.quicksand(
                                             fontSize: 15,
                                             fontWeight: FontWeight.w700,
@@ -1253,7 +1254,7 @@ class _HomeScreenState extends State<HomeScreen>
                                         const SizedBox(width: 10),
                                         Expanded(
                                           child: Text(
-                                            'Xem Toàn Màn Hình',
+                                            t('view_fullscreen'),
                                             style: GoogleFonts.quicksand(
                                               color: Colors.white,
                                               fontWeight: FontWeight.bold,
@@ -1268,7 +1269,7 @@ class _HomeScreenState extends State<HomeScreen>
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          'Xem 1 đoạn video quảng cáo ngắn hoặc Nâng cấp Premium để thưởng thức chế độ toàn màn hình tuyệt đẹp!',
+                                          t('fullscreen_ad_desc'),
                                           style: GoogleFonts.quicksand(color: Colors.white70, fontSize: 14),
                                         ),
                                         const SizedBox(height: 16),
@@ -1308,7 +1309,7 @@ class _HomeScreenState extends State<HomeScreen>
                                           child: ElevatedButton.icon(
                                             icon: const Icon(Icons.play_circle_filled_rounded, size: 20),
                                             label: Text(
-                                              'Xem Quảng Cáo (Miễn phí)',
+                                              t('watch_ad_free'),
                                               style: GoogleFonts.quicksand(fontWeight: FontWeight.bold, fontSize: 14),
                                             ),
                                             style: ElevatedButton.styleFrom(
@@ -1334,7 +1335,7 @@ class _HomeScreenState extends State<HomeScreen>
                                     actions: [
                                       TextButton(
                                         onPressed: () => Navigator.pop(context),
-                                        child: Text('Hủy', style: GoogleFonts.quicksand(color: Colors.white54)),
+                                        child: Text(t('cancel'), style: GoogleFonts.quicksand(color: Colors.white54)),
                                       ),
                                     ],
                                   ),
@@ -1353,7 +1354,7 @@ class _HomeScreenState extends State<HomeScreen>
                                     const Icon(Icons.play_circle_filled_rounded, color: Color(0xFFF59E0B), size: 18),
                                     const SizedBox(width: 6),
                                     Text(
-                                      'Xem toàn màn hình',
+                                      t('watch_fullscreen'),
                                       style: GoogleFonts.quicksand(
                                         color: Colors.white70,
                                         fontSize: 13,
@@ -1438,7 +1439,7 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                   const SizedBox(width: 10),
                   Text(
-                    'Tất cả sự kiện',
+                    t('all_events_tab'),
                     style: GoogleFonts.quicksand(
                       fontSize: 24,
                       fontWeight: FontWeight.w800,
@@ -1503,7 +1504,7 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                     const SizedBox(width: 10),
                     Text(
-                      'Đã qua',
+                      t('passed'),
                       style: GoogleFonts.quicksand(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -1585,11 +1586,11 @@ class _HomeScreenState extends State<HomeScreen>
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _buildNavIcon(0, Icons.home_rounded, 'Trang chủ'),
-                    _buildNavIcon(1, Icons.event_note_rounded, 'Sự kiện'),
+                    _buildNavIcon(0, Icons.home_rounded, t('home')),
+                    _buildNavIcon(1, Icons.event_note_rounded, t('events')),
                     const SizedBox(width: 60), // Không gian cho nút giữa
-                    _buildNavIcon(2, Icons.card_giftcard_rounded, 'Quà tặng'),
-                    _buildNavIcon(3, Icons.settings_rounded, 'Cài đặt'),
+                    _buildNavIcon(2, Icons.card_giftcard_rounded, t('gifts')),
+                    _buildNavIcon(3, Icons.settings_rounded, t('settings')),
                   ],
                 ),
               ),
@@ -1710,7 +1711,7 @@ class _HomeScreenState extends State<HomeScreen>
           ),
           const SizedBox(height: 24),
           Text(
-            'Chưa có kỷ niệm nào',
+            t('no_events_yet'),
             style: GoogleFonts.quicksand(
               fontSize: 22,
               fontWeight: FontWeight.w700,
@@ -1719,7 +1720,7 @@ class _HomeScreenState extends State<HomeScreen>
           ),
           const SizedBox(height: 8),
           Text(
-            'Hãy thêm những ngày quan trọng\ncủa bạn để không bao giờ quên!',
+            t('empty_state_desc'),
             textAlign: TextAlign.center,
             style: GoogleFonts.quicksand(fontSize: 15, color: Colors.white38),
           ),
@@ -1742,7 +1743,7 @@ class _HomeScreenState extends State<HomeScreen>
                 ],
               ),
               child: Text(
-                '+ Thêm ngay',
+                t('add_now'),
                 style: GoogleFonts.quicksand(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
@@ -1764,7 +1765,7 @@ class _HomeScreenState extends State<HomeScreen>
           const Text('📅', style: TextStyle(fontSize: 60)),
           const SizedBox(height: 20),
           Text(
-            'Không có sự kiện sắp tới',
+            t('no_upcoming_events'),
             style: GoogleFonts.quicksand(
               fontSize: 20,
               fontWeight: FontWeight.w700,
@@ -1773,7 +1774,7 @@ class _HomeScreenState extends State<HomeScreen>
           ),
           const SizedBox(height: 8),
           Text(
-            'Tất cả sự kiện đã diễn ra.\nThêm sự kiện mới hoặc xem tab Tất cả.',
+            t('no_upcoming_desc'),
             textAlign: TextAlign.center,
             style: GoogleFonts.quicksand(fontSize: 14, color: Colors.white38),
           ),
@@ -1789,7 +1790,7 @@ class _HomeScreenState extends State<HomeScreen>
                 border: Border.all(color: Colors.white12),
               ),
               child: Text(
-                'Xem tất cả sự kiện →',
+                t('view_all_events_arrow'),
                 style: GoogleFonts.quicksand(
                     fontSize: 14, color: Colors.white70),
               ),

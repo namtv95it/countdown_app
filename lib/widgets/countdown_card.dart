@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/localization_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../models/anniversary.dart';
@@ -137,7 +138,7 @@ class CountdownCard extends StatelessWidget {
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: Text(
-                                        '↺ năm',
+                                        t('card_yearly'),
                                         style: GoogleFonts.quicksand(
                                           fontSize: 10,
                                           color: cardColor.withValues(alpha: 0.9),
@@ -158,7 +159,7 @@ class CountdownCard extends StatelessWidget {
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: Text(
-                                        '🛍️ Quà',
+                                        t('card_gift'),
                                         style: GoogleFonts.quicksand(
                                           fontSize: 10,
                                           color: const Color(0xFF10B981),
@@ -236,7 +237,7 @@ class CountdownCard extends StatelessWidget {
   }
 
   String _countdownText(int calendarDays) {
-    if (calendarDays == 0) return '🎊 Hôm nay!';
+    if (calendarDays == 0) return t('card_today');
     if (calendarDays > 0) {
       final now = DateTime.now();
       final target = DateTime(
@@ -246,11 +247,11 @@ class CountdownCard extends StatelessWidget {
       );
       final diff = target.difference(now);
       if (diff.inDays > 0) {
-        return '⏳ Còn ${diff.inDays} ngày';
+        return t('card_days_left', params: {'days': diff.inDays.toString()});
       } else {
-        return '⏳ Ngày mai';
+        return t('card_tomorrow');
       }
     }
-    return '✓ Đã qua ${-calendarDays} ngày';
+    return t('card_days_passed', params: {'days': (-calendarDays).toString()});
   }
 }

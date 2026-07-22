@@ -6,13 +6,17 @@ import 'services/ad_service.dart';
 import 'services/widget_service.dart';
 import 'services/notification_service.dart';
 import 'services/font_service.dart';
+import 'services/localization_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('vi', null);
+  await initializeDateFormatting('en', null);
+  
+  await LocalizationService.init();
   
   // FontService lấy từ SharedPreferences nên load cực nhanh và cần thiết để render UI không bị giật font
-  await FontService.init(); 
+  await FontService.init();
 
   // Các service nặng như AdMob, Widget, Notification có thể load song song 
   // và không nhất thiết phải block quá trình vẽ frame đầu tiên của app.
@@ -28,11 +32,16 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Đếm ngược Kỷ niệm',
-      debugShowCheckedModeBanner: false,
-      theme: _buildTheme(),
-      home: const HomeScreen(),
+    return ValueListenableBuilder<String>(
+      valueListenable: LocalizationService.languageNotifier,
+      builder: (context, lang, child) {
+        return MaterialApp(
+          title: t('app_name'),
+          debugShowCheckedModeBanner: false,
+          theme: _buildTheme(),
+          home: const HomeScreen(),
+        );
+      },
     );
   }
 

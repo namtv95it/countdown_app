@@ -1,3 +1,4 @@
+import '../services/localization_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -81,7 +82,7 @@ class _GiftScreenState extends State<GiftScreen> {
         _receiverController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Vui lòng nhập tên người gửi và người nhận',
+          content: Text(t('enter_sender_receiver'),
               style: GoogleFonts.quicksand()),
           backgroundColor: const Color(0xFF1A1A2E),
           behavior: SnackBarBehavior.floating,
@@ -127,7 +128,7 @@ class _GiftScreenState extends State<GiftScreen> {
         content: Row(
           children: [
             const Text('✅ ', style: TextStyle(fontSize: 16)),
-            Text('Đã copy lời chúc!',
+            Text(t('wish_copied'),
                 style: GoogleFonts.quicksand(fontWeight: FontWeight.w600)),
           ],
         ),
@@ -304,7 +305,7 @@ class _GiftScreenState extends State<GiftScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Tên bạn
-          Text('Tên bạn (xưng)',
+          Text(t('your_name'),
               style: GoogleFonts.quicksand(
                   fontSize: 13, color: Colors.white54)),
           const SizedBox(height: 6),
@@ -327,7 +328,7 @@ class _GiftScreenState extends State<GiftScreen> {
           const SizedBox(height: 14),
 
           // Tên người nhận
-          Text('Tên người nhận',
+          Text(t('receiver_name'),
               style: GoogleFonts.quicksand(
                   fontSize: 13, color: Colors.white54)),
           const SizedBox(height: 6),
@@ -350,7 +351,7 @@ class _GiftScreenState extends State<GiftScreen> {
           const SizedBox(height: 14),
 
           // Dịp
-          Text('Dịp kỷ niệm',
+          Text(t('anniversary_occasion'),
               style: GoogleFonts.quicksand(
                   fontSize: 13, color: Colors.white54)),
           const SizedBox(height: 6),
@@ -461,7 +462,7 @@ class _GiftScreenState extends State<GiftScreen> {
                     const Icon(Icons.copy_rounded,
                         color: Color(0xFFA78BFA), size: 14),
                     const SizedBox(width: 6),
-                    Text('Copy',
+                    Text(t('copy'),
                         style: GoogleFonts.quicksand(
                             fontSize: 13,
                             color: const Color(0xFFA78BFA),
