@@ -34,15 +34,13 @@ class _GiftScreenState extends State<GiftScreen> {
   // ── Gợi ý quà (WebView) ──
   late final WebViewController _webViewController;
   bool _isWebViewLoading = true;
+  late String _currentLang;
 
   @override
   void initState() {
     super.initState();
     
-    String url = 'https://namtv95it.github.io/countdown_gift_web/';
-    if (widget.initialCategoryId != null) {
-      url += '?category=${widget.initialCategoryId}';
-    }
+    _currentLang = LocalizationService.languageNotifier.value;
     
     _webViewController = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
@@ -65,8 +63,17 @@ class _GiftScreenState extends State<GiftScreen> {
             return NavigationDecision.prevent;
           },
         ),
-      )
-      ..loadRequest(Uri.parse(url));
+      );
+      
+    _loadWebViewUrl();
+  }
+  
+  void _loadWebViewUrl() {
+    String url = 'https://namtv95it.github.io/countdown_gift_web/?lang=$_currentLang';
+    if (widget.initialCategoryId != null) {
+      url += '&category=${widget.initialCategoryId}';
+    }
+    _webViewController.loadRequest(Uri.parse(url));
   }
 
   @override
@@ -155,6 +162,13 @@ class _GiftScreenState extends State<GiftScreen> {
   // ──────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    // Check for language change and reload WebView if necessary
+    final currentAppLang = LocalizationService.languageNotifier.value;
+    if (_currentLang != currentAppLang) {
+      _currentLang = currentAppLang;
+      _loadWebViewUrl();
+    }
+
     // Giảm padding nếu đã nâng cấp premium vì quảng cáo bị ẩn
     final double fabBottomPadding = widget.isPremium ? 90.0 : 150.0;
 
