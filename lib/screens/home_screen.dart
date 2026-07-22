@@ -361,6 +361,15 @@ class _HomeScreenState extends State<HomeScreen>
         _featuredIndex = 0;
       });
       await _storageService.saveAnniversaries(_anniversaries);
+    } else if (result is Anniversary) {
+      setState(() {
+        final idx = _anniversaries.indexWhere((a) => a.id == result.id);
+        if (idx != -1) {
+          _anniversaries[idx] = result;
+        }
+        _sortAnniversaries();
+      });
+      await _storageService.saveAnniversaries(_anniversaries);
     } else if (result is String && result.startsWith('gift:')) {
       final categoryId = result.substring(5);
       setState(() {

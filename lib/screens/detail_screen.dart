@@ -10,6 +10,7 @@ import '../services/notification_service.dart';
 import '../services/ad_service.dart';
 import '../widgets/time_unit_box.dart';
 import '../widgets/emoji_picker_sheet.dart';
+import '../widgets/ad_premium_dialog.dart';
 
 
 class DetailScreen extends StatefulWidget {
@@ -61,6 +62,16 @@ class _DetailScreenState extends State<DetailScreen>
     _timer.cancel();
     _pulseController.dispose();
     super.dispose();
+  }
+
+  Future<void> _goBack() async {
+    if (_hasChanged) {
+      final all = await _storageService.getAnniversaries();
+      final idx = all.indexWhere((a) => a.id == _currentAnniversary.id);
+      if (idx != -1) all[idx] = _currentAnniversary;
+      await _storageService.saveAnniversaries(all);
+    }
+    if (mounted) Navigator.pop(context, _hasChanged ? _currentAnniversary : null);
   }
 
   Future<void> _confirmDelete() async {
@@ -149,9 +160,9 @@ class _DetailScreenState extends State<DetailScreen>
 
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
+      onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
-        Navigator.pop(context, _hasChanged ? _currentAnniversary : null);
+        await _goBack();
       },
       child: Stack(
       children: [
@@ -168,7 +179,7 @@ class _DetailScreenState extends State<DetailScreen>
                 Icons.arrow_back_ios_rounded,
                 color: Colors.white,
               ),
-              onPressed: () => Navigator.pop(context, _hasChanged ? _currentAnniversary : null),
+              onPressed: _goBack,
             ),
             actions: [
               IconButton(
@@ -577,39 +588,6 @@ class _DetailScreenState extends State<DetailScreen>
               showEdit: true,
             ),
           ),
-          if (ann.category.canSuggestProducts) ...[
-            const SizedBox(height: 4),
-            Padding(
-              padding: const EdgeInsets.only(left: 32),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text('🛍️', style: TextStyle(fontSize: 11)),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Có thể gợi ý quà',
-                          style: GoogleFonts.quicksand(
-                            fontSize: 11,
-                            color: const Color(0xFF10B981),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
           const Divider(color: Colors.white12, height: 24),
           InkWell(
             onTap: _editDate,
@@ -632,15 +610,93 @@ class _DetailScreenState extends State<DetailScreen>
             ),
           ],
           const Divider(color: Colors.white12, height: 24),
+          Row(
+            children: [
+              Icon(Icons.repeat_rounded, color: cardColor, size: 20),
+              const SizedBox(width: 12),
+              Text('Lặp lại hàng năm', style: GoogleFonts.quicksand(fontSize: 14, color: Colors.white54)),
+              const Spacer(),
+              SizedBox(
+                height: 24,
+                width: 44,
+                child: Transform.scale(
+                  scale: 0.8,
+                  child: Switch(
+                    value: ann.isYearly,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    activeThumbColor: cardColor,
+                    onChanged: (val) {
+                      setState(() {
+                        _currentAnniversary = Anniversary(
+                          id: ann.id, title: ann.title, date: ann.date,
+                          emoji: ann.emoji, colorValue: ann.colorValue,
+                          isYearly: val, isLunar: ann.isLunar,
+                          note: ann.note, categoryId: ann.categoryId,
+                        );
+                        _hasChanged = true;
+                        _updateRemaining();
+                      });
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const Divider(color: Colors.white12, height: 24),
+          Row(
+            children: [
+              Icon(Icons.nights_stay_rounded, color: cardColor, size: 20),
+              const SizedBox(width: 12),
+              Text('Tính theo Âm lịch', style: GoogleFonts.quicksand(fontSize: 14, color: Colors.white54)),
+              const Spacer(),
+              SizedBox(
+                height: 24,
+                width: 44,
+                child: Transform.scale(
+                  scale: 0.8,
+                  child: Switch(
+                    value: ann.isLunar,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    activeThumbColor: cardColor,
+                    onChanged: (val) {
+                      setState(() {
+                        _currentAnniversary = Anniversary(
+                          id: ann.id, title: ann.title, date: ann.date,
+                          emoji: ann.emoji, colorValue: ann.colorValue,
+                          isYearly: ann.isYearly, isLunar: val,
+                          note: ann.note, categoryId: ann.categoryId,
+                        );
+                        _hasChanged = true;
+                        _updateRemaining();
+                      });
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const Divider(color: Colors.white12, height: 24),
           InkWell(
-            onTap: _editType,
+            onTap: _editColor,
             borderRadius: BorderRadius.circular(16),
-            child: _buildInfoRow(
-              ann.isYearly ? Icons.repeat_rounded : Icons.event_rounded,
-              'Loại sự kiện',
-              ann.isYearly ? 'Lặp lại hàng năm' : 'Một lần',
-              cardColor,
-              showEdit: true,
+            child: Row(
+              children: [
+                Icon(Icons.palette_rounded, color: cardColor, size: 20),
+                const SizedBox(width: 12),
+                Text('Màu sắc', style: GoogleFonts.quicksand(fontSize: 14, color: Colors.white54)),
+                const Spacer(),
+                Container(
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    color: cardColor,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white30, width: 1.5),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                const Icon(Icons.chevron_right_rounded, color: Colors.white30, size: 20),
+              ],
             ),
           ),
         ],
@@ -791,27 +847,12 @@ class _DetailScreenState extends State<DetailScreen>
       }
 
       if (!AdService.isPremium) {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            backgroundColor: const Color(0xFF1A1A2E),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: Text('Yêu cầu xem quảng cáo', style: GoogleFonts.quicksand(color: Colors.white, fontWeight: FontWeight.bold)),
-            content: Text('Bạn cần xem một quảng cáo ngắn để thay đổi biểu tượng. Xem ngay?', style: GoogleFonts.quicksand(color: Colors.white70)),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('Hủy', style: GoogleFonts.quicksand(color: Colors.white54)),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  AdService.showRewardedAd(onEarnedReward: applyEmoji);
-                },
-                child: Text('Xem ngay', style: GoogleFonts.quicksand(color: const Color(0xFFEC4899), fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
+        AdPremiumDialog.show(
+          context,
+          title: 'Biểu tượng tùy chỉnh',
+          message: 'Xem 1 đoạn video quảng cáo ngắn hoặc Nâng cấp Premium để sử dụng biểu tượng tuyệt đẹp nhé!',
+          icon: Icons.auto_awesome_rounded,
+          onAdWatched: applyEmoji,
         );
       } else {
         applyEmoji();
@@ -959,56 +1000,48 @@ class _DetailScreenState extends State<DetailScreen>
     );
   }
 
-  void _editType() {
-    bool tempYearly = _currentAnniversary.isYearly;
-    bool tempLunar = _currentAnniversary.isLunar;
-
+  void _editColor() {
+    const colorOptions = [
+      0xFF7C3AED, 0xFFEC4899, 0xFF06B6D4, 0xFF10B981,
+      0xFFF59E0B, 0xFFEF4444, 0xFF8B5CF6, 0xFF3B82F6,
+      0xFFFF6B6B, 0xFF4ECDC4,
+    ];
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          padding: const EdgeInsets.all(24),
-          decoration: const BoxDecoration(
-            color: Color(0xFF1A1A2E),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Loại sự kiện', style: GoogleFonts.quicksand(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
-              const SizedBox(height: 24),
-              SwitchListTile(
-                title: Text('Lặp lại hàng năm', style: GoogleFonts.quicksand(color: Colors.white)),
-                activeTrackColor: _currentAnniversary.color,
-                value: tempYearly,
-                onChanged: (val) => setModalState(() => tempYearly = val),
-              ),
-              SwitchListTile(
-                title: Text('Tính theo Âm lịch', style: GoogleFonts.quicksand(color: Colors.white)),
-                activeTrackColor: _currentAnniversary.color,
-                value: tempLunar,
-                onChanged: (val) => setModalState(() => tempLunar = val),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _currentAnniversary.color,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  ),
-                  onPressed: () {
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(
+          color: Color(0xFF1A1A2E),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40, height: 4,
+              decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
+            ),
+            const SizedBox(height: 20),
+            Text('Chọn màu sắc', style: GoogleFonts.quicksand(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+            const SizedBox(height: 24),
+            Wrap(
+              spacing: 14,
+              runSpacing: 14,
+              alignment: WrapAlignment.center,
+              children: colorOptions.map((colorVal) {
+                final isSelected = colorVal == _currentAnniversary.colorValue;
+                return GestureDetector(
+                  onTap: () {
                     setState(() {
                       _currentAnniversary = Anniversary(
                         id: _currentAnniversary.id,
                         title: _currentAnniversary.title,
                         date: _currentAnniversary.date,
                         emoji: _currentAnniversary.emoji,
-                        colorValue: _currentAnniversary.colorValue,
-                        isYearly: tempYearly,
-                        isLunar: tempLunar,
+                        colorValue: colorVal,
+                        isYearly: _currentAnniversary.isYearly,
+                        isLunar: _currentAnniversary.isLunar,
                         note: _currentAnniversary.note,
                         categoryId: _currentAnniversary.categoryId,
                       );
@@ -1017,13 +1050,38 @@ class _DetailScreenState extends State<DetailScreen>
                     });
                     Navigator.pop(context);
                   },
-                  child: Text('Lưu', style: GoogleFonts.quicksand(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                ),
-              ),
-            ],
-          ),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Color(colorVal),
+                      shape: BoxShape.circle,
+                      border: isSelected
+                          ? Border.all(color: Colors.white, width: 3)
+                          : Border.all(color: Colors.transparent, width: 3),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: Color(colorVal).withValues(alpha: 0.6),
+                                blurRadius: 12,
+                                spreadRadius: 2,
+                              )
+                            ]
+                          : null,
+                    ),
+                    child: isSelected
+                        ? const Icon(Icons.check_rounded, color: Colors.white, size: 22)
+                        : null,
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 16),
+          ],
         ),
       ),
     );
   }
+
 }

@@ -6,6 +6,7 @@ import '../models/event_category.dart';
 import '../data/preset_holidays.dart';
 import '../services/ad_service.dart';
 import '../widgets/emoji_picker_sheet.dart';
+import '../widgets/ad_premium_dialog.dart';
 import '../services/storage_service.dart';
 
 class AddEventScreen extends StatefulWidget {
@@ -83,29 +84,12 @@ class _AddEventScreenState extends State<AddEventScreen> {
   void _saveEvent() {
     if (_formKey.currentState!.validate() && _selectedDate != null) {
       if (_customEmoji != null && !AdService.isPremium) {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            backgroundColor: const Color(0xFF1A1A2E),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: Text('Yêu cầu xem quảng cáo', style: GoogleFonts.quicksand(color: Colors.white, fontWeight: FontWeight.bold)),
-            content: Text('Bạn đã thay đổi biểu tượng. Vui lòng xem một quảng cáo ngắn để lưu lại thay đổi này nhé!', style: GoogleFonts.quicksand(color: Colors.white70)),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('Hủy', style: GoogleFonts.quicksand(color: Colors.white54)),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  AdService.showRewardedAd(
-                    onEarnedReward: () => _performSave(),
-                  );
-                },
-                child: Text('Xem ngay', style: GoogleFonts.quicksand(color: const Color(0xFFEC4899), fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
+        AdPremiumDialog.show(
+          context,
+          title: 'Biểu tượng tùy chỉnh',
+          message: 'Xem 1 đoạn video quảng cáo ngắn hoặc Nâng cấp Premium để lưu lại thay đổi biểu tượng tuyệt đẹp nhé!',
+          icon: Icons.auto_awesome_rounded,
+          onAdWatched: () => _performSave(),
         );
       } else {
         _performSave();
@@ -527,12 +511,20 @@ class _AddEventScreenState extends State<AddEventScreen> {
               ],
             ),
           ),
-          Switch(
-            value: _isYearly,
-            onChanged: (v) => setState(() => _isYearly = v),
-            activeThumbColor: Colors.white,
-            activeTrackColor: const Color(0xFF7C3AED),
-            inactiveTrackColor: Colors.white12,
+          SizedBox(
+            height: 24,
+            width: 44,
+            child: Transform.scale(
+              scale: 0.8,
+              child: Switch(
+                value: _isYearly,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                onChanged: (v) => setState(() => _isYearly = v),
+                activeThumbColor: Colors.white,
+                activeTrackColor: const Color(0xFF7C3AED),
+                inactiveTrackColor: Colors.white12,
+              ),
+            ),
           ),
         ],
       ),
@@ -577,12 +569,20 @@ class _AddEventScreenState extends State<AddEventScreen> {
               ],
             ),
           ),
-          Switch(
-            value: _isLunar,
-            onChanged: (v) => setState(() => _isLunar = v),
-            activeThumbColor: Colors.white,
-            activeTrackColor: const Color(0xFF7C3AED),
-            inactiveTrackColor: Colors.white12,
+          SizedBox(
+            height: 24,
+            width: 44,
+            child: Transform.scale(
+              scale: 0.8,
+              child: Switch(
+                value: _isLunar,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                onChanged: (v) => setState(() => _isLunar = v),
+                activeThumbColor: Colors.white,
+                activeTrackColor: const Color(0xFF7C3AED),
+                inactiveTrackColor: Colors.white12,
+              ),
+            ),
           ),
         ],
       ),
