@@ -7,7 +7,9 @@ import '../services/notification_service.dart';
 import '../services/storage_service.dart';
 import '../services/ad_service.dart';
 import '../services/font_service.dart';
+import '../services/promo_service.dart';
 import '../widgets/premium_dialog.dart';
+import '../widgets/success_promo_dialog.dart';
 
 class SettingsScreen extends StatefulWidget {
   final ValueChanged<String>? onEffectChanged;
@@ -53,8 +55,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
     
     final effect = await StorageService().getSelectedEffect();
     // Pre-load trạng thái mở khóa
+    final effectIds = [
+      'bubbles',
+      'hearts',
+      'snow',
+      'stars',
+      'meteor',
+      'rain',
+      'rain_ripple',
+      'rainbow',
+      'waves',
+      'leaves',
+      'sunset_birds',
+      'aurora',
+      'fireflies',
+      'fireworks',
+      'cherry_blossom',
+      'galaxy',
+    ];
     final storage = StorageService();
-    final effectIds = ['bubbles', 'hearts', 'snow', 'stars', 'meteor', 'rain', 'rain_ripple', 'rainbow'];
     final unlockResults = await Future.wait(
       effectIds.map((id) => storage.isFeatureUnlocked('${id}_effect_unlocked')),
     );
@@ -379,6 +398,134 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  void _showPromoCodeDialog() {
+    final controller = TextEditingController();
+    bool isChecking = false;
+    String? errorMsg;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: const Color(0xFF1A1A2E),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: const BorderSide(color: Colors.white12),
+          ),
+          title: Row(
+            children: [
+              const Icon(Icons.vpn_key_rounded, color: Colors.amber),
+              const SizedBox(width: 10),
+              Text(
+                'Nhập Gift Code',
+                style: GoogleFonts.quicksand(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Nhập mã quà tặng VIP để mở khóa Premium hoặc Gift Code để mở hiệu ứng đặc biệt:',
+                style: GoogleFonts.quicksand(color: Colors.white70, fontSize: 13),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: controller,
+                textCapitalization: TextCapitalization.characters,
+                style: GoogleFonts.quicksand(color: Colors.white, fontWeight: FontWeight.bold),
+                decoration: InputDecoration(
+                  hintText: 'Nhập Gift Code',
+                  hintStyle: GoogleFonts.quicksand(color: Colors.white38),
+                  filled: true,
+                  fillColor: Colors.white.withValues(alpha: 0.08),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.white24),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.white24),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.amber),
+                  ),
+                ),
+              ),
+              if (errorMsg != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  errorMsg!,
+                  style: GoogleFonts.quicksand(
+                    color: const Color(0xFFEF4444),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Hủy', style: GoogleFonts.quicksand(color: Colors.white54)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF7C3AED),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: isChecking
+                  ? null
+                  : () async {
+                      setDialogState(() {
+                        isChecking = true;
+                        errorMsg = null;
+                      });
+                      final result = await PromoService.redeemCode(controller.text);
+                      if (!context.mounted) return;
+                      if (result.success) {
+                        Navigator.pop(context);
+                        if (result.matchedCode?.type == PromoType.premium) {
+                          _togglePremium(true);
+                        } else {
+                          await _loadSettings();
+                          final unlockedEffect = result.matchedCode?.unlockedEffectId;
+                          if (unlockedEffect != null) {
+                            widget.onEffectChanged?.call(unlockedEffect);
+                          }
+                        }
+                        if (result.matchedCode != null) {
+                          SuccessPromoDialog.show(context, result.matchedCode!);
+                        }
+                      } else {
+                        setDialogState(() {
+                          isChecking = false;
+                          errorMsg = result.message;
+                        });
+                      }
+                    },
+              child: isChecking
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : Text('Kích hoạt', style: GoogleFonts.quicksand(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showMessage(String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -505,7 +652,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               Text(
                                 _isPremium
                                     ? 'Đã sở hữu trọn bộ đặc quyền vĩnh viễn'
-                                    : 'Ẩn quảng cáo, mở khóa tất cả màu & hiệu ứng',
+                                    : 'Ẩn quảng cáo, mở khóa tất cả hiệu ứng nền',
                                 style: GoogleFonts.quicksand(
                                   fontSize: 12,
                                   color: Colors.white70,
@@ -520,6 +667,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
               ),
+            ),
+            const SizedBox(height: 10),
+            _buildListTile(
+              title: 'Nhập gift code',
+              subtitle: 'Nhập mã quà tặng VIP hoặc Gift Code đặc biệt',
+              trailing: const Icon(Icons.vpn_key_rounded, color: Colors.amber),
+              onTap: _showPromoCodeDialog,
             ),
             const SizedBox(height: 10),
             _buildListTile(
