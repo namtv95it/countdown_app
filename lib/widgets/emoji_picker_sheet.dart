@@ -63,8 +63,8 @@ class EmojiPickerSheet extends StatelessWidget {
                 final emoji = commonEmojis[index];
                 return GestureDetector(
                   onTap: () {
-                    onEmojiSelected(emoji);
                     Navigator.pop(context);
+                    onEmojiSelected(emoji);
                   },
                   child: Container(
                     decoration: BoxDecoration(
