@@ -9,7 +9,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:gal/gal.dart';
 import '../models/anniversary.dart';
@@ -21,11 +20,13 @@ import '../widgets/countdown_card.dart';
 import '../widgets/time_unit_box.dart';
 import '../widgets/effect_background.dart';
 import '../widgets/premium_dialog.dart';
+import '../widgets/theme_picker_sheet.dart';
+import 'package:file_picker/file_picker.dart';
 
 import 'add_event_screen.dart';
 import 'detail_screen.dart';
 import 'gift_screen.dart';
-import 'settings_screen.dart' hide GoogleFonts;
+import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -47,6 +48,7 @@ class _HomeScreenState extends State<HomeScreen>
   late PageController _pageController;
   final ScrollController _eventsScrollController = ScrollController();
   String _selectedEffect = 'none';
+  String? _backgroundImagePath;
   bool _isFullscreenMode = false;
   bool _showFullscreenExitButton = false;
   Timer? _hideExitButtonTimer;
@@ -135,7 +137,39 @@ class _HomeScreenState extends State<HomeScreen>
     _pageController = PageController(initialPage: 0);
     _checkFirstLaunchPermissions();
     _loadAnniversaries();
+    _loadThemeSettings();
     _loadBannerAd();
+  }
+
+  Future<void> _loadThemeSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _backgroundImagePath = prefs.getString('app_background_image');
+    });
+  }
+
+  Future<void> _pickBackgroundImage() async {
+    try {
+      final result = await FilePicker.pickFiles(type: FileType.image);
+      if (result != null && result.files.single.path != null) {
+        final path = result.files.single.path!;
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('app_background_image', path);
+        setState(() {
+          _backgroundImagePath = path;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error picking image: $e');
+    }
+  }
+
+  Future<void> _clearBackgroundImage() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('app_background_image');
+    setState(() {
+      _backgroundImagePath = null;
+    });
   }
 
   Future<void> _checkFirstLaunchPermissions() async {
@@ -443,14 +477,49 @@ class _HomeScreenState extends State<HomeScreen>
             ? const Center(
                 child: CircularProgressIndicator(color: Color(0xFF7C3AED)),
               )
-            : Stack(
-                children: [
-                  RepaintBoundary(
-                    child: EffectBackground(effectType: _selectedEffect),
-                  ),
-                  RepaintBoundary(
-                    key: _repaintBoundaryKey,
-                    child: GestureDetector(
+            : RepaintBoundary(
+                key: _repaintBoundaryKey,
+                child: Stack(
+                  children: [
+                    // 1. Lớp Ảnh nền hoặc Gradient
+                    if (_backgroundImagePath != null && File(_backgroundImagePath!).existsSync()) ...[
+                      Positioned.fill(
+                        child: Image.file(
+                          File(_backgroundImagePath!),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      Positioned.fill(
+                        child: Container(
+                          color: Colors.black.withValues(alpha: 0.4),
+                        ),
+                      ),
+                    ] else ...[
+                      // Gradient mặc định
+                      Positioned.fill(
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 600),
+                          decoration: BoxDecoration(
+                            gradient: RadialGradient(
+                              center: const Alignment(0, -0.3),
+                              radius: 1.2,
+                              colors: [
+                                _accentColor.withValues(alpha: 0.35),
+                                const Color(0xFF0D0D1A),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+
+                    // 2. Lớp Hiệu ứng hạt
+                    RepaintBoundary(
+                      child: EffectBackground(effectType: _selectedEffect),
+                    ),
+
+                    // 3. Lớp Nội dung chính (UI)
+                    GestureDetector(
                       behavior: HitTestBehavior.translucent,
                       onTap: () {
                         if (_isFullscreenMode) {
@@ -462,7 +531,6 @@ class _HomeScreenState extends State<HomeScreen>
                       },
                       child: _buildCurrentTab(),
                     ),
-                  ),
                   if (_isFullscreenMode) ...[
                     Positioned(
                       top: 40,
@@ -539,7 +607,8 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                     ),
                   ],
-                ],
+                  ],
+                ),
               ),
         bottomNavigationBar: _isFullscreenMode ? const SizedBox.shrink() : _buildBottomNav(),
       ),
@@ -565,20 +634,6 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildPlaceholderTab(String title) {
-    return Center(
-      child: Text(
-        '$title\n(Sắp ra mắt)',
-        textAlign: TextAlign.center,
-        style: GoogleFonts.quicksand(
-          fontSize: 20,
-          color: Colors.white54,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-
   // ─────────────────────────────────────────────────────────
   // TAB 0: Hero — Sự kiện sắp tới nổi bật
   // ─────────────────────────────────────────────────────────
@@ -598,22 +653,6 @@ class _HomeScreenState extends State<HomeScreen>
 
     return Stack(
       children: [
-        // Background gradient theo màu sự kiện
-        Positioned.fill(
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 600),
-            decoration: BoxDecoration(
-              gradient: RadialGradient(
-                center: const Alignment(0, -0.3),
-                radius: 1.2,
-                colors: [
-                  cardColor.withValues(alpha: 0.35),
-                  const Color(0xFF0D0D1A),
-                ],
-              ),
-            ),
-          ),
-        ),
 
         // Particle glow top
         Positioned(
@@ -711,6 +750,80 @@ class _HomeScreenState extends State<HomeScreen>
                           ),
                         ],
                       ),
+                    
+                    const SizedBox(width: 12),
+                    // Nút Theme
+                    PopupMenuButton<String>(
+                      icon: const Icon(Icons.palette_rounded, color: Colors.amber),
+                      color: const Color(0xFF1A1A2E),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: const BorderSide(color: Colors.white12),
+                      ),
+                      onSelected: (value) {
+                        if (value == 'effect' || value == 'font') {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (_) => ThemePickerSheet(
+                              initialTabIndex: value == 'effect' ? 0 : 1,
+                              onEffectChanged: (effect) {
+                                setState(() => _selectedEffect = effect);
+                              },
+                            ),
+                          );
+                        } else if (value == 'bg_image') {
+                          _pickBackgroundImage();
+                        } else if (value == 'bg_clear') {
+                          _clearBackgroundImage();
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        PopupMenuItem(
+                          value: 'effect',
+                          child: Row(
+                            children: [
+                              const Icon(Icons.auto_awesome_rounded, color: Colors.amber, size: 20),
+                              const SizedBox(width: 12),
+                              Text('Hiệu ứng nền', style: GoogleFonts.quicksand(color: Colors.white)),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: 'font',
+                          child: Row(
+                            children: [
+                              const Icon(Icons.font_download_rounded, color: Colors.blueAccent, size: 20),
+                              const SizedBox(width: 12),
+                              Text('Font chữ', style: GoogleFonts.quicksand(color: Colors.white)),
+                            ],
+                          ),
+                        ),
+                        const PopupMenuDivider(height: 1),
+                        PopupMenuItem(
+                          value: 'bg_image',
+                          child: Row(
+                            children: [
+                              const Icon(Icons.image_rounded, color: Colors.greenAccent, size: 20),
+                              const SizedBox(width: 12),
+                              Text('Chọn ảnh nền', style: GoogleFonts.quicksand(color: Colors.white)),
+                            ],
+                          ),
+                        ),
+                        if (_backgroundImagePath != null)
+                          PopupMenuItem(
+                            value: 'bg_clear',
+                            child: Row(
+                              children: [
+                                const Icon(Icons.delete_rounded, color: Colors.redAccent, size: 20),
+                                const SizedBox(width: 12),
+                                Text('Xóa ảnh nền', style: GoogleFonts.quicksand(color: Colors.redAccent)),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
 
                   ],
                 ),
