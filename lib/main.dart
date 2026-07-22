@@ -10,10 +10,16 @@ import 'services/font_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('vi', null);
-  await FontService.init();
-  await AdService.init();
-  await WidgetService.initialize();
-  await NotificationService().initialize();
+  
+  // FontService lấy từ SharedPreferences nên load cực nhanh và cần thiết để render UI không bị giật font
+  await FontService.init(); 
+
+  // Các service nặng như AdMob, Widget, Notification có thể load song song 
+  // và không nhất thiết phải block quá trình vẽ frame đầu tiên của app.
+  AdService.init(); 
+  WidgetService.initialize();
+  NotificationService().initialize();
+
   runApp(const MyApp());
 }
 
