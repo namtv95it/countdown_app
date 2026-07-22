@@ -37,9 +37,15 @@
     <header class="sticky top-0 z-50 bg-transparent  border-b border-white/5 pt-3 pb-2">
         <div class="container mx-auto px-4">
 
-            <!-- Special Occasion Banner (full width) -->
-            <div class="mb-2" id="occasion-list">
-                <!-- Occasion will be injected here by JS -->
+            <!-- Special Occasion Banner (scrollable) -->
+            <div class="mb-2 relative" id="occasion-container">
+                <div class="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide gap-3 pb-1" id="occasion-list">
+                    <!-- Occasions will be injected here by JS -->
+                </div>
+                <!-- Pagination Dots -->
+                <div class="flex justify-center gap-1.5 mt-2" id="occasion-dots">
+                    <!-- Dots will be injected here by JS -->
+                </div>
             </div>
 
             <!-- Category Filter -->

@@ -35,40 +35,80 @@ function renderOccasions() {
     const container = document.getElementById('occasion-list');
     container.innerHTML = '';
 
-    const occasions = getUpcomingOccasions();
+    const occasions = getUpcomingOccasions().slice(0, 5); // Hiển thị tối đa 5 sự kiện
     if (occasions.length === 0) return;
 
-    // Chỉ lấy ngày lễ gần nhất
-    const occ = occasions[0];
+    const dotsContainer = document.getElementById('occasion-dots');
+    dotsContainer.innerHTML = '';
 
-    const btn = document.createElement('button');
-    btn.className = 'occasion-chip w-full flex items-center gap-2 px-3 py-1.5 rounded-xl outline-none text-white';
-    btn.style.background = occ.gradient;
+    occasions.forEach((occ, index) => {
+        const btn = document.createElement('button');
+        // Thêm snap-center flex-shrink-0 min-w-full để cuộn từng cái
+        btn.className = 'occasion-chip min-w-full flex-shrink-0 snap-center flex items-center gap-3 px-4 py-3 rounded-2xl outline-none text-white shadow-sm';
+        btn.style.background = occ.gradient;
 
-    const isToday = occ.daysLeft === 0;
+        const isToday = occ.daysLeft === 0;
 
-    btn.innerHTML = `
-        <!-- LEFT: Emoji + info một hàng -->
-        <span class="text-base flex-shrink-0">${occ.emoji}</span>
-        <div class="flex flex-col items-start leading-none flex-1 min-w-0">
-            <div class="flex items-baseline gap-1.5 flex-wrap">
-                <span class="text-[12px] font-extrabold truncate">${occ.name}</span>
-                <span class="text-[9px] opacity-65 font-medium">${occ.dateLabel}</span>
+        btn.innerHTML = `
+            <!-- LEFT: Emoji + info một hàng -->
+            <span class="text-2xl flex-shrink-0">${occ.emoji}</span>
+            <div class="flex flex-col items-start leading-none flex-1 min-w-0">
+                <div class="flex items-baseline gap-2 flex-wrap mb-1">
+                    <span class="text-[15px] font-extrabold truncate">${occ.name}</span>
+                    <span class="text-[11px] opacity-75 font-medium">${occ.dateLabel}</span>
+                </div>
+                <span class="cta-blink text-[10px] font-bold"><i class="fa-solid fa-hand-pointer mr-1"></i>Nhấn để xem quà tặng</span>
             </div>
-            <span class="cta-blink text-[8px] font-bold mt-0.5"><i class="fa-solid fa-hand-pointer mr-0.5"></i>Nhấn để xem quà tặng</span>
-        </div>
-        <!-- RIGHT: Số ngày -->
-        <div class="flex-shrink-0 flex items-center gap-1 bg-black/20 rounded-lg px-2 py-1">
-            <span class="text-[15px] font-black tabular-nums leading-none">${isToday ? '🎉' : occ.daysLeft}</span>
-            ${isToday ? '' : '<span class="text-[8px] font-bold opacity-70 leading-none">ngày</span>'}
-        </div>
-    `;
+            <!-- RIGHT: Số ngày -->
+            <div class="flex-shrink-0 flex items-center gap-1 bg-black/20 rounded-xl px-3 py-2">
+                <span class="text-[20px] font-black tabular-nums leading-none">${isToday ? '🎉' : occ.daysLeft}</span>
+                ${isToday ? '' : '<span class="text-[10px] font-bold opacity-70 leading-none mt-1">ngày</span>'}
+            </div>
+        `;
 
-    btn.addEventListener('click', () => {
-        window.location.href = `${occ.id}.html`;
+        btn.onclick = () => {
+            window.location.href = `tet_trung_thu.html?occasion=${occ.id}`;
+        };
+
+        container.appendChild(btn);
+
+        // Tạo dot tương ứng
+        const dot = document.createElement('div');
+        dot.className = `w-1.5 h-1.5 rounded-full transition-all duration-300 ${index === 0 ? 'bg-white w-4' : 'bg-white/30'}`;
+        dotsContainer.appendChild(dot);
     });
 
-    container.appendChild(btn);
+    // Cập nhật dot khi cuộn
+    container.addEventListener('scroll', () => {
+        const scrollLeft = container.scrollLeft;
+        const itemWidth = container.clientWidth + 12; // 12px for gap-3
+        const activeIndex = Math.round(scrollLeft / itemWidth);
+        
+        const dots = dotsContainer.children;
+        for (let i = 0; i < dots.length; i++) {
+            if (i === activeIndex) {
+                dots[i].className = 'w-4 h-1.5 rounded-full transition-all duration-300 bg-white';
+            } else {
+                dots[i].className = 'w-1.5 h-1.5 rounded-full transition-all duration-300 bg-white/30';
+            }
+        }
+    });
+
+    // Tự động chuyển banner sau mỗi 6 giây
+    if (window.occasionAutoScroll) clearInterval(window.occasionAutoScroll);
+    window.occasionAutoScroll = setInterval(() => {
+        const itemWidth = container.clientWidth + 12; // 12px for gap-3
+        let nextIndex = Math.round(container.scrollLeft / itemWidth) + 1;
+        
+        if (nextIndex >= dotsContainer.children.length) {
+            nextIndex = 0;
+        }
+        
+        container.scrollTo({
+            left: nextIndex * itemWidth,
+            behavior: 'smooth'
+        });
+    }, 6000);
 }
 
 
