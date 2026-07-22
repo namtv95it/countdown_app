@@ -51,10 +51,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (spacer && spacer.tagName === 'DIV') {
             spacer.className = "flex items-center gap-2 justify-end min-w-[72px]";
             spacer.innerHTML = `
-                <a href="${prevEventId}.html" class="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition text-white" title="Sự kiện trước">
+                <a href="${prevEventId}.html" class="w-8 h-8 flex items-center justify-center rounded-full bg-white/25 hover:bg-white/40 transition text-white" title="Sự kiện trước">
                     <i class="fa-solid fa-angle-left"></i>
                 </a>
-                <a href="${nextEventId}.html" class="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition text-white" title="Sự kiện tiếp theo">
+                <a href="${nextEventId}.html" class="w-8 h-8 flex items-center justify-center rounded-full bg-white/25 hover:bg-white/40 transition text-white" title="Sự kiện tiếp theo">
                     <i class="fa-solid fa-angle-right"></i>
                 </a>
             `;
@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Lọc sản phẩm theo danh mục của sự kiện
-    const eventProducts = products.filter(p => p.categoryId === event.categoryId);
+    const eventProducts = products.filter(p => p.categoryIds && p.categoryIds.includes(event.categoryId));
     
     document.getElementById('product-count').innerText = `${eventProducts.length} món`;
 

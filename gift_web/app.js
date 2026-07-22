@@ -117,7 +117,7 @@ function renderProducts() {
     // Lọc sản phẩm
     const filteredProducts = currentCategory === 'all' 
         ? products 
-        : products.filter(p => p.categoryId === currentCategory);
+        : products.filter(p => p.categoryIds && p.categoryIds.includes(currentCategory));
 
     // Hiển thị trạng thái rỗng nếu không có sản phẩm
     if (filteredProducts.length === 0) {
