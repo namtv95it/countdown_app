@@ -31,10 +31,10 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="style.css?v=2">
 </head>
-<body class="bg-transparent text-white font-sans antialiased selection:bg-brandPurple selection:text-white">
+<body class="h-[100dvh] flex flex-col bg-transparent text-white font-sans antialiased selection:bg-brandPurple selection:text-white overflow-hidden">
 
     <!-- Header Section -->
-    <header id="event-header" class="sticky top-0 z-50 bg-transparent  border-b border-white/10 pt-1 pb-4">
+    <header id="event-header" class="flex-shrink-0 z-50 bg-transparent border-b border-white/10 pt-1 pb-4">
         <div class="container mx-auto px-4 flex items-center justify-between">
             <button onclick="history.back()" class="w-10 h-10 flex items-center justify-center rounded-full bg-white/25 hover:bg-white/40 transition text-white">
                 <i class="fa-solid fa-chevron-left"></i>
@@ -47,7 +47,7 @@
     </header>
 
     <!-- Main Content -->
-    <main class="container mx-auto px-4 py-6 pb-40">
+    <main class="flex-1 overflow-y-auto container mx-auto px-4 py-6 pb-40">
         
         <!-- Event Banner -->
         <div id="event-banner" class="w-full rounded-3xl p-6 mb-8 flex flex-col items-center justify-center text-center shadow-lg transition-all duration-300">

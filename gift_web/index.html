@@ -31,10 +31,10 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="style.css?v=2">
 </head>
-<body class="bg-transparent text-white font-sans antialiased selection:bg-brandPurple selection:text-white">
+<body class="h-[100dvh] flex flex-col bg-transparent text-white font-sans antialiased selection:bg-brandPurple selection:text-white overflow-hidden">
 
     <!-- Header Section -->
-    <header class="sticky top-0 z-50 bg-transparent  border-b border-white/5 pt-3 pb-2">
+    <header class="flex-shrink-0 z-50 bg-transparent border-b border-white/5 pt-3 pb-2">
         <div class="container mx-auto px-4">
 
             <!-- Special Occasion Banner (scrollable) -->
@@ -58,7 +58,7 @@
     </header>
 
     <!-- Main Content -->
-    <main class="container mx-auto px-4 py-6 pb-40">
+    <main class="flex-1 overflow-y-auto container mx-auto px-4 py-6 pb-40">
         <!-- Empty State -->
         <div id="empty-state" class="hidden flex-col items-center justify-center py-16 text-center">
             <div class="text-6xl mb-4">🛍️</div>
