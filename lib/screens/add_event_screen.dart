@@ -701,8 +701,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                           onPressed: () {
                             setModalState(() {
-                              for (var h in PresetHolidays.all.where((h) => h.badge == t('vietnam'))) {
-                                if (!widget.existingEvents.any((e) => e.title == h.title)) {
+                              for (var h in PresetHolidays.all.where((h) => h.badge == 'vn')) {
+                                if (!widget.existingEvents.any((e) => e.title == t(h.title))) {
                                   selectedHolidays.add(h);
                                 }
                               }
@@ -718,8 +718,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                           onPressed: () {
                             setModalState(() {
-                              for (var h in PresetHolidays.all.where((h) => h.badge == t('international'))) {
-                                if (!widget.existingEvents.any((e) => e.title == h.title)) {
+                              for (var h in PresetHolidays.all.where((h) => h.badge == 'intl')) {
+                                if (!widget.existingEvents.any((e) => e.title == t(h.title))) {
                                   selectedHolidays.add(h);
                                 }
                               }
@@ -790,7 +790,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                               resultList.add(
                                 Anniversary(
                                   id: '${DateTime.now().microsecondsSinceEpoch}${resultList.length}',
-                                  title: h.title,
+                                  title: t(h.title),
                                   date: storeDate,
                                   emoji: h.emoji,
                                   colorValue: h.colorValue,
@@ -852,7 +852,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
   }
 
   Widget _buildPresetTile(PresetHoliday h, Set<PresetHoliday> selectedHolidays, StateSetter setModalState) {
-    final isAlreadyAdded = widget.existingEvents.any((e) => e.title == h.title);
+    final isAlreadyAdded = widget.existingEvents.any((e) => e.title == t(h.title));
     final isSelected = selectedHolidays.contains(h);
     
     return Container(
@@ -892,7 +892,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
           ),
         ),
         title: Text(
-          h.title,
+          t(h.title),
           style: GoogleFonts.quicksand(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -920,7 +920,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                       : null,
                 ),
                 child: Text(
-                  h.badge,
+                  t('badge_${h.badge}'),
                   style: GoogleFonts.quicksand(
                     color: h.isLunar ? const Color(0xFFF59E0B) : Colors.white70,
                     fontSize: 10,

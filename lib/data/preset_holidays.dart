@@ -1,10 +1,10 @@
 class PresetHoliday {
-  final String title;
+  final String title; // Lưu key đa ngôn ngữ, vd: 'h_solar_new_year'
   final int month;
   final int day;
   final String emoji;
   final int colorValue;
-  final String badge;
+  final String badge; // 'vn' hoặc 'intl'
   final bool isLunar;
   final String categoryId;
 
@@ -23,42 +23,42 @@ class PresetHoliday {
 class PresetHolidays {
   static const List<PresetHoliday> all = [
     // --- DƯƠNG LỊCH QUỐC TẾ & VIỆT NAM ---
-    PresetHoliday(title: 'Tết Dương lịch', month: 1, day: 1, emoji: '🎆', colorValue: 0xFFEF4444, badge: 'Quốc tế', categoryId: 'festival'),
-    PresetHoliday(title: 'Học sinh - Sinh viên', month: 1, day: 9, emoji: '🎓', colorValue: 0xFF3B82F6, badge: 'Việt Nam', categoryId: 'education'),
-    PresetHoliday(title: 'Thành lập Đảng', month: 2, day: 3, emoji: '🇻🇳', colorValue: 0xFFEF4444, badge: 'Việt Nam', categoryId: 'national'),
-    PresetHoliday(title: 'Lễ Tình nhân', month: 2, day: 14, emoji: '💝', colorValue: 0xFFEC4899, badge: 'Quốc tế', categoryId: 'love'),
-    PresetHoliday(title: 'Thầy thuốc Việt Nam', month: 2, day: 27, emoji: '🩺', colorValue: 0xFF10B981, badge: 'Việt Nam', categoryId: 'profession'),
-    PresetHoliday(title: 'Quốc tế Phụ nữ', month: 3, day: 8, emoji: '💐', colorValue: 0xFFEC4899, badge: 'Quốc tế', categoryId: 'gratitude'),
-    PresetHoliday(title: 'Quốc tế Hạnh phúc', month: 3, day: 20, emoji: '😊', colorValue: 0xFFF59E0B, badge: 'Quốc tế', categoryId: 'awareness'),
-    PresetHoliday(title: 'Thành lập Đoàn', month: 3, day: 26, emoji: '👕', colorValue: 0xFF3B82F6, badge: 'Việt Nam', categoryId: 'national'),
-    PresetHoliday(title: 'Cá tháng Tư', month: 4, day: 1, emoji: '🃏', colorValue: 0xFF8B5CF6, badge: 'Quốc tế', categoryId: 'festival'),
-    PresetHoliday(title: 'Ngày Trái Đất', month: 4, day: 22, emoji: '🌍', colorValue: 0xFF10B981, badge: 'Quốc tế', categoryId: 'awareness'),
-    PresetHoliday(title: 'Giải phóng miền Nam', month: 4, day: 30, emoji: '🕊️', colorValue: 0xFFEF4444, badge: 'Việt Nam', categoryId: 'national'),
-    PresetHoliday(title: 'Quốc tế Lao động', month: 5, day: 1, emoji: '👷', colorValue: 0xFFF59E0B, badge: 'Quốc tế', categoryId: 'profession'),
-    PresetHoliday(title: 'Chiến thắng Điện Biên', month: 5, day: 7, emoji: '⚔️', colorValue: 0xFFEF4444, badge: 'Việt Nam', categoryId: 'national'),
-    PresetHoliday(title: 'Sinh nhật Bác', month: 5, day: 19, emoji: '🇻🇳', colorValue: 0xFFEF4444, badge: 'Việt Nam', categoryId: 'national'),
-    PresetHoliday(title: 'Quốc tế Thiếu nhi', month: 6, day: 1, emoji: '🎈', colorValue: 0xFFF59E0B, badge: 'Quốc tế', categoryId: 'family'),
-    PresetHoliday(title: 'Môi trường Thế giới', month: 6, day: 5, emoji: '🌱', colorValue: 0xFF10B981, badge: 'Quốc tế', categoryId: 'awareness'),
-    PresetHoliday(title: 'Báo chí Cách mạng', month: 6, day: 21, emoji: '📰', colorValue: 0xFF3B82F6, badge: 'Việt Nam', categoryId: 'profession'),
-    PresetHoliday(title: 'Thương binh Liệt sĩ', month: 7, day: 27, emoji: '🕯️', colorValue: 0xFFEF4444, badge: 'Việt Nam', categoryId: 'national'),
-    PresetHoliday(title: 'Cách mạng tháng Tám', month: 8, day: 19, emoji: '🇻🇳', colorValue: 0xFFEF4444, badge: 'Việt Nam', categoryId: 'national'),
-    PresetHoliday(title: 'Quốc khánh', month: 9, day: 2, emoji: '🇻🇳', colorValue: 0xFFEF4444, badge: 'Việt Nam', categoryId: 'national'),
-    PresetHoliday(title: 'Phụ nữ Việt Nam', month: 10, day: 20, emoji: '🌹', colorValue: 0xFFEC4899, badge: 'Việt Nam', categoryId: 'gratitude'),
-    PresetHoliday(title: 'Halloween', month: 10, day: 31, emoji: '🎃', colorValue: 0xFFF59E0B, badge: 'Quốc tế', categoryId: 'festival'),
-    PresetHoliday(title: 'Quốc tế Nam giới', month: 11, day: 19, emoji: '👨', colorValue: 0xFF3B82F6, badge: 'Quốc tế', categoryId: 'gratitude'),
-    PresetHoliday(title: 'Nhà giáo Việt Nam', month: 11, day: 20, emoji: '👩‍🏫', colorValue: 0xFF10B981, badge: 'Việt Nam', categoryId: 'gratitude'),
-    PresetHoliday(title: 'Quân đội Nhân dân', month: 12, day: 22, emoji: '🎖️', colorValue: 0xFF8B5CF6, badge: 'Việt Nam', categoryId: 'profession'),
-    PresetHoliday(title: 'Lễ Giáng sinh', month: 12, day: 25, emoji: '🎄', colorValue: 0xFF10B981, badge: 'Quốc tế', categoryId: 'festival'),
+    PresetHoliday(title: 'h_solar_new_year', month: 1, day: 1, emoji: '🎆', colorValue: 0xFFEF4444, badge: 'intl', categoryId: 'festival'),
+    PresetHoliday(title: 'h_students_day', month: 1, day: 9, emoji: '🎓', colorValue: 0xFF3B82F6, badge: 'vn', categoryId: 'education'),
+    PresetHoliday(title: 'h_cpv_day', month: 2, day: 3, emoji: '🇻🇳', colorValue: 0xFFEF4444, badge: 'vn', categoryId: 'national'),
+    PresetHoliday(title: 'h_valentine', month: 2, day: 14, emoji: '💝', colorValue: 0xFFEC4899, badge: 'intl', categoryId: 'love'),
+    PresetHoliday(title: 'h_vn_doctors_day', month: 2, day: 27, emoji: '🩺', colorValue: 0xFF10B981, badge: 'vn', categoryId: 'profession'),
+    PresetHoliday(title: 'h_womens_day', month: 3, day: 8, emoji: '💐', colorValue: 0xFFEC4899, badge: 'intl', categoryId: 'gratitude'),
+    PresetHoliday(title: 'h_intl_happiness_day', month: 3, day: 20, emoji: '😊', colorValue: 0xFFF59E0B, badge: 'intl', categoryId: 'awareness'),
+    PresetHoliday(title: 'h_hcm_youth_union', month: 3, day: 26, emoji: '👕', colorValue: 0xFF3B82F6, badge: 'vn', categoryId: 'national'),
+    PresetHoliday(title: 'h_april_fools', month: 4, day: 1, emoji: '🃏', colorValue: 0xFF8B5CF6, badge: 'intl', categoryId: 'festival'),
+    PresetHoliday(title: 'h_earth_day', month: 4, day: 22, emoji: '🌍', colorValue: 0xFF10B981, badge: 'intl', categoryId: 'awareness'),
+    PresetHoliday(title: 'h_liberation_day', month: 4, day: 30, emoji: '🕊️', colorValue: 0xFFEF4444, badge: 'vn', categoryId: 'national'),
+    PresetHoliday(title: 'h_labor_day', month: 5, day: 1, emoji: '👷', colorValue: 0xFFF59E0B, badge: 'intl', categoryId: 'profession'),
+    PresetHoliday(title: 'h_dien_bien_phu', month: 5, day: 7, emoji: '⚔️', colorValue: 0xFFEF4444, badge: 'vn', categoryId: 'national'),
+    PresetHoliday(title: 'h_ho_chi_minh_birthday', month: 5, day: 19, emoji: '🇻🇳', colorValue: 0xFFEF4444, badge: 'vn', categoryId: 'national'),
+    PresetHoliday(title: 'h_childrens_day', month: 6, day: 1, emoji: '🎈', colorValue: 0xFFF59E0B, badge: 'intl', categoryId: 'family'),
+    PresetHoliday(title: 'h_environment_day', month: 6, day: 5, emoji: '🌱', colorValue: 0xFF10B981, badge: 'intl', categoryId: 'awareness'),
+    PresetHoliday(title: 'h_vn_press_day', month: 6, day: 21, emoji: '📰', colorValue: 0xFF3B82F6, badge: 'vn', categoryId: 'profession'),
+    PresetHoliday(title: 'h_invalids_martyrs_day', month: 7, day: 27, emoji: '🕯️', colorValue: 0xFFEF4444, badge: 'vn', categoryId: 'national'),
+    PresetHoliday(title: 'h_august_revolution', month: 8, day: 19, emoji: '🇻🇳', colorValue: 0xFFEF4444, badge: 'vn', categoryId: 'national'),
+    PresetHoliday(title: 'h_national_day', month: 9, day: 2, emoji: '🇻🇳', colorValue: 0xFFEF4444, badge: 'vn', categoryId: 'national'),
+    PresetHoliday(title: 'h_womens_day_vn', month: 10, day: 20, emoji: '🌹', colorValue: 0xFFEC4899, badge: 'vn', categoryId: 'gratitude'),
+    PresetHoliday(title: 'h_halloween', month: 10, day: 31, emoji: '🎃', colorValue: 0xFFF59E0B, badge: 'intl', categoryId: 'festival'),
+    PresetHoliday(title: 'h_mens_day', month: 11, day: 19, emoji: '👨', colorValue: 0xFF3B82F6, badge: 'intl', categoryId: 'gratitude'),
+    PresetHoliday(title: 'h_teachers_day', month: 11, day: 20, emoji: '👩‍🏫', colorValue: 0xFF10B981, badge: 'vn', categoryId: 'gratitude'),
+    PresetHoliday(title: 'h_vn_peoples_army', month: 12, day: 22, emoji: '🎖️', colorValue: 0xFF8B5CF6, badge: 'vn', categoryId: 'profession'),
+    PresetHoliday(title: 'h_christmas', month: 12, day: 25, emoji: '🎄', colorValue: 0xFF10B981, badge: 'intl', categoryId: 'festival'),
 
     // --- ÂM LỊCH ---
-    PresetHoliday(title: 'Tết Nguyên đán', month: 1, day: 1, emoji: '🏮', colorValue: 0xFFEF4444, badge: 'Việt Nam', isLunar: true, categoryId: 'festival'),
-    PresetHoliday(title: 'Tết Nguyên tiêu', month: 1, day: 15, emoji: '🌕', colorValue: 0xFFF59E0B, badge: 'Việt Nam', isLunar: true, categoryId: 'festival'),
-    PresetHoliday(title: 'Tết Hàn thực', month: 3, day: 3, emoji: '🍡', colorValue: 0xFF10B981, badge: 'Việt Nam', isLunar: true, categoryId: 'festival'),
-    PresetHoliday(title: 'Giỗ Tổ Hùng Vương', month: 3, day: 10, emoji: '🥁', colorValue: 0xFFEF4444, badge: 'Việt Nam', isLunar: true, categoryId: 'national'),
-    PresetHoliday(title: 'Lễ Phật Đản', month: 4, day: 15, emoji: '🌸', colorValue: 0xFFF59E0B, badge: 'Việt Nam', isLunar: true, categoryId: 'festival'),
-    PresetHoliday(title: 'Tết Đoan ngọ', month: 5, day: 5, emoji: '🥟', colorValue: 0xFF10B981, badge: 'Việt Nam', isLunar: true, categoryId: 'festival'),
-    PresetHoliday(title: 'Lễ Vu Lan', month: 7, day: 15, emoji: '🙏', colorValue: 0xFF8B5CF6, badge: 'Việt Nam', isLunar: true, categoryId: 'family'),
-    PresetHoliday(title: 'Tết Trung thu', month: 8, day: 15, emoji: '🥮', colorValue: 0xFFF59E0B, badge: 'Việt Nam', isLunar: true, categoryId: 'festival'),
-    PresetHoliday(title: 'Ông Công Ông Táo', month: 12, day: 23, emoji: '🐟', colorValue: 0xFFEF4444, badge: 'Việt Nam', isLunar: true, categoryId: 'festival'),
+    PresetHoliday(title: 'h_lunar_new_year', month: 1, day: 1, emoji: '🏮', colorValue: 0xFFEF4444, badge: 'vn', isLunar: true, categoryId: 'festival'),
+    PresetHoliday(title: 'h_lantern_festival', month: 1, day: 15, emoji: '🌕', colorValue: 0xFFF59E0B, badge: 'vn', isLunar: true, categoryId: 'festival'),
+    PresetHoliday(title: 'h_cold_food_festival', month: 3, day: 3, emoji: '🍡', colorValue: 0xFF10B981, badge: 'vn', isLunar: true, categoryId: 'festival'),
+    PresetHoliday(title: 'h_hung_kings', month: 3, day: 10, emoji: '🥁', colorValue: 0xFFEF4444, badge: 'vn', isLunar: true, categoryId: 'national'),
+    PresetHoliday(title: 'h_vesak', month: 4, day: 15, emoji: '🌸', colorValue: 0xFFF59E0B, badge: 'vn', isLunar: true, categoryId: 'festival'),
+    PresetHoliday(title: 'h_duanwu', month: 5, day: 5, emoji: '🥟', colorValue: 0xFF10B981, badge: 'vn', isLunar: true, categoryId: 'festival'),
+    PresetHoliday(title: 'h_ghost_festival', month: 7, day: 15, emoji: '🙏', colorValue: 0xFF8B5CF6, badge: 'vn', isLunar: true, categoryId: 'family'),
+    PresetHoliday(title: 'h_mid_autumn', month: 8, day: 15, emoji: '🥮', colorValue: 0xFFF59E0B, badge: 'vn', isLunar: true, categoryId: 'festival'),
+    PresetHoliday(title: 'h_kitchen_gods', month: 12, day: 23, emoji: '🐟', colorValue: 0xFFEF4444, badge: 'vn', isLunar: true, categoryId: 'festival'),
   ];
 }

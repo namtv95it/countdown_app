@@ -71,7 +71,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
         final newEvent = Anniversary(
           id: '${now.millisecondsSinceEpoch}${random.nextInt(9999)}',
-          title: holiday.title,
+          title: t(holiday.title), // Store localized title initially
           date: targetDate,
           emoji: holiday.emoji,
           colorValue: holiday.colorValue,
@@ -100,15 +100,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if (lang == 'vi') {
       // Việt Nam lên trước, Quốc tế sau
       all.sort((a, b) {
-        final aVn = a.badge == 'Việt Nam' ? 0 : 1;
-        final bVn = b.badge == 'Việt Nam' ? 0 : 1;
+        final aVn = a.badge == 'vn' ? 0 : 1;
+        final bVn = b.badge == 'vn' ? 0 : 1;
         return aVn.compareTo(bVn);
       });
     } else {
       // Quốc tế lên trước, Việt Nam sau
       all.sort((a, b) {
-        final aInt = a.badge == 'Quốc tế' ? 0 : 1;
-        final bInt = b.badge == 'Quốc tế' ? 0 : 1;
+        final aInt = a.badge == 'intl' ? 0 : 1;
+        final bInt = b.badge == 'intl' ? 0 : 1;
         return aInt.compareTo(bInt);
       });
     }
@@ -371,7 +371,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                holiday.title,
+                                t(holiday.title),
                                 style: GoogleFonts.quicksand(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
@@ -394,17 +394,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: holiday.badge == 'Việt Nam'
+                                      color: holiday.badge == 'vn'
                                           ? const Color(0xFFEF4444).withValues(alpha: 0.15)
                                           : const Color(0xFF3B82F6).withValues(alpha: 0.15),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: Text(
-                                      holiday.badge,
+                                      t('badge_${holiday.badge}'),
                                       style: GoogleFonts.quicksand(
                                         fontSize: 10,
                                         fontWeight: FontWeight.w700,
-                                        color: holiday.badge == 'Việt Nam'
+                                        color: holiday.badge == 'vn'
                                             ? const Color(0xFFEF4444)
                                             : const Color(0xFF3B82F6),
                                       ),
