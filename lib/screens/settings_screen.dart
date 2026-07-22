@@ -7,6 +7,7 @@ import '../services/notification_service.dart';
 import '../services/storage_service.dart';
 import '../services/ad_service.dart';
 import '../services/font_service.dart';
+import '../widgets/premium_dialog.dart';
 
 class SettingsScreen extends StatefulWidget {
   final ValueChanged<String>? onEffectChanged;
@@ -298,37 +299,80 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ],
         ),
-        content: Text(
-          'Xem 1 đoạn video quảng cáo ngắn để mở khóa vĩnh viễn hiệu ứng $effectName tuyệt đẹp cho Trang chủ nhé!',
-          style: GoogleFonts.quicksand(color: Colors.white70),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Xem 1 đoạn video quảng cáo ngắn hoặc Nâng cấp Premium để sở hữu ngay hiệu ứng $effectName tuyệt đẹp nhé!',
+              style: GoogleFonts.quicksand(color: Colors.white70, fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.workspace_premium_rounded, color: Colors.amber, size: 20),
+                label: Text(
+                  'Nâng cấp Premium (\$2.00)',
+                  style: GoogleFonts.quicksand(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.amber,
+                    fontSize: 14,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF14142B),
+                  elevation: 0,
+                  side: const BorderSide(color: Colors.amber, width: 1.5),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                  PremiumDialog.show(
+                    context,
+                    onPremiumUnlocked: () => _togglePremium(true),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.play_circle_filled_rounded, size: 20),
+                label: Text(
+                  'Xem Quảng Cáo (Miễn phí)',
+                  style: GoogleFonts.quicksand(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF7C3AED),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                  AdService.showRewardedAd(
+                    onEarnedReward: () async {
+                      await StorageService().unlockFeature('${effectId}_effect_unlocked');
+                      await StorageService().setSelectedEffect(effectId);
+                      if (mounted) {
+                        setState(() => _selectedEffect = effectId);
+                        widget.onEffectChanged?.call(effectId);
+                        _showMessage('🎉 Đã mở khóa vĩnh viễn hiệu ứng $effectName!');
+                      }
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text('Hủy', style: GoogleFonts.quicksand(color: Colors.white54)),
-          ),
-          ElevatedButton.icon(
-            icon: const Icon(Icons.play_circle_filled_rounded),
-            label: Text('Xem Video', style: GoogleFonts.quicksand(fontWeight: FontWeight.bold)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF7C3AED),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () {
-              Navigator.pop(context); // Đóng dialog
-              AdService.showRewardedAd(
-                onEarnedReward: () async {
-                  await StorageService().unlockFeature('${effectId}_effect_unlocked');
-                  await StorageService().setSelectedEffect(effectId);
-                  if (mounted) {
-                    setState(() => _selectedEffect = effectId);
-                    widget.onEffectChanged?.call(effectId);
-                    _showMessage('🎉 Đã mở khóa vĩnh viễn hiệu ứng $effectName!');
-                  }
-                },
-              );
-            },
           ),
         ],
       ),
@@ -379,13 +423,112 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 24),
             
             _buildSectionHeader('💎 Tài khoản Premium'),
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(18),
+                gradient: LinearGradient(
+                  colors: _isPremium
+                      ? [const Color(0xFF1F2937), const Color(0xFF111827)]
+                      : [
+                          const Color(0xFF7C3AED).withValues(alpha: 0.3),
+                          const Color(0xFFEC4899).withValues(alpha: 0.3),
+                        ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                border: Border.all(
+                  color: _isPremium
+                      ? const Color(0xFFFFD700).withValues(alpha: 0.6)
+                      : const Color(0xFFEC4899).withValues(alpha: 0.4),
+                  width: 1.5,
+                ),
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(18),
+                  onTap: () {
+                    PremiumDialog.show(
+                      context,
+                      onPremiumUnlocked: () {
+                        _togglePremium(true);
+                      },
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFFFE259), Color(0xFFFF6700)],
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFFFA500).withValues(alpha: 0.4),
+                                blurRadius: 10,
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.workspace_premium_rounded,
+                            color: Colors.white,
+                            size: 26,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    _isPremium ? 'Thành viên VIP Premium' : 'Nâng cấp Premium \$2.00',
+                                    style: GoogleFonts.quicksand(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  if (_isPremium) ...[
+                                    const SizedBox(width: 6),
+                                    const Icon(Icons.check_circle_rounded, color: Color(0xFFFFD700), size: 18),
+                                  ],
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                _isPremium
+                                    ? 'Đã sở hữu trọn bộ đặc quyền vĩnh viễn'
+                                    : 'Ẩn quảng cáo, mở khóa tất cả màu & hiệu ứng',
+                                style: GoogleFonts.quicksand(
+                                  fontSize: 12,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right_rounded, color: Colors.white70),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
             _buildListTile(
-              title: 'Nâng cấp Premium',
-              subtitle: 'Ẩn tất cả quảng cáo & mở khóa tính năng',
+              title: 'Bật/Tắt Premium (Chế độ Test)',
+              subtitle: 'Chỉ dùng thử nghiệm: Tự do bật tắt để kiểm tra giao diện & quảng cáo',
               trailing: Switch(
                 value: _isPremium,
                 onChanged: _togglePremium,
-                activeColor: Colors.amber,
+                activeThumbColor: Colors.amber,
                 activeTrackColor: Colors.amber.withValues(alpha: 0.3),
               ),
             ),

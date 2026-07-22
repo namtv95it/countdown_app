@@ -20,6 +20,7 @@ import '../services/notification_service.dart';
 import '../widgets/countdown_card.dart';
 import '../widgets/time_unit_box.dart';
 import '../widgets/effect_background.dart';
+import '../widgets/premium_dialog.dart';
 
 import 'add_event_screen.dart';
 import 'detail_screen.dart';
@@ -1027,12 +1028,109 @@ class _HomeScreenState extends State<HomeScreen>
                             // Nút Xem toàn màn hình
                             GestureDetector(
                               onTap: () {
-                                AdService.showRewardedAd(
-                                  onEarnedReward: () {
-                                    if (mounted) {
-                                      setState(() { _isFullscreenMode = true; _showFullscreenExitButton = false; });
-                                    }
-                                  },
+                                if (AdService.isPremium) {
+                                  setState(() { _isFullscreenMode = true; _showFullscreenExitButton = false; });
+                                  return;
+                                }
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    backgroundColor: const Color(0xFF1A1A2E),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                      side: const BorderSide(color: Colors.white12),
+                                    ),
+                                    title: Row(
+                                      children: [
+                                        const Icon(Icons.fullscreen_rounded, color: Colors.amber),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Text(
+                                            'Xem Toàn Màn Hình',
+                                            style: GoogleFonts.quicksand(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 18,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    content: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Xem 1 đoạn video quảng cáo ngắn hoặc Nâng cấp Premium để thưởng thức chế độ toàn màn hình tuyệt đẹp!',
+                                          style: GoogleFonts.quicksand(color: Colors.white70, fontSize: 14),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        SizedBox(
+                                          width: double.infinity,
+                                          child: ElevatedButton.icon(
+                                            icon: const Icon(Icons.workspace_premium_rounded, color: Colors.amber, size: 20),
+                                            label: Text(
+                                              'Nâng cấp Premium (\$2.00)',
+                                              style: GoogleFonts.quicksand(
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.amber,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: const Color(0xFF14142B),
+                                              elevation: 0,
+                                              side: const BorderSide(color: Colors.amber, width: 1.5),
+                                              padding: const EdgeInsets.symmetric(vertical: 12),
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                            ),
+                                            onPressed: () {
+                                              Navigator.pop(context);
+                                              PremiumDialog.show(
+                                                context,
+                                                onPremiumUnlocked: () {
+                                                  setState(() {});
+                                                },
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        SizedBox(
+                                          width: double.infinity,
+                                          child: ElevatedButton.icon(
+                                            icon: const Icon(Icons.play_circle_filled_rounded, size: 20),
+                                            label: Text(
+                                              'Xem Quảng Cáo (Miễn phí)',
+                                              style: GoogleFonts.quicksand(fontWeight: FontWeight.bold, fontSize: 14),
+                                            ),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: const Color(0xFF7C3AED),
+                                              foregroundColor: Colors.white,
+                                              padding: const EdgeInsets.symmetric(vertical: 12),
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                            ),
+                                            onPressed: () {
+                                              Navigator.pop(context);
+                                              AdService.showRewardedAd(
+                                                onEarnedReward: () {
+                                                  if (mounted) {
+                                                    setState(() { _isFullscreenMode = true; _showFullscreenExitButton = false; });
+                                                  }
+                                                },
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: Text('Hủy', style: GoogleFonts.quicksand(color: Colors.white54)),
+                                      ),
+                                    ],
+                                  ),
                                 );
                               },
                               child: Container(
