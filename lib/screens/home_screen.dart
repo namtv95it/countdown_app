@@ -1278,7 +1278,7 @@ class _HomeScreenState extends State<HomeScreen>
                                           child: ElevatedButton.icon(
                                             icon: const Icon(Icons.workspace_premium_rounded, color: Colors.amber, size: 20),
                                             label: Text(
-                                              'Nâng cấp Premium (\$2.00)',
+                                              t('upgrade_premium_btn'),
                                               style: GoogleFonts.quicksand(
                                                 fontWeight: FontWeight.bold,
                                                 color: Colors.amber,

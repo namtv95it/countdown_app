@@ -105,7 +105,7 @@ class AdPremiumDialog extends StatelessWidget {
             child: ElevatedButton.icon(
               icon: const Icon(Icons.play_circle_filled_rounded, size: 20, color: Colors.white),
               label: Text(
-                'Xem Quảng Cáo (Miễn phí)',
+                t('watch_ad_free'),
                 style: GoogleFonts.quicksand(
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -131,7 +131,7 @@ class AdPremiumDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text('Hủy', style: GoogleFonts.quicksand(color: Colors.white54)),
+          child: Text(t('cancel'), style: GoogleFonts.quicksand(color: Colors.white54)),
         ),
       ],
     );

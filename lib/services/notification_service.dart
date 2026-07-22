@@ -1,3 +1,4 @@
+import '../services/localization_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -100,10 +101,10 @@ class NotificationService {
 
       await _scheduleNotification(
         id: idCounter++,
-        title: 'Sắp tới: ${event.title} ${event.emoji}',
+        title: t('upcoming_event', params: {'title': event.title, 'emoji': event.emoji}),
         body: reminderDays == 0 
-            ? 'Hôm nay là ngày kỷ niệm của bạn!'
-            : 'Còn $reminderDays ngày nữa là tới ngày ${event.title}.',
+            ? t('anniversary_today')
+            : t('reminder_days_left', params: {'days': reminderDays.toString(), 'title': event.title}),
         scheduledDate: notificationDate,
         playSound: soundEnabled,
       );
@@ -111,7 +112,7 @@ class NotificationService {
   }
 
   Future<void> scheduleTestNotification() async {
-    print('NotificationService: Bắt đầu hẹn giờ test thông báo sau 5 giây...');
+    print('''NotificationService: Test notification in 5s...''');
     final prefs = await SharedPreferences.getInstance();
     final bool soundEnabled = prefs.getBool('sound_enabled') ?? true;
     
@@ -120,8 +121,8 @@ class NotificationService {
     final AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
       'countdown_events_channel_v3',
-      'Sự kiện đếm ngược',
-      channelDescription: 'Nhắc nhở sự kiện sắp tới',
+      t('event_countdown'),
+      channelDescription: t('upcoming_reminder'),
       importance: Importance.max,
       priority: Priority.high,
       playSound: soundEnabled,
@@ -143,17 +144,17 @@ class NotificationService {
     final now = DateTime.now();
     await _notificationsPlugin.zonedSchedule(
       id: 9299,
-      title: 'Thông báo thử nghiệm',
-      body: 'Cấu hình thông báo của bạn đã hoạt động tốt trên Status Bar!',
+      title: t('test_notification_title'),
+      body: t('test_notification_body'),
       scheduledDate: tz.TZDateTime.from(now.add(const Duration(seconds: 5)), tz.local),
       notificationDetails: platformChannelSpecifics,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
-    print('NotificationService: Đã đăng ký hẹn giờ (chờ 5s nữa sẽ nổ)...');
+    print('''NotificationService: Registered test (5s)...''');
     
     // Tạo 1 luồng chờ 5 giây tương đương để in log ra màn hình
     Future.delayed(const Duration(seconds: 5), () {
-      print('NotificationService: BOOM! Thông báo đáng lẽ đã xuất hiện trên màn hình khóa/status bar lúc này!');
+      print('''NotificationService: BOOM!''');
     });
   }
 
@@ -164,17 +165,17 @@ class NotificationService {
     final daysDiff = event.daysRemaining;
     String bodyText;
     if (daysDiff == 0) {
-      bodyText = 'Hôm nay là ngày kỷ niệm!';
+      bodyText = t('today_is_anniversary');
     } else if (daysDiff > 0) {
-      bodyText = 'Còn $daysDiff ngày nữa';
+      bodyText = t('days_left_notif', params: {'days': daysDiff.toString()});
     } else {
-      bodyText = 'Đã qua ${daysDiff.abs()} ngày';
+      bodyText = t('days_passed_notif', params: {'days': daysDiff.abs().toString()});
     }
 
     final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       'countdown_pinned_channel',
-      'Sự kiện được ghim',
-      channelDescription: 'Thông báo cố định trên thanh trạng thái',
+      t('pinned_event'),
+      channelDescription: t('pinned_notif_body'),
       importance: Importance.defaultImportance,
       priority: Priority.low, // Để không kêu vang liên tục khi update
       ongoing: true,          // Thông báo dính
@@ -215,8 +216,8 @@ class NotificationService {
     final AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
       'countdown_events_channel_v3',
-      'Sự kiện đếm ngược',
-      channelDescription: 'Nhắc nhở sự kiện sắp tới',
+      t('event_countdown'),
+      channelDescription: t('upcoming_reminder'),
       importance: Importance.max,
       priority: Priority.high,
       playSound: playSound,

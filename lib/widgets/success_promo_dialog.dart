@@ -100,7 +100,7 @@ class SuccessPromoDialog extends StatelessWidget {
 
             // Tiêu đề
             Text(
-              '🎉 CHÚC MỪNG BẠN!',
+              t('congrats_title'),
               style: GoogleFonts.quicksand(
                 fontSize: 22,
                 fontWeight: FontWeight.w900,
@@ -112,8 +112,8 @@ class SuccessPromoDialog extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               promoCode.type == PromoType.premium
-                  ? 'Kích Hoạt Tài Khoản VIP Thành Công'
-                  : 'Kích Hoạt Gift Code Thành Công',
+                  ? t('vip_activated_success')
+                  : t('gift_activated_success'),
               style: GoogleFonts.quicksand(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
@@ -128,8 +128,8 @@ class SuccessPromoDialog extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Text(
                 promoCode.type == PromoType.premium
-                    ? 'Chào mừng bạn gia nhập thành viên VIP Premium! Từ bây giờ, ứng dụng của bạn đã sẵn sàng với 100% tính năng cao cấp không có quảng cáo.'
-                    : 'Chúc mừng bạn đã mở khóa thành công ${promoCode.description}! Hiệu ứng mới đã được áp dụng và sẵn sàng để sử dụng.',
+                    ? t('welcome_vip_desc')
+                    : t('unlock_success_desc', params: {'promo': promoCode.description}),
                 textAlign: TextAlign.center,
                 style: GoogleFonts.quicksand(
                   fontSize: 13,
@@ -154,22 +154,22 @@ class SuccessPromoDialog extends StatelessWidget {
                 children: [
                   _buildDetailRow(
                     icon: Icons.card_giftcard_rounded,
-                    label: 'Gói kích hoạt:',
+                    label: t('activation_package'),
                     value: promoCode.description,
                     valueColor: const Color(0xFF10B981),
                   ),
                   const Divider(color: Colors.white12, height: 16),
                   _buildDetailRow(
                     icon: Icons.vpn_key_rounded,
-                    label: 'Mã sử dụng:',
+                    label: t('usage_code'),
                     value: promoCode.code,
                     valueColor: const Color(0xFFFFD700),
                   ),
                   const Divider(color: Colors.white12, height: 16),
                   _buildDetailRow(
                     icon: Icons.all_inclusive_rounded,
-                    label: 'Thời hạn sử dụng:',
-                    value: 'Vĩnh viễn ✨',
+                    label: t('expiration_date'),
+                    value: t('lifetime'),
                     valueColor: const Color(0xFFFFD700),
                   ),
                 ],
@@ -211,7 +211,7 @@ class SuccessPromoDialog extends StatelessWidget {
                           const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 20),
                           const SizedBox(width: 8),
                           Text(
-                            'KHÁM PHÁ NGAY',
+                            t('explore_now'),
                             style: GoogleFonts.quicksand(
                               fontSize: 15,
                               fontWeight: FontWeight.w900,

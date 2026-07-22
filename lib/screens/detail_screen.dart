@@ -357,10 +357,10 @@ class _DetailScreenState extends State<DetailScreen>
                     ),
                     child: Column(
                       children: [
-                        const Text('🎉', style: TextStyle(fontSize: 48)),
+                        Text(t('congratulation_word'), style: const TextStyle(fontSize: 48)),
                         const SizedBox(height: 12),
                         Text(
-                          'Chúc mừng',
+                          t('congratulation_word'),
                           style: GoogleFonts.quicksand(
                             fontSize: 20,
                             fontWeight: FontWeight.w600,

@@ -194,7 +194,7 @@ class _GiftScreenState extends State<GiftScreen> {
             backgroundColor: const Color(0xFFEC4899),
             icon: const Icon(Icons.mail_rounded, color: Colors.white),
             label: Text(
-              'Lời chúc',
+              t('wish_button_short'),
               style: GoogleFonts.quicksand(
                 fontWeight: FontWeight.w700,
                 color: Colors.white,
@@ -221,7 +221,7 @@ class _GiftScreenState extends State<GiftScreen> {
       padding: const EdgeInsets.all(20),
       children: [
         Text(
-          '💌 Tạo lời chúc',
+          t('wish_button'),
           style: GoogleFonts.quicksand(
             fontSize: 26, 
             fontWeight: FontWeight.w900, 
@@ -234,7 +234,7 @@ class _GiftScreenState extends State<GiftScreen> {
         if (_isGenerating) _buildShimmerWishes(),
         if (!_isGenerating && _generatedWishes.isNotEmpty) ...[
           Text(
-            '✨ Lời chúc gợi ý',
+            t('suggested_wishes'),
             key: _wishesHeaderKey,
             style: GoogleFonts.quicksand(
                 fontSize: 16,
@@ -262,7 +262,7 @@ class _GiftScreenState extends State<GiftScreen> {
                       color: Colors.white54, size: 18),
                   const SizedBox(width: 8),
                   Text(
-                    'Tạo lại lời chúc khác',
+                    t('regenerate_wish'),
                     style: GoogleFonts.quicksand(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -315,7 +315,7 @@ class _GiftScreenState extends State<GiftScreen> {
               controller: _senderController,
               style: inputStyle,
               decoration: InputDecoration(
-                hintText: 'VD: Nam, Lan, anh Hùng...',
+                hintText: t('sender_hint'),
                 hintStyle: hintStyle,
                 prefixIcon:
                     const Icon(Icons.person_rounded, color: Colors.white38),
@@ -338,7 +338,7 @@ class _GiftScreenState extends State<GiftScreen> {
               controller: _receiverController,
               style: inputStyle,
               decoration: InputDecoration(
-                hintText: 'VD: em Hoa, vợ yêu, mẹ...',
+                hintText: t('receiver_hint'),
                 hintStyle: hintStyle,
                 prefixIcon: const Icon(Icons.favorite_rounded,
                     color: Colors.white38),
@@ -404,7 +404,7 @@ class _GiftScreenState extends State<GiftScreen> {
                   children: [
                     const Text('✨ ', style: TextStyle(fontSize: 16)),
                     Text(
-                      'Tạo lời chúc',
+                      t('create_wish'),
                       style: GoogleFonts.quicksand(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,

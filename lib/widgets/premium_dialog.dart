@@ -38,7 +38,7 @@ class _PremiumDialogState extends State<PremiumDialog> {
   Future<void> _redeemPromoCode() async {
     final code = _promoController.text.trim();
     if (code.isEmpty) {
-      setState(() => _promoError = 'Vui lòng nhập gift code!');
+      setState(() => _promoError = t('please_enter_gift_code'));
       return;
     }
 
@@ -174,7 +174,7 @@ class _PremiumDialogState extends State<PremiumDialog> {
                     const Icon(Icons.stars_rounded, color: Color(0xFFFFD700), size: 22),
                     const SizedBox(width: 6),
                     Text(
-                      'TÀI KHOẢN VIP PREMIUM',
+                      t('vip_account_premium'),
                       style: GoogleFonts.quicksand(
                         fontSize: 20,
                         fontWeight: FontWeight.w900,
@@ -202,7 +202,7 @@ class _PremiumDialogState extends State<PremiumDialog> {
                       const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 14),
                       const SizedBox(width: 6),
                       Text(
-                        'Đã kích hoạt • Bản quyền Vĩnh viễn',
+                        t('activated_lifetime'),
                         style: GoogleFonts.quicksand(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -218,7 +218,7 @@ class _PremiumDialogState extends State<PremiumDialog> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Text(
-                    'Cảm ơn bạn đã ủng hộ ứng dụng Đếm ngược Kỷ niệm! Bạn đang tận hưởng 100% các đặc quyền VIP cao cấp nhất:',
+                    t('thanks_vip'),
                     textAlign: TextAlign.center,
                     style: GoogleFonts.quicksand(
                       fontSize: 13,
@@ -237,15 +237,15 @@ class _PremiumDialogState extends State<PremiumDialog> {
                     children: [
                       _buildFeatureItem(
                         icon: Icons.check_circle_outline_rounded,
-                        title: 'Đã Ẩn 100% Quảng cáo',
-                        desc: 'Không bao giờ xuất hiện banner hay video làm phiền',
+                        title: t('ads_hidden'),
+                        desc: t('no_ads_desc'),
                         iconColor: const Color(0xFF10B981),
                       ),
                       const SizedBox(height: 12),
                       _buildFeatureItem(
                         icon: Icons.check_circle_outline_rounded,
-                        title: 'Đã Mở khóa Tất cả Hiệu ứng Nền',
-                        desc: 'Thỏa sức chọn hiệu ứng hình nền độc quyền',
+                        title: t('effects_unlocked'),
+                        desc: t('effects_unlocked_desc'),
                         iconColor: const Color(0xFF10B981),
                       ),
                     ],
@@ -287,7 +287,7 @@ class _PremiumDialogState extends State<PremiumDialog> {
                               const Icon(Icons.workspace_premium_rounded, color: Color(0xFF1A1A2E), size: 22),
                               const SizedBox(width: 8),
                               Text(
-                                'BẠN ĐANG LÀ THÀNH VIÊN VIP ✨',
+                                t('you_are_vip'),
                                 style: GoogleFonts.quicksand(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w900,
@@ -402,7 +402,7 @@ class _PremiumDialogState extends State<PremiumDialog> {
 
               // Tiêu đề & Giá
               Text(
-                'MỞ KHÓA PREMIUM VIP',
+                t('unlock_premium_vip'),
                 style: GoogleFonts.quicksand(
                   fontSize: 20,
                   fontWeight: FontWeight.w900,
@@ -439,22 +439,22 @@ class _PremiumDialogState extends State<PremiumDialog> {
                   children: [
                     _buildFeatureItem(
                       icon: Icons.block_rounded,
-                      title: 'Ẩn 100% Quảng cáo',
-                      desc: 'Trải nghiệm ứng dụng mượt mà không bị gián đoạn',
+                      title: t('hide_ads_title'),
+                      desc: t('hide_ads_desc'),
                       iconColor: const Color(0xFFEF4444),
                     ),
                     const SizedBox(height: 12),
                     _buildFeatureItem(
                       icon: Icons.auto_awesome_rounded,
-                      title: 'Mở khóa Tất cả Hiệu ứng Nền',
-                      desc: 'Tự do chọn hiệu ứng hình nền độc quyền',
+                      title: t('unlock_effects_title'),
+                      desc: t('unlock_effects_desc'),
                       iconColor: const Color(0xFFEC4899),
                     ),
                     const SizedBox(height: 12),
                     _buildFeatureItem(
                       icon: Icons.stars_rounded,
-                      title: 'Huy hiệu VIP Đặc biệt',
-                      desc: 'Tài khoản Premium vĩnh viễn không tính phí hàng tháng',
+                      title: t('special_vip_badge'),
+                      desc: t('no_monthly_fee'),
                       iconColor: const Color(0xFFFFD700),
                     ),
                   ],
@@ -484,7 +484,7 @@ class _PremiumDialogState extends State<PremiumDialog> {
                                 const Icon(Icons.stars_rounded, color: Colors.amber),
                                 const SizedBox(width: 10),
                                 Text(
-                                  '🎉 Bạn đã nâng cấp Premium thành công!',
+                                  t('upgrade_success'),
                                   style: GoogleFonts.quicksand(
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white,
@@ -556,7 +556,7 @@ class _PremiumDialogState extends State<PremiumDialog> {
                         },
                         icon: const Icon(Icons.vpn_key_rounded, size: 16, color: Colors.amber),
                         label: Text(
-                          'Bạn có mã kích hoạt hoặc Gift Code?',
+                          t('have_gift_code'),
                           style: GoogleFonts.quicksand(
                             fontSize: 13,
                             color: Colors.amber,
@@ -577,7 +577,7 @@ class _PremiumDialogState extends State<PremiumDialog> {
                                 fontSize: 14,
                               ),
                               decoration: InputDecoration(
-                                hintText: 'Nhập gift code',
+                                hintText: t('enter_gift_code'),
                                 hintStyle: GoogleFonts.quicksand(
                                   color: Colors.white38,
                                   fontSize: 12,
@@ -624,7 +624,7 @@ class _PremiumDialogState extends State<PremiumDialog> {
                                     ),
                                   )
                                 : Text(
-                                    'Áp dụng',
+                                    t('apply'),
                                     style: GoogleFonts.quicksand(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 13,
