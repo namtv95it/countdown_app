@@ -42,8 +42,6 @@ class _HomeScreenState extends State<HomeScreen>
   int _currentTab = 0;
   int _featuredIndex = 0;
 
-  // Timer ticking mỗi giây để rebuild countdown
-  Timer? _timer;
   BannerAd? _bannerAd;
   bool _isBannerAdReady = false;
   late PageController _pageController;
@@ -137,7 +135,6 @@ class _HomeScreenState extends State<HomeScreen>
     _pageController = PageController(initialPage: 0);
     _checkFirstLaunchPermissions();
     _loadAnniversaries();
-    _startTimer();
     _loadBannerAd();
   }
 
@@ -149,12 +146,6 @@ class _HomeScreenState extends State<HomeScreen>
       await NotificationService().requestPermissions();
       await prefs.setBool('has_requested_notification_permission', true);
     }
-  }
-
-  void _startTimer() {
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() {});
-    });
   }
 
   void _loadBannerAd() {
@@ -184,7 +175,6 @@ class _HomeScreenState extends State<HomeScreen>
   void dispose() {
     _pageController.dispose();
     _eventsScrollController.dispose();
-    _timer?.cancel();
     _hideExitButtonTimer?.cancel();
     _bannerAd?.dispose();
     super.dispose();
@@ -220,15 +210,6 @@ class _HomeScreenState extends State<HomeScreen>
         _isLoading = false;
       });
     }
-  }
-
-  /// Tính thời gian còn lại tới 00:00:00 của ngày sự kiện
-  Duration _computeRemaining(Anniversary ann) {
-    final target = ann.displayDate;
-    // Đếm đến đầu ngày (00:00:00) — ngày kỷ niệm bắt đầu
-    final targetDt = DateTime(target.year, target.month, target.day);
-    final now = DateTime.now();
-    return targetDt.isAfter(now) ? targetDt.difference(now) : Duration.zero;
   }
 
   void _sortAnniversaries() {
@@ -465,23 +446,21 @@ class _HomeScreenState extends State<HomeScreen>
             : Stack(
                 children: [
                   RepaintBoundary(
+                    child: EffectBackground(effectType: _selectedEffect),
+                  ),
+                  RepaintBoundary(
                     key: _repaintBoundaryKey,
-                    child: Stack(
-                      children: [
-                        EffectBackground(effectType: _selectedEffect),
-                        GestureDetector(
-                          behavior: HitTestBehavior.translucent,
-                          onTap: () {
-                            if (_isFullscreenMode) {
-                              setState(() {
-                                _showFullscreenExitButton = true;
-                              });
-                              _scheduleHideExitButton();
-                            }
-                          },
-                          child: _buildCurrentTab(),
-                        ),
-                      ],
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.translucent,
+                      onTap: () {
+                        if (_isFullscreenMode) {
+                          setState(() {
+                            _showFullscreenExitButton = true;
+                          });
+                          _scheduleHideExitButton();
+                        }
+                      },
+                      child: _buildCurrentTab(),
                     ),
                   ),
                   if (_isFullscreenMode) ...[
@@ -753,11 +732,6 @@ class _HomeScreenState extends State<HomeScreen>
                     final itemColor = item.color;
                     final days = item.daysRemaining;
                     final isToday = days == 0;
-                    final remaining = _computeRemaining(item);
-                    final daysLeft = remaining.inDays;
-                    final hours = remaining.inHours % 24;
-                    final minutes = remaining.inMinutes % 60;
-                    final seconds = remaining.inSeconds % 60;
 
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -901,33 +875,52 @@ class _HomeScreenState extends State<HomeScreen>
 
 
                             // ── Countdown boxes ──
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                TimeUnitBox(
-                                  value: daysLeft.toString().padLeft(2, '0'),
-                                  label: 'Ngày',
-                                  color: itemColor,
-                                ),
-                                _separator(itemColor),
-                                TimeUnitBox(
-                                  value: hours.toString().padLeft(2, '0'),
-                                  label: 'Giờ',
-                                  color: itemColor,
-                                ),
-                                _separator(itemColor),
-                                TimeUnitBox(
-                                  value: minutes.toString().padLeft(2, '0'),
-                                  label: 'Phút',
-                                  color: itemColor,
-                                ),
-                                _separator(itemColor),
-                                TimeUnitBox(
-                                  value: seconds.toString().padLeft(2, '0'),
-                                  label: 'Giây',
-                                  color: itemColor,
-                                ),
-                              ],
+                            StreamBuilder<DateTime>(
+                              stream: Stream.periodic(const Duration(seconds: 1), (_) => DateTime.now()),
+                              builder: (context, snapshot) {
+                                final now = snapshot.data ?? DateTime.now();
+                                final targetDt = DateTime(
+                                  item.displayDate.year,
+                                  item.displayDate.month,
+                                  item.displayDate.day,
+                                );
+                                final remaining = targetDt.isAfter(now)
+                                    ? targetDt.difference(now)
+                                    : Duration.zero;
+                                final daysLeft = remaining.inDays;
+                                final hours = remaining.inHours % 24;
+                                final minutes = remaining.inMinutes % 60;
+                                final seconds = remaining.inSeconds % 60;
+
+                                return Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    TimeUnitBox(
+                                      value: daysLeft.toString().padLeft(2, '0'),
+                                      label: 'Ngày',
+                                      color: itemColor,
+                                    ),
+                                    _separator(itemColor),
+                                    TimeUnitBox(
+                                      value: hours.toString().padLeft(2, '0'),
+                                      label: 'Giờ',
+                                      color: itemColor,
+                                    ),
+                                    _separator(itemColor),
+                                    TimeUnitBox(
+                                      value: minutes.toString().padLeft(2, '0'),
+                                      label: 'Phút',
+                                      color: itemColor,
+                                    ),
+                                    _separator(itemColor),
+                                    TimeUnitBox(
+                                      value: seconds.toString().padLeft(2, '0'),
+                                      label: 'Giây',
+                                      color: itemColor,
+                                    ),
+                                  ],
+                                );
+                              },
                             ),
                           ],
 
