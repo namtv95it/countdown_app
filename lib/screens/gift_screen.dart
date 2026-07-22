@@ -43,6 +43,19 @@ class _GiftScreenState extends State<GiftScreen> {
     _webViewController = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(const Color(0x00000000))
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onNavigationRequest: (NavigationRequest request) {
+            // Chỉ cho phép điều hướng nội bộ trên Github Pages
+            if (request.url.startsWith('https://namtv95it.github.io')) {
+              return NavigationDecision.navigate;
+            }
+            // Các link bên ngoài (Shopee, web khác) -> mở ứng dụng bên ngoài
+            _openUrl(request.url);
+            return NavigationDecision.prevent;
+          },
+        ),
+      )
       ..loadRequest(Uri.parse(url));
   }
 
@@ -134,48 +147,23 @@ class _GiftScreenState extends State<GiftScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: SafeArea(
-        bottom: false,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 150.0),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            _buildHeader(),
-            Expanded(
-              child: _buildGiftTab(),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF7C3AED), Color(0xFFEC4899)],
-              ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Text('🎁', style: TextStyle(fontSize: 18)),
+            FloatingActionButton.small(
+            heroTag: 'refresh_fab',
+            onPressed: () => _webViewController.reload(),
+            backgroundColor: const Color(0xFF1A1A2E),
+            foregroundColor: Colors.white70,
+            child: const Icon(Icons.refresh_rounded),
           ),
-          const SizedBox(width: 12),
-          Text(
-            'Quà Tặng',
-            style: GoogleFonts.quicksand(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-            ),
-          ),
-          const Spacer(),
-          // Nút Lời chúc
-          GestureDetector(
-            onTap: () {
+          const SizedBox(height: 12),
+          FloatingActionButton.extended(
+            heroTag: 'wish_fab',
+            onPressed: () {
               showModalBottomSheet(
                 context: context,
                 isScrollControlled: true,
@@ -189,43 +177,26 @@ class _GiftScreenState extends State<GiftScreen> {
                 ),
               );
             },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF7C3AED), Color(0xFFEC4899)],
-                ),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF7C3AED).withValues(alpha: 0.35),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.mail_rounded,
-                      color: Colors.white, size: 15),
-                  const SizedBox(width: 5),
-                  Text(
-                    'Lời chúc',
-                    style: GoogleFonts.quicksand(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
+            backgroundColor: const Color(0xFFEC4899),
+            icon: const Icon(Icons.mail_rounded, color: Colors.white),
+            label: Text(
+              'Lời chúc',
+              style: GoogleFonts.quicksand(
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
               ),
             ),
           ),
         ],
       ),
+      ),
+      body: SafeArea(
+        bottom: false,
+        child: _buildGiftTab(),
+      ),
     );
   }
+
 
   // ──────────────────────────────────────────────────────────────
   // Lời chúc (BottomSheet Content)
