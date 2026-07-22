@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/intl.dart';
@@ -347,116 +348,221 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
+  Future<bool> _showExitConfirmDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A2E),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: Colors.white12),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEC4899).withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.exit_to_app_rounded,
+                color: Color(0xFFEC4899),
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Thoát ứng dụng',
+              style: GoogleFonts.quicksand(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'Bạn có chắc chắn muốn thoát khỏi ứng dụng Đếm ngược Kỷ niệm không?',
+          style: GoogleFonts.quicksand(
+            color: Colors.white70,
+            fontSize: 14,
+            height: 1.4,
+          ),
+        ),
+        actionsPadding: const EdgeInsets.only(right: 16, bottom: 16, left: 16),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            ),
+            child: Text(
+              'Hủy',
+              style: GoogleFonts.quicksand(
+                color: Colors.white54,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF7C3AED),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(
+              'Thoát',
+              style: GoogleFonts.quicksand(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0D0D1A),
-      extendBody: true, // Thêm dòng này để body chìm dưới BottomNav trong suốt
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF7C3AED)),
-            )
-          : Stack(
-              children: [
-                RepaintBoundary(
-                  key: _repaintBoundaryKey,
-                  child: Stack(
-                    children: [
-                      EffectBackground(effectType: _selectedEffect),
-                      GestureDetector(
-                        behavior: HitTestBehavior.translucent,
-                        onTap: () {
-                          if (_isFullscreenMode) {
-                            setState(() {
-                              _showFullscreenExitButton = true;
-                            });
-                            _scheduleHideExitButton();
-                          }
-                        },
-                        child: _buildCurrentTab(),
-                      ),
-                    ],
-                  ),
-                ),
-                if (_isFullscreenMode) ...[
-                  Positioned(
-                    top: 40,
-                    right: 20,
-                    child: AnimatedOpacity(
-                      opacity: _showFullscreenExitButton ? 1.0 : 0.0,
-                      duration: const Duration(milliseconds: 300),
-                      child: IgnorePointer(
-                        ignoring: !_showFullscreenExitButton,
-                        child: IconButton(
-                          icon: const Icon(Icons.fullscreen_exit_rounded, color: Colors.white, size: 30),
-                          style: IconButton.styleFrom(
-                            backgroundColor: Colors.black45,
-                          ),
-                          onPressed: () {
-                            setState(() => _isFullscreenMode = false);
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) async {
+        if (didPop) return;
+        if (_isFullscreenMode) {
+          setState(() {
+            _isFullscreenMode = false;
+          });
+          return;
+        }
+        if (_currentTab != 0) {
+          setState(() {
+            _currentTab = 0;
+          });
+          return;
+        }
+        final shouldExit = await _showExitConfirmDialog();
+        if (shouldExit) {
+          SystemNavigator.pop();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFF0D0D1A),
+        extendBody: true, // Thêm dòng này để body chìm dưới BottomNav trong suốt
+        body: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(color: Color(0xFF7C3AED)),
+              )
+            : Stack(
+                children: [
+                  RepaintBoundary(
+                    key: _repaintBoundaryKey,
+                    child: Stack(
+                      children: [
+                        EffectBackground(effectType: _selectedEffect),
+                        GestureDetector(
+                          behavior: HitTestBehavior.translucent,
+                          onTap: () {
+                            if (_isFullscreenMode) {
+                              setState(() {
+                                _showFullscreenExitButton = true;
+                              });
+                              _scheduleHideExitButton();
+                            }
                           },
+                          child: _buildCurrentTab(),
                         ),
-                      ),
+                      ],
                     ),
                   ),
-                  Positioned(
-                    bottom: 40,
-                    left: 0,
-                    right: 0,
-                    child: Center(
+                  if (_isFullscreenMode) ...[
+                    Positioned(
+                      top: 40,
+                      right: 20,
                       child: AnimatedOpacity(
                         opacity: _showFullscreenExitButton ? 1.0 : 0.0,
                         duration: const Duration(milliseconds: 300),
                         child: IgnorePointer(
                           ignoring: !_showFullscreenExitButton,
-                          child: GestureDetector(
-                            onTap: _isCapturing ? null : () async {
-                              // Không ẩn nút ngay lập tức để hiển thị chữ "Đang chụp..."
-                              await _captureAndShareScreenshot();
+                          child: IconButton(
+                            icon: const Icon(Icons.fullscreen_exit_rounded, color: Colors.white, size: 30),
+                            style: IconButton.styleFrom(
+                              backgroundColor: Colors.black45,
+                            ),
+                            onPressed: () {
+                              setState(() => _isFullscreenMode = false);
                             },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                              decoration: BoxDecoration(
-                                color: Colors.black45,
-                                borderRadius: BorderRadius.circular(25),
-                                border: Border.all(color: Colors.white24, width: 1),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  if (_isCapturing) ...[
-                                    const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 40,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                        child: AnimatedOpacity(
+                          opacity: _showFullscreenExitButton ? 1.0 : 0.0,
+                          duration: const Duration(milliseconds: 300),
+                          child: IgnorePointer(
+                            ignoring: !_showFullscreenExitButton,
+                            child: GestureDetector(
+                              onTap: _isCapturing ? null : () async {
+                                // Không ẩn nút ngay lập tức để hiển thị chữ "Đang chụp..."
+                                await _captureAndShareScreenshot();
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: Colors.black45,
+                                  borderRadius: BorderRadius.circular(25),
+                                  border: Border.all(color: Colors.white24, width: 1),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (_isCapturing) ...[
+                                      const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                        ),
+                                      ),
+                                    ] else ...[
+                                      const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 24),
+                                    ],
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      _isCapturing ? 'Đang chụp...' : 'Chụp màn hình',
+                                      style: GoogleFonts.quicksand(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
-                                  ] else ...[
-                                    const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 24),
                                   ],
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    _isCapturing ? 'Đang chụp...' : 'Chụp màn hình',
-                                    style: GoogleFonts.quicksand(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
                             ),
                           ),
                         ),
                       ),
                     ),
-                  ),
+                  ],
                 ],
-              ],
-            ),
-      bottomNavigationBar: _isFullscreenMode ? const SizedBox.shrink() : _buildBottomNav(),
+              ),
+        bottomNavigationBar: _isFullscreenMode ? const SizedBox.shrink() : _buildBottomNav(),
+      ),
     );
   }
 
