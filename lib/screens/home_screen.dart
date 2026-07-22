@@ -21,6 +21,7 @@ import '../widgets/time_unit_box.dart';
 import '../widgets/effect_background.dart';
 import '../widgets/premium_dialog.dart';
 import '../widgets/theme_picker_sheet.dart';
+import '../widgets/congratulations_view.dart';
 import 'package:file_picker/file_picker.dart';
 
 import 'add_event_screen.dart';
@@ -54,6 +55,50 @@ class _HomeScreenState extends State<HomeScreen>
   Timer? _hideExitButtonTimer;
   final GlobalKey _repaintBoundaryKey = GlobalKey();
   bool _isCapturing = false;
+  DateTime? _customCountdownTarget;
+  void _showCustomTimerDialog() {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E1E2C),
+          title: Text('Cài đặt đếm ngược', style: GoogleFonts.quicksand(color: Colors.white)),
+          content: TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            style: const TextStyle(color: Colors.white),
+            decoration: const InputDecoration(
+              hintText: 'Nhập số giây (tối đa 60)',
+              hintStyle: TextStyle(color: Colors.white54),
+              enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
+              focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Color(0xFF7C3AED))),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Hủy', style: GoogleFonts.quicksand(color: Colors.white54)),
+            ),
+            TextButton(
+              onPressed: () {
+                final seconds = int.tryParse(controller.text) ?? 0;
+                if (seconds > 0) {
+                  final s = seconds > 60 ? 60 : seconds;
+                  setState(() {
+                    _customCountdownTarget = DateTime.now().add(Duration(seconds: s));
+                  });
+                  Navigator.pop(context);
+                }
+              },
+              child: Text('Bắt đầu', style: GoogleFonts.quicksand(color: const Color(0xFF7C3AED))),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   Future<void> _captureAndShareScreenshot() async {
     if (_isCapturing) return;
@@ -552,6 +597,7 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                       ),
                     ),
+
                     Positioned(
                       bottom: 40,
                       left: 0,
@@ -562,45 +608,77 @@ class _HomeScreenState extends State<HomeScreen>
                           duration: const Duration(milliseconds: 300),
                           child: IgnorePointer(
                             ignoring: !_showFullscreenExitButton,
-                            child: GestureDetector(
-                              onTap: _isCapturing ? null : () async {
-                                // Không ẩn nút ngay lập tức để hiển thị chữ "Đang chụp..."
-                                await _captureAndShareScreenshot();
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                                decoration: BoxDecoration(
-                                  color: Colors.black45,
-                                  borderRadius: BorderRadius.circular(25),
-                                  border: Border.all(color: Colors.white24, width: 1),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    if (_isCapturing) ...[
-                                      const SizedBox(
-                                        width: 16,
-                                        height: 16,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                        ),
-                                      ),
-                                    ] else ...[
-                                      const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 24),
-                                    ],
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      _isCapturing ? 'Đang chụp...' : 'Chụp màn hình',
-                                      style: GoogleFonts.quicksand(
-                                        color: Colors.white,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                      ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                GestureDetector(
+                                  onTap: _showCustomTimerDialog,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black45,
+                                      borderRadius: BorderRadius.circular(25),
+                                      border: Border.all(color: Colors.white24, width: 1),
                                     ),
-                                  ],
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.timer_outlined, color: Colors.white, size: 24),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Cài đặt bộ đếm',
+                                          style: GoogleFonts.quicksand(
+                                            color: Colors.white,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                const SizedBox(height: 16),
+                                GestureDetector(
+                                  onTap: _isCapturing ? null : () async {
+                                    // Không ẩn nút ngay lập tức để hiển thị chữ "Đang chụp..."
+                                    await _captureAndShareScreenshot();
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black45,
+                                      borderRadius: BorderRadius.circular(25),
+                                      border: Border.all(color: Colors.white24, width: 1),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        if (_isCapturing) ...[
+                                          const SizedBox(
+                                            width: 16,
+                                            height: 16,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                            ),
+                                          ),
+                                        ] else ...[
+                                          const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 24),
+                                        ],
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          _isCapturing ? 'Đang chụp...' : 'Chụp màn hình',
+                                          style: GoogleFonts.quicksand(
+                                            color: Colors.white,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -950,40 +1028,8 @@ class _HomeScreenState extends State<HomeScreen>
 
                           const SizedBox(height: 16),
 
-                          if (isToday)
-                            Column(
-                              children: [
-                                  // ── Chúc mừng: layout gọn gàng, 1 dòng đẹp ──
-                                  ShaderMask(
-                                    shaderCallback: (bounds) => const LinearGradient(
-                                      colors: [
-                                        Color(0xFFFFD700),
-                                        Color(0xFFFFA500),
-                                        Color(0xFFFFD700),
-                                      ],
-                                    ).createShader(bounds),
-                                    child: Text(
-                                      '🎊 Chúc mừng!',
-                                      style: GoogleFonts.quicksand(
-                                        fontSize: 32,
-                                        fontWeight: FontWeight.w900,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Hôm nay là ${item.title}',
-                                    style: GoogleFonts.quicksand(
-                                      fontSize: 15,
-                                      color: Colors.white70,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-
-                                ],
-                              )
+                          if (isToday && (_customCountdownTarget == null || !_isFullscreenMode))
+                            CongratulationsView(title: item.title)
                           else ...[
 
 
@@ -992,14 +1038,21 @@ class _HomeScreenState extends State<HomeScreen>
                               stream: Stream.periodic(const Duration(seconds: 1), (_) => DateTime.now()),
                               builder: (context, snapshot) {
                                 final now = snapshot.data ?? DateTime.now();
-                                final targetDt = DateTime(
-                                  item.displayDate.year,
-                                  item.displayDate.month,
-                                  item.displayDate.day,
-                                );
+                                final targetDt = (_isFullscreenMode && _customCountdownTarget != null)
+                                    ? _customCountdownTarget!
+                                    : DateTime(
+                                        item.displayDate.year,
+                                        item.displayDate.month,
+                                        item.displayDate.day,
+                                      );
                                 final remaining = targetDt.isAfter(now)
                                     ? targetDt.difference(now)
                                     : Duration.zero;
+
+                                if (remaining == Duration.zero) {
+                                  return CongratulationsView(title: item.title);
+                                }
+
                                 final daysLeft = remaining.inDays;
                                 final hours = remaining.inHours % 24;
                                 final minutes = remaining.inMinutes % 60;
