@@ -51,20 +51,26 @@ html, body {
 /* Occasion banner chip */
 .occasion-chip {
     transition: all 0.2s ease-in-out;
-    animation: occasion-pulse 2.5s ease-in-out infinite;
 }
 
 .occasion-chip:hover {
-    transform: translateY(-2px) scale(1.03);
-    filter: brightness(1.15);
+    filter: brightness(1.1);
 }
 
 .occasion-chip:active {
-    transform: scale(0.97);
+    transform: scale(0.98);
 }
 
-@keyframes occasion-pulse {
-    0%, 100% { box-shadow: 0 4px 14px rgba(0,0,0,0.3); }
-    50% { box-shadow: 0 6px 20px rgba(0,0,0,0.45); }
+/* CTA "Nhấn để xem" blinking text */
+.cta-blink {
+    color: rgba(255, 255, 255, 0.95);
+    animation: cta-pulse 1.6s ease-in-out infinite;
+    display: inline-block;
 }
+
+@keyframes cta-pulse {
+    0%, 100% { opacity: 0.95; text-shadow: 0 0 0px rgba(255,255,255,0); }
+    50%       { opacity: 0.45; text-shadow: 0 0 6px rgba(255,255,255,0.6); }
+}
+
 
