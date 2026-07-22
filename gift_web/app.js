@@ -43,26 +43,27 @@ function renderOccasions() {
 
     occasions.forEach((occ, index) => {
         const btn = document.createElement('button');
-        // Thêm snap-center flex-shrink-0 min-w-full để cuộn từng cái
-        btn.className = 'occasion-chip min-w-full flex-shrink-0 snap-center flex items-center gap-3 px-4 py-3 rounded-2xl outline-none text-white shadow-sm';
+        // Sử dụng w-full để cố định chiều rộng bằng 100% container, không bị giãn nở
+        btn.className = 'occasion-chip w-full max-w-full flex-shrink-0 snap-center flex items-center gap-3 px-4 py-3 rounded-2xl outline-none text-white shadow-sm';
         btn.style.background = occ.gradient;
 
         const isToday = occ.daysLeft === 0;
 
         btn.innerHTML = `
-            <!-- LEFT: Emoji + info một hàng -->
-            <span class="text-2xl flex-shrink-0">${occ.emoji}</span>
-            <div class="flex flex-col items-start leading-none flex-1 min-w-0">
-                <div class="flex items-baseline gap-2 flex-wrap mb-1">
-                    <span class="text-[15px] font-extrabold truncate">${occ.name}</span>
-                    <span class="text-[11px] opacity-75 font-medium">${occ.dateLabel}</span>
-                </div>
-                <span class="cta-blink text-[10px] font-bold"><i class="fa-solid fa-hand-pointer mr-1"></i>Nhấn để xem quà tặng</span>
+            <!-- LEFT: Emoji + info -->
+            <span class="text-3xl flex-shrink-0">${occ.emoji}</span>
+            <div class="flex flex-col items-start leading-tight flex-1 min-w-0 gap-0.5">
+                <span class="text-[16px] font-extrabold truncate w-full text-left">${occ.name}</span>
+                <span class="text-[12px] opacity-90 font-medium w-full text-left">${occ.dateLabel}</span>
+                <span class="cta-blink text-[10px] font-bold mt-0.5 text-white/90"><i class="fa-solid fa-gift mr-1"></i>Nhấn để xem quà tặng</span>
             </div>
             <!-- RIGHT: Số ngày -->
-            <div class="flex-shrink-0 flex items-center gap-1 bg-black/20 rounded-xl px-3 py-2">
-                <span class="text-[20px] font-black tabular-nums leading-none">${isToday ? '🎉' : occ.daysLeft}</span>
-                ${isToday ? '' : '<span class="text-[10px] font-bold opacity-70 leading-none mt-1">ngày</span>'}
+            <div class="flex-shrink-0 flex flex-col items-start justify-center bg-black/25 rounded-xl px-3 py-1.5 min-w-[68px]">
+                ${isToday ? '' : '<span class="text-[9px] font-bold opacity-80 uppercase tracking-wider mb-0.5 w-full text-left">Còn</span>'}
+                <div class="flex items-baseline gap-0.5">
+                    <span class="text-[24px] font-black tabular-nums leading-none">${isToday ? '🎉' : occ.daysLeft}</span>
+                    ${isToday ? '' : '<span class="text-[10px] font-bold opacity-80">ngày</span>'}
+                </div>
             </div>
         `;
 
