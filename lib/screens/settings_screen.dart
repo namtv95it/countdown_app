@@ -719,24 +719,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ]
               : [],
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Stack(
           children: [
-            Icon(
-              isUnlocked ? icon : Icons.lock_rounded,
-              color: isSelected ? Colors.white : Colors.white60,
-              size: 26,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              name,
-              textAlign: TextAlign.center,
-              style: GoogleFonts.quicksand(
-                color: isSelected ? Colors.white : Colors.white60,
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
+            Align(
+              alignment: Alignment.center,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    icon,
+                    color: isSelected ? Colors.white : Colors.white60,
+                    size: 26,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    name,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.quicksand(
+                      color: isSelected ? Colors.white : Colors.white60,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
               ),
             ),
+            if (!isUnlocked)
+              Positioned(
+                top: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.4),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.lock_rounded,
+                    color: Colors.amber,
+                    size: 13,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
