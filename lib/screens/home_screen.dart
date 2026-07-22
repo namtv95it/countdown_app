@@ -42,6 +42,8 @@ class _HomeScreenState extends State<HomeScreen>
   List<Anniversary> _anniversaries = [];
   bool _isLoading = true;
   int _currentTab = 0;
+  bool _hasVisitedGiftTab = false;
+  String? _selectedGiftCategory;
   int _featuredIndex = 0;
 
   BannerAd? _bannerAd;
@@ -699,7 +701,11 @@ class _HomeScreenState extends State<HomeScreen>
       children: [
         _buildHeroTab(),
         _buildAllEventsTab(),
-        GiftScreen(isPremium: AdService.isPremium),
+        _hasVisitedGiftTab ? GiftScreen(
+          key: ValueKey('gift_$_selectedGiftCategory'),
+          isPremium: AdService.isPremium,
+          initialCategoryId: _selectedGiftCategory,
+        ) : const SizedBox.shrink(),
         SettingsScreen(
           onEffectChanged: (effect) {
             setState(() => _selectedEffect = effect);
@@ -1141,26 +1147,11 @@ class _HomeScreenState extends State<HomeScreen>
                                 if (item.category.canSuggestProducts) ...[
                                   GestureDetector(
                                     onTap: () {
-                                      setState(() => _currentTab = 1);
-                                      // Navigate to gift tab with category filter
-                                      Navigator.of(context).push(
-                                        PageRouteBuilder(
-                                          pageBuilder: (_, a1, a2) => GiftScreen(
-                                            initialCategoryId: item.categoryId,
-                                          ),
-                                          transitionsBuilder: (_, anim, __, child) {
-                                            return SlideTransition(
-                                              position: Tween<Offset>(
-                                                begin: const Offset(0, 1),
-                                                end: Offset.zero,
-                                              ).animate(CurvedAnimation(
-                                                  parent: anim,
-                                                  curve: Curves.easeOut)),
-                                              child: child,
-                                            );
-                                          },
-                                        ),
-                                      );
+                                      setState(() {
+                                        _currentTab = 2; // Navigate to gift tab
+                                        _hasVisitedGiftTab = true;
+                                        _selectedGiftCategory = item.categoryId;
+                                      });
                                     },
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(
@@ -1644,7 +1635,10 @@ class _HomeScreenState extends State<HomeScreen>
           }
         });
 
-        setState(() => _currentTab = index);
+        setState(() {
+          _currentTab = index;
+          if (index == 2) _hasVisitedGiftTab = true;
+        });
       },
       child: SizedBox(
         width: 60,
