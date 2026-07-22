@@ -1,19 +1,6 @@
 
 
-/**
- * Tính số ngày còn lại đến ngày lễ (luôn lấy ngày gần nhất trong tương lai).
- */
-function daysUntil(month, day) {
-    const now = new Date();
-    // Đặt thời gian về đầu ngày để tính chính xác
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    let target = new Date(today.getFullYear(), month - 1, day);
-    if (target < today) {
-        // Ngày lễ năm nay đã qua → lấy năm sau
-        target = new Date(today.getFullYear() + 1, month - 1, day);
-    }
-    return Math.round((target - today) / (1000 * 60 * 60 * 24));
-}
+
 
 /**
  * Lấy toàn bộ ngày lễ, tính số ngày còn lại và sắp xếp gần nhất lên đầu.

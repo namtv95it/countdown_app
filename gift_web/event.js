@@ -23,13 +23,55 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('event-banner').style.background = event.gradient;
 
     // Tính toán số ngày
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    let target = new Date(today.getFullYear(), event.month - 1, event.day);
-    if (target < today) {
-        target = new Date(today.getFullYear() + 1, event.month - 1, event.day);
+    const daysLeft = daysUntil(event.month, event.day);
+
+    // Tính toán Next / Prev Sự kiện
+    const upcomingOccasions = specialOccasions
+        .map(occ => ({ ...occ, daysLeft: daysUntil(occ.month, occ.day) }))
+        .sort((a, b) => a.daysLeft - b.daysLeft);
+
+    const currentIndex = upcomingOccasions.findIndex(occ => occ.id === event.id);
+    let prevEventId = null;
+    let nextEventId = null;
+
+    if (currentIndex !== -1) {
+        prevEventId = currentIndex > 0 
+            ? upcomingOccasions[currentIndex - 1].id 
+            : upcomingOccasions[upcomingOccasions.length - 1].id;
+            
+        nextEventId = currentIndex < upcomingOccasions.length - 1 
+            ? upcomingOccasions[currentIndex + 1].id 
+            : upcomingOccasions[0].id;
     }
-    const daysLeft = Math.round((target - today) / (1000 * 60 * 60 * 24));
+
+    // Thêm nút Next / Prev vào Header
+    const headerContainer = document.querySelector('#event-header .container');
+    if (headerContainer && nextEventId && prevEventId) {
+        const spacer = headerContainer.lastElementChild;
+        if (spacer && spacer.tagName === 'DIV') {
+            spacer.className = "flex items-center gap-2 justify-end min-w-[72px]";
+            spacer.innerHTML = `
+                <a href="${prevEventId}.html" class="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition text-white" title="Sự kiện trước">
+                    <i class="fa-solid fa-angle-left"></i>
+                </a>
+                <a href="${nextEventId}.html" class="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition text-white" title="Sự kiện tiếp theo">
+                    <i class="fa-solid fa-angle-right"></i>
+                </a>
+            `;
+            
+            // Điều chỉnh nút back bên trái để tiêu đề ở giữa không bị lệch
+            const leftBtn = headerContainer.firstElementChild;
+            if (leftBtn && leftBtn.tagName === 'BUTTON') {
+                leftBtn.onclick = () => { window.location.href = 'index.html'; };
+                leftBtn.innerHTML = '<i class="fa-solid fa-house"></i>';
+                
+                const leftWrapper = document.createElement('div');
+                leftWrapper.className = "min-w-[72px] flex items-center justify-start";
+                leftBtn.parentNode.insertBefore(leftWrapper, leftBtn);
+                leftWrapper.appendChild(leftBtn);
+            }
+        }
+    }
     
     const countdownText = document.getElementById('event-countdown-text');
     if (daysLeft === 0) {

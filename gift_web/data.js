@@ -96,3 +96,18 @@ const specialOccasions = [
     { id: 'new_year', name: "Năm Mới", dateLabel: "1 tháng 1", emoji: "🎆", month: 1, day: 1, gradient: 'linear-gradient(135deg, #7C3AED, #EC4899)', categoryId: 'holiday' },
     { id: 'tet', name: "Tết Nguyên Đán", dateLabel: "29 tháng 1", emoji: "🧧", month: 1, day: 29, gradient: 'linear-gradient(135deg, #EF4444, #F59E0B)', categoryId: 'holiday' },
 ];
+
+/**
+ * Tính số ngày còn lại đến ngày lễ (luôn lấy ngày gần nhất trong tương lai).
+ */
+function daysUntil(month, day) {
+    const now = new Date();
+    // Đặt thời gian về đầu ngày để tính chính xác
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    let target = new Date(today.getFullYear(), month - 1, day);
+    if (target < today) {
+        // Ngày lễ năm nay đã qua → lấy năm sau
+        target = new Date(today.getFullYear() + 1, month - 1, day);
+    }
+    return Math.round((target - today) / (1000 * 60 * 60 * 24));
+}
