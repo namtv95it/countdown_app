@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 import '../data/gift_products.dart';
 import '../models/event_category.dart';
 import '../models/gift_product.dart';
@@ -17,10 +18,7 @@ class GiftScreen extends StatefulWidget {
   State<GiftScreen> createState() => _GiftScreenState();
 }
 
-class _GiftScreenState extends State<GiftScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-
+class _GiftScreenState extends State<GiftScreen> {
   // ── Gửi lời chúc ──
   final _senderController = TextEditingController();
   final _receiverController = TextEditingController();
@@ -30,30 +28,29 @@ class _GiftScreenState extends State<GiftScreen>
   final _wishScrollController = ScrollController();
   final _wishesHeaderKey = GlobalKey(); // dùng để scroll đến đầu danh sách lời chúc
 
-  // ── Gợi ý quà ──
-  String? _filterCategoryId;
-  final _giftScrollController = ScrollController();
+  // ── Gợi ý quà (WebView) ──
+  late final WebViewController _webViewController;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(
-      length: 2,
-      vsync: this,
-      initialIndex: 0, // Gift tab is now index 0
-    );
+    
+    String url = 'https://namtv95it.github.io/countdown_gift_web/';
     if (widget.initialCategoryId != null) {
-      _filterCategoryId = widget.initialCategoryId;
+      url += '?category=${widget.initialCategoryId}';
     }
+    
+    _webViewController = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(const Color(0x00000000))
+      ..loadRequest(Uri.parse(url));
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
     _senderController.dispose();
     _receiverController.dispose();
     _wishScrollController.dispose();
-    _giftScrollController.dispose();
     super.dispose();
   }
 
@@ -128,10 +125,7 @@ class _GiftScreenState extends State<GiftScreen>
     }
   }
 
-  List<GiftProduct> get _filteredProducts {
-    if (_filterCategoryId == null) return GiftProducts.all;
-    return GiftProducts.byCategory(_filterCategoryId);
-  }
+
 
   // ──────────────────────────────────────────────────────────────
   // BUILD
@@ -145,16 +139,8 @@ class _GiftScreenState extends State<GiftScreen>
         child: Column(
           children: [
             _buildHeader(),
-            _buildTabBar(),
             Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  _buildGiftTab(),
-                  _buildWishTab(),
-                ],
-              ),
+              child: _buildGiftTab(),
             ),
           ],
         ),
@@ -163,7 +149,6 @@ class _GiftScreenState extends State<GiftScreen>
   }
 
   Widget _buildHeader() {
-    const shopUrl = 'https://shopee.vn/shop/your_shop_id';
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
       child: Row(
@@ -188,9 +173,22 @@ class _GiftScreenState extends State<GiftScreen>
             ),
           ),
           const Spacer(),
-          // Nút Shop
+          // Nút Lời chúc
           GestureDetector(
-            onTap: () => _openUrl(shopUrl),
+            onTap: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: const Color(0xFF1A1A2E),
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                ),
+                builder: (context) => FractionallySizedBox(
+                  heightFactor: 0.85,
+                  child: _buildWishTab(),
+                ),
+              );
+            },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
               decoration: BoxDecoration(
@@ -209,11 +207,11 @@ class _GiftScreenState extends State<GiftScreen>
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.storefront_rounded,
+                  const Icon(Icons.mail_rounded,
                       color: Colors.white, size: 15),
                   const SizedBox(width: 5),
                   Text(
-                    'Cửa hàng của tôi',
+                    'Lời chúc',
                     style: GoogleFonts.quicksand(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -229,41 +227,8 @@ class _GiftScreenState extends State<GiftScreen>
     );
   }
 
-  Widget _buildTabBar() {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(20, 4, 20, 0),
-      height: 44,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white12),
-      ),
-      child: TabBar(
-        controller: _tabController,
-        indicator: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF7C3AED), Color(0xFFEC4899)],
-          ),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        indicatorSize: TabBarIndicatorSize.tab,
-        dividerColor: Colors.transparent,
-        labelStyle: GoogleFonts.quicksand(
-            fontSize: 14, fontWeight: FontWeight.w700),
-        unselectedLabelStyle:
-            GoogleFonts.quicksand(fontSize: 14, fontWeight: FontWeight.w500),
-        labelColor: Colors.white,
-        unselectedLabelColor: Colors.white54,
-        tabs: const [
-          Tab(text: '🎁 Gợi ý quà'),
-          Tab(text: '💌 Lời chúc'),
-        ],
-      ),
-    );
-  }
-
   // ──────────────────────────────────────────────────────────────
-  // TAB 1: Lời chúc
+  // Lời chúc (BottomSheet Content)
   // ──────────────────────────────────────────────────────────────
   Widget _buildWishTab() {
     return ListView(
@@ -555,263 +520,6 @@ class _GiftScreenState extends State<GiftScreen>
   // TAB 2: Gợi ý quà
   // ──────────────────────────────────────────────────────────────
   Widget _buildGiftTab() {
-    final products = _filteredProducts;
-    final giftCategories = EventCategory.all
-        .where((c) => c.canSuggestProducts)
-        .toList();
-
-    return Column(
-      children: [
-        // Category filter chips
-        const SizedBox(height: 12),
-        SizedBox(
-          height: 48,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            children: [
-              _buildFilterChip(null, 'Tất cả'),
-              ...giftCategories
-                  .map((c) => _buildFilterChip(c.id, '${c.emoji} ${c.name}')),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 12),
-
-        // Product grid
-        Expanded(
-          child: products.isEmpty
-              ? _buildNoProducts()
-              : CustomScrollView(
-                  controller: _giftScrollController,
-                  slivers: [
-                    SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                      sliver: SliverGrid(
-                        delegate: SliverChildBuilderDelegate(
-                          (ctx, i) => _buildProductCard(products[i]),
-                          childCount: products.length,
-                        ),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                          mainAxisExtent: 290,
-                        ),
-                      ),
-                    ),
-                    const SliverToBoxAdapter(
-                      child: SizedBox(height: 80),
-                    ),
-                  ],
-                ),
-        ),
-
-      ],
-    );
-  }
-
-  Widget _buildFilterChip(String? categoryId, String label) {
-    final isSelected = _filterCategoryId == categoryId;
-    return GestureDetector(
-      onTap: () {
-        setState(() => _filterCategoryId = categoryId);
-        // Scroll lên đầu danh sách khi đổi danh mục
-        if (_giftScrollController.hasClients) {
-          _giftScrollController.animateTo(
-            0,
-            duration: const Duration(milliseconds: 350),
-            curve: Curves.easeOut,
-          );
-        }
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.only(right: 8),
-        alignment: Alignment.center,
-        padding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
-        decoration: BoxDecoration(
-          gradient: isSelected
-              ? const LinearGradient(
-                  colors: [Color(0xFF7C3AED), Color(0xFFEC4899)],
-                )
-              : null,
-          color: isSelected ? null : Colors.white.withValues(alpha: 0.07),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected
-                ? Colors.transparent
-                : Colors.white.withValues(alpha: 0.15),
-          ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color:
-                        const Color(0xFF7C3AED).withValues(alpha: 0.3),
-                    blurRadius: 8,
-                  )
-                ]
-              : null,
-        ),
-        child: Text(
-          label,
-          style: GoogleFonts.quicksand(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: isSelected ? Colors.white : Colors.white60,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProductCard(GiftProduct product) {
-    final cat = EventCategory.findById(product.categoryId);
-    return GestureDetector(
-      onTap: () => _openUrl(product.affiliateUrl),
-      child: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFF1A1A2E),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Emoji hero
-            Stack(
-              children: [
-                Container(
-                  height: 110,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Color(cat.colorValue).withValues(alpha: 0.15),
-                    borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(17)),
-                  ),
-                  child: Center(
-                    child: Text(product.emoji,
-                        style: const TextStyle(fontSize: 46)),
-                  ),
-                ),
-                if (product.isPopular)
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(colors: [
-                          Color(0xFFEAB308),
-                          Color(0xFFF59E0B),
-                        ]),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text('⭐ Hot',
-                          style: GoogleFonts.quicksand(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white)),
-                    ),
-                  ),
-              ],
-            ),
-
-            // Info
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      product.name,
-                      style: GoogleFonts.quicksand(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      product.description,
-                      style: GoogleFonts.quicksand(
-                          fontSize: 11,
-                          color: Colors.white54,
-                          height: 1.4),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const Spacer(),
-                    Text(
-                      product.priceRange,
-                      style: GoogleFonts.quicksand(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: Color(cat.colorValue)),
-                    ),
-                    const SizedBox(height: 6),
-                    Container(
-                      width: double.infinity,
-                      padding:
-                          const EdgeInsets.symmetric(vertical: 7),
-                      decoration: BoxDecoration(
-                        color: Color(cat.colorValue)
-                            .withValues(alpha: 0.18),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                            color: Color(cat.colorValue)
-                                .withValues(alpha: 0.4)),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text('Xem ngay',
-                              style: GoogleFonts.quicksand(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color:
-                                      Color(cat.colorValue))),
-                          const SizedBox(width: 4),
-                          Icon(Icons.open_in_new_rounded,
-                              size: 12,
-                              color: Color(cat.colorValue)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNoProducts() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text('🛍️', style: TextStyle(fontSize: 52)),
-          const SizedBox(height: 16),
-          Text('Không tìm thấy sản phẩm',
-              style: GoogleFonts.quicksand(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white)),
-          const SizedBox(height: 8),
-          Text('Thử tìm kiếm từ khóa khác',
-              style: GoogleFonts.quicksand(
-                  fontSize: 14, color: Colors.white38)),
-        ],
-      ),
-    );
+    return WebViewWidget(controller: _webViewController);
   }
 }

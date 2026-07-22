@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gợi Ý Quà Tặng</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        darkBase: '#0F0F1A',
+                        darkSurface: '#1A1A2E',
+                        brandPurple: '#7C3AED',
+                        brandPink: '#EC4899',
+                        brandYellow: '#FACC15',
+                    },
+                    fontFamily: {
+                        sans: ['Quicksand', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-transparent text-white font-sans antialiased selection:bg-brandPurple selection:text-white">
+
+    <!-- Header Section -->
+    <header class="sticky top-0 z-50 bg-transparent backdrop-blur-lg border-b border-white/5 pt-3 pb-2">
+        <div class="container mx-auto px-4">
+
+            <!-- Special Occasion Banners -->
+            <div class="overflow-x-auto pb-2 scrollbar-hide mb-2">
+                <div class="flex space-x-3 w-max" id="occasion-list">
+                    <!-- Occasions will be injected here by JS -->
+                </div>
+            </div>
+
+            <!-- Category Filter -->
+            <div class="overflow-x-auto pb-2 scrollbar-hide">
+                <div class="flex space-x-3 w-max" id="category-list">
+                    <!-- Categories will be injected here by JS -->
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-6 pb-24">
+        <!-- Empty State -->
+        <div id="empty-state" class="hidden flex-col items-center justify-center py-16 text-center">
+            <div class="text-6xl mb-4">🛍️</div>
+            <h2 class="text-lg font-bold mb-2">Không tìm thấy sản phẩm</h2>
+            <p class="text-white/40 text-sm">Hãy thử chọn một danh mục khác.</p>
+        </div>
+
+        <!-- Product Grid -->
+        <div id="product-grid" class="grid grid-cols-2 gap-4">
+            <!-- Products will be injected here by JS -->
+        </div>
+    </main>
+
+    <!-- App JS -->
+    <script src="app.js"></script>
+</body>
+</html>
+

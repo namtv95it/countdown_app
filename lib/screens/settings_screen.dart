@@ -625,14 +625,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
             ),
 
-            const SizedBox(height: 24),
-            _buildSectionHeader('🎁 Quà tặng & Lời chúc'),
-            _buildListTile(
-              title: 'Cửa hàng của tôi',
-              subtitle: _shopUrl,
-              trailing: const Icon(Icons.edit_rounded, color: Colors.white54),
-              onTap: _editShopUrl,
-            ),
+            // const SizedBox(height: 24),
+            // _buildSectionHeader('🎁 Quà tặng & Lời chúc'),
+            // _buildListTile(
+            //   title: 'Cửa hàng của tôi',
+            //   subtitle: _shopUrl,
+            //   trailing: const Icon(Icons.edit_rounded, color: Colors.white54),
+            //   onTap: _editShopUrl,
+            // ),
 
             const SizedBox(height: 24),
             _buildSectionHeader('ℹ️ Thông tin'),
