@@ -1401,96 +1401,64 @@ class _HomeScreenState extends State<HomeScreen>
           child: CustomScrollView(
             controller: _eventsScrollController,
             slivers: [
-        SliverAppBar(
-          pinned: true,
-          backgroundColor: const Color(0xFF0D0D1A),
-          expandedHeight: 80,
-          flexibleSpace: FlexibleSpaceBar(
-            titlePadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-            title: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: _accentColor,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(Icons.list_rounded,
-                      color: Colors.white, size: 18),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  'Tất cả sự kiện',
-                  style: GoogleFonts.quicksand(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(1),
-            child: Container(
-              height: 1,
-              decoration: BoxDecoration(
-                color: _accentColor,
-              ),
-            ),
-          ),
+        // Đã bỏ SliverAppBar theo yêu cầu
+        SliverSafeArea(
+          bottom: false,
+          sliver: const SliverToBoxAdapter(child: SizedBox.shrink()),
         ),
         if (_anniversaries.isEmpty)
           SliverFillRemaining(child: _buildEmptyState())
         else ...[
-          // Sắp tới
-          if (_upcomingList.isNotEmpty) ...[
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 4,
-                      height: 18,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [Color(0xFF7C3AED), Color(0xFFEC4899)],
-                        ),
-                        borderRadius: BorderRadius.circular(2),
+          // Tiêu đề trang
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+              child: Row(
+                children: [
+                  Container(
+                    width: 5,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Color(0xFF7C3AED), Color(0xFFEC4899)],
                       ),
+                      borderRadius: BorderRadius.circular(3),
                     ),
-                    const SizedBox(width: 10),
-                    Text(
-                      'Sắp tới',
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Tất cả sự kiện',
+                    style: GoogleFonts.quicksand(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF7C3AED).withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '${_anniversaries.length}',
                       style: GoogleFonts.quicksand(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
+                        fontSize: 14,
+                        color: const Color(0xFF7C3AED),
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF7C3AED).withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        '${_upcomingList.length}',
-                        style: GoogleFonts.quicksand(
-                            fontSize: 12,
-                            color: const Color(0xFF7C3AED),
-                            fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
+          ),
+          
+          if (_upcomingList.isNotEmpty) ...[
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               sliver: SliverList(
