@@ -44,7 +44,6 @@ html, body {
 }
 
 .category-chip.active {
-    background: linear-gradient(90deg, #7C3AED, #EC4899);
     border-color: transparent;
 }
 

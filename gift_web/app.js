@@ -80,7 +80,19 @@ function renderCategories() {
 
     categories.forEach(cat => {
         const btn = document.createElement('button');
-        btn.className = `category-chip px-4 py-2 rounded-full flex items-center gap-2 whitespace-nowrap outline-none ${currentCategory === cat.id ? 'active text-white font-bold' : 'text-white/70 font-semibold'}`;
+        const isActive = currentCategory === cat.id;
+        btn.className = `category-chip px-4 py-2 rounded-full flex items-center gap-2 whitespace-nowrap outline-none ${isActive ? 'active text-white font-bold' : 'text-white/70 font-semibold'}`;
+        
+        if (isActive) {
+            if (cat.id === 'all') {
+                const allColor = '#7C3AED';
+                const allColorRgb = hexToRgb(allColor);
+                btn.style.background = `linear-gradient(135deg, ${allColor}, rgba(${allColorRgb}, 0.6))`;
+            } else {
+                const catColorRgb = hexToRgb(cat.color || '#FACC15');
+                btn.style.background = `linear-gradient(135deg, ${cat.color || '#FACC15'}, rgba(${catColorRgb}, 0.6))`;
+            }
+        }
         
         // Nội dung HTML bên trong nút
         let content = '';
@@ -147,23 +159,22 @@ function renderProducts() {
             <div class="h-28 w-full relative overflow-hidden" style="background-color: rgba(${catColorRgb}, 0.15)">
                 <img src="${product.imageUrl}" alt="${product.name}" class="w-full h-full object-cover">
                 ${product.isPopular ? `
-                <div class="absolute top-2 right-2 px-2 py-1 bg-gradient-to-r from-yellow-500 to-amber-600 rounded-md shadow-lg">
-                    <span class="text-[10px] font-bold text-white tracking-wider uppercase">⭐ Hot</span>
+                <div class="absolute top-2 right-2 px-2 h-5 bg-gradient-to-r from-yellow-500 to-amber-600 rounded-md shadow-lg flex items-center justify-center">
+                    <span class="text-[10px] font-bold text-white tracking-wider uppercase leading-none mt-[1px]">⭐ Hot</span>
                 </div>
                 ` : ''}
             </div>
 
             <!-- Info Section -->
             <div class="p-3 flex flex-col flex-grow">
-                <h3 class="text-sm font-bold text-white line-clamp-2 mb-1">${product.name}</h3>
-                <p class="text-[11px] text-white/50 line-clamp-2 leading-relaxed mb-3">${product.description}</p>
+                <h3 class="text-sm font-bold text-white line-clamp-2 mb-3">${product.name}</h3>
                 
                 <div class="mt-auto">
-                    <div class="text-xs font-bold mb-2" style="color: ${cat.color || '#FACC15'}">${product.priceRange}</div>
-                    <div class="w-full py-1.5 rounded-lg border flex items-center justify-center gap-1 transition-colors" 
+                    <div class="text-sm font-black mb-2" style="color: ${cat.color || '#FACC15'}">${product.priceRange}</div>
+                    <div class="w-full py-1.5 rounded-lg border flex items-center justify-center gap-1.5 transition-colors" 
                          style="background-color: rgba(${catColorRgb}, 0.18); border-color: rgba(${catColorRgb}, 0.4)">
-                        <span class="text-xs font-bold" style="color: ${cat.color}">Xem ngay</span>
-                        <i class="fa-solid fa-arrow-up-right-from-square text-[10px]" style="color: ${cat.color}"></i>
+                        <i class="${product.platform === 'Tiktok Shop' ? 'fa-brands fa-tiktok' : 'fa-solid fa-bag-shopping'} text-[11px]" style="color: ${cat.color}"></i>
+                        <span class="text-xs font-bold" style="color: ${cat.color}">${product.platform || 'Xem ngay'}</span>
                     </div>
                 </div>
             </div>

@@ -98,27 +98,44 @@ document.addEventListener('DOMContentLoaded', () => {
         emptyState.classList.add('hidden');
         emptyState.classList.remove('flex');
 
+        function hexToRgb(hex) {
+            var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? 
+                `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : 
+                '250, 204, 21'; // default brand yellow
+        }
+
         eventProducts.forEach(product => {
+            const cat = categories.find(c => c.id === product.categoryId) || categories.find(c => c.id === event.categoryId) || categories[1];
+            const catColorRgb = hexToRgb(cat.color || '#FACC15');
+
             const card = document.createElement('a');
             card.href = product.affiliateUrl;
             card.target = '_blank';
-            card.className = 'bg-darkSurface rounded-2xl overflow-hidden border border-white/5 active:scale-95 transition-transform block relative';
+            card.rel = 'noopener noreferrer';
+            card.className = 'product-card glass rounded-2xl overflow-hidden flex flex-col relative block';
 
-            if (product.isPopular) {
-                card.innerHTML += `<div class="absolute top-2 left-2 bg-brandPink text-white text-[10px] font-bold px-2 py-0.5 rounded-full z-10 shadow-lg">HOT</div>`;
-            }
-
-            card.innerHTML += `
-                <div class="aspect-square bg-white/5 overflow-hidden">
+            card.innerHTML = `
+                <!-- Image Hero Section -->
+                <div class="h-28 w-full relative overflow-hidden" style="background-color: rgba(${catColorRgb}, 0.15)">
                     <img src="${product.imageUrl}" alt="${product.name}" class="w-full h-full object-cover">
+                    ${product.isPopular ? `
+                    <div class="absolute top-2 right-2 px-2 h-5 bg-gradient-to-r from-yellow-500 to-amber-600 rounded-md shadow-lg flex items-center justify-center">
+                        <span class="text-[10px] font-bold text-white tracking-wider uppercase leading-none mt-[1px]">⭐ Hot</span>
+                    </div>
+                    ` : ''}
                 </div>
-                <div class="p-3">
-                    <h3 class="font-bold text-sm mb-1 leading-tight line-clamp-2">${product.name}</h3>
-                    <p class="text-[10px] text-white/50 mb-2 line-clamp-2 leading-snug">${product.description}</p>
-                    <div class="flex items-center justify-between">
-                        <span class="text-brandYellow font-extrabold text-sm">${product.priceRange}</span>
-                        <div class="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center">
-                            <i class="fa-solid fa-cart-shopping text-[10px]"></i>
+
+                <!-- Info Section -->
+                <div class="p-3 flex flex-col flex-grow">
+                    <h3 class="text-sm font-bold text-white line-clamp-2 mb-3">${product.name}</h3>
+                    
+                    <div class="mt-auto">
+                        <div class="text-sm font-black mb-2" style="color: ${cat.color || '#FACC15'}">${product.priceRange}</div>
+                        <div class="w-full py-1.5 rounded-lg border flex items-center justify-center gap-1.5 transition-colors" 
+                             style="background-color: rgba(${catColorRgb}, 0.18); border-color: rgba(${catColorRgb}, 0.4)">
+                            <i class="${product.platform === 'Tiktok Shop' ? 'fa-brands fa-tiktok' : 'fa-solid fa-bag-shopping'} text-[11px]" style="color: ${cat.color || '#FACC15'}"></i>
+                            <span class="text-xs font-bold" style="color: ${cat.color || '#FACC15'}">${product.platform || 'Xem ngay'}</span>
                         </div>
                     </div>
                 </div>
