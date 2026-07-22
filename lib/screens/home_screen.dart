@@ -699,7 +699,7 @@ class _HomeScreenState extends State<HomeScreen>
       children: [
         _buildHeroTab(),
         _buildAllEventsTab(),
-        const GiftScreen(),
+        GiftScreen(isPremium: AdService.isPremium),
         SettingsScreen(
           onEffectChanged: (effect) {
             setState(() => _selectedEffect = effect);

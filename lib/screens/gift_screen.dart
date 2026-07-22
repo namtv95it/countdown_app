@@ -7,12 +7,14 @@ import '../data/gift_products.dart';
 import '../models/event_category.dart';
 import '../models/gift_product.dart';
 import '../services/wish_service.dart';
+import '../services/ad_service.dart';
 
 class GiftScreen extends StatefulWidget {
   /// Nếu được truyền, sẽ tự động chọn danh mục này ở tab Gợi ý quà
   final String? initialCategoryId;
+  final bool isPremium;
 
-  const GiftScreen({super.key, this.initialCategoryId});
+  const GiftScreen({super.key, this.initialCategoryId, this.isPremium = false});
 
   @override
   State<GiftScreen> createState() => _GiftScreenState();
@@ -145,10 +147,13 @@ class _GiftScreenState extends State<GiftScreen> {
   // ──────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    // Giảm padding nếu đã nâng cấp premium vì quảng cáo bị ẩn
+    final double fabBottomPadding = widget.isPremium ? 90.0 : 150.0;
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 150.0),
+        padding: EdgeInsets.only(bottom: fabBottomPadding),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.end,
