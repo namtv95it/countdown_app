@@ -32,6 +32,7 @@ class _GiftScreenState extends State<GiftScreen> {
 
   // ── Gợi ý quà (WebView) ──
   late final WebViewController _webViewController;
+  bool _isWebViewLoading = true;
 
   @override
   void initState() {
@@ -47,6 +48,12 @@ class _GiftScreenState extends State<GiftScreen> {
       ..setBackgroundColor(const Color(0x00000000))
       ..setNavigationDelegate(
         NavigationDelegate(
+          onPageStarted: (String url) {
+            if (mounted) setState(() => _isWebViewLoading = true);
+          },
+          onPageFinished: (String url) {
+            if (mounted) setState(() => _isWebViewLoading = false);
+          },
           onNavigationRequest: (NavigationRequest request) {
             // Chỉ cho phép điều hướng nội bộ trên Github Pages
             if (request.url.startsWith('https://namtv95it.github.io')) {
@@ -499,6 +506,46 @@ class _GiftScreenState extends State<GiftScreen> {
   // TAB 2: Gợi ý quà
   // ──────────────────────────────────────────────────────────────
   Widget _buildGiftTab() {
-    return WebViewWidget(controller: _webViewController);
+    return Stack(
+      children: [
+        WebViewWidget(controller: _webViewController),
+        if (_isWebViewLoading)
+          Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1A1A2E).withValues(alpha: 0.8),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.white12),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFEC4899).withValues(alpha: 0.15),
+                    blurRadius: 30,
+                    spreadRadius: 5,
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(
+                    strokeWidth: 3,
+                    color: Color(0xFFEC4899),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Đang tải danh sách quà...',
+                    style: GoogleFonts.quicksand(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
   }
 }

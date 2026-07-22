@@ -1394,6 +1394,10 @@ class _HomeScreenState extends State<HomeScreen>
   // TAB 1: Tất cả sự kiện
   // ─────────────────────────────────────────────────────────
   Widget _buildAllEventsTab() {
+    if (_anniversaries.isEmpty) {
+      return _buildEmptyState();
+    }
+
     return Column(
       children: [
         Expanded(
@@ -1405,10 +1409,7 @@ class _HomeScreenState extends State<HomeScreen>
           bottom: false,
           sliver: const SliverToBoxAdapter(child: SizedBox.shrink()),
         ),
-        if (_anniversaries.isEmpty)
-          SliverFillRemaining(child: _buildEmptyState())
-        else ...[
-          // Tiêu đề trang
+        // Tiêu đề trang
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
@@ -1524,14 +1525,12 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ),
           ],
-
+          
           const SliverToBoxAdapter(child: SizedBox(height: 200)), // Tăng khoảng trống tránh đè quảng cáo
         ],
-      ],
-    ),
+      ),
     ), // End of Expanded
-
-    ],
+      ],
     );
   }
 

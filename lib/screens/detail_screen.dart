@@ -3,11 +3,10 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../models/anniversary.dart';
+import '../models/event_category.dart';
 import '../services/storage_service.dart';
 import '../services/notification_service.dart';
-import '../services/ad_service.dart';
 import '../widgets/time_unit_box.dart';
 
 
@@ -27,10 +26,13 @@ class _DetailScreenState extends State<DetailScreen>
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
   final StorageService _storageService = StorageService();
+  late Anniversary _currentAnniversary;
+  bool _hasChanged = false;
 
   @override
   void initState() {
     super.initState();
+    _currentAnniversary = widget.anniversary;
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
@@ -45,7 +47,7 @@ class _DetailScreenState extends State<DetailScreen>
   }
 
   void _updateRemaining() {
-    final target = widget.anniversary.displayDate;
+    final target = _currentAnniversary.displayDate;
     // Đếm đến đầu ngày (00:00:00) — ngày kỷ niệm bắt đầu
     final targetDt = DateTime(target.year, target.month, target.day);
     final now = DateTime.now();
@@ -102,13 +104,13 @@ class _DetailScreenState extends State<DetailScreen>
       ),
     );
     if (confirm == true) {
-      await _storageService.deleteAnniversary(widget.anniversary.id);
+      await _storageService.deleteAnniversary(_currentAnniversary.id);
       if (mounted) Navigator.pop(context, 'deleted');
     }
   }
 
   Future<void> _pinEvent() async {
-    await NotificationService().showPinnedNotification(widget.anniversary);
+    await NotificationService().showPinnedNotification(_currentAnniversary);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -123,7 +125,7 @@ class _DetailScreenState extends State<DetailScreen>
 
   @override
   Widget build(BuildContext context) {
-    final ann = widget.anniversary;
+    final ann = _currentAnniversary;
     final cardColor = ann.color;
     final days = ann.daysRemaining;
     final isPast = days < 0;
@@ -143,7 +145,13 @@ class _DetailScreenState extends State<DetailScreen>
     final daysSinceYear = eventInYear.difference(yearStart).inDays;
     final yearProgress = daysSinceYear / totalDays;
 
-    return Stack(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        Navigator.pop(context, _hasChanged ? _currentAnniversary : null);
+      },
+      child: Stack(
       children: [
         Scaffold(
           backgroundColor: const Color(0xFF0D0D1A),
@@ -158,7 +166,7 @@ class _DetailScreenState extends State<DetailScreen>
                 Icons.arrow_back_ios_rounded,
                 color: Colors.white,
               ),
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(context, _hasChanged ? _currentAnniversary : null),
             ),
             actions: [
               IconButton(
@@ -223,14 +231,26 @@ class _DetailScreenState extends State<DetailScreen>
                     const SizedBox(height: 16),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Text(
-                        ann.title,
-                        style: GoogleFonts.quicksand(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
+                      child: GestureDetector(
+                        onTap: _editTitle,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                ann.title,
+                                style: GoogleFonts.quicksand(
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Icon(Icons.edit_rounded, color: Colors.white54, size: 20),
+                          ],
                         ),
-                        textAlign: TextAlign.center,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -436,8 +456,8 @@ class _DetailScreenState extends State<DetailScreen>
         ],
       ),
     ),
-
       ],
+    ),
     );
   }
 
@@ -524,11 +544,16 @@ class _DetailScreenState extends State<DetailScreen>
       ),
       child: Column(
         children: [
-          _buildInfoRow(
-            Icons.category_rounded,
-            'Danh mục',
-            '${ann.category.emoji} ${ann.category.name}',
-            cardColor,
+          InkWell(
+            onTap: _editCategory,
+            borderRadius: BorderRadius.circular(16),
+            child: _buildInfoRow(
+              Icons.category_rounded,
+              'Danh mục',
+              '${ann.category.emoji} ${ann.category.name}',
+              cardColor,
+              showEdit: true,
+            ),
           ),
           if (ann.category.canSuggestProducts) ...[
             const SizedBox(height: 4),
@@ -564,11 +589,16 @@ class _DetailScreenState extends State<DetailScreen>
             ),
           ],
           const Divider(color: Colors.white12, height: 24),
-          _buildInfoRow(
-            Icons.calendar_today_rounded,
-            'Ngày gốc',
-            DateFormat('dd/MM/yyyy').format(ann.date),
-            cardColor,
+          InkWell(
+            onTap: _editDate,
+            borderRadius: BorderRadius.circular(16),
+            child: _buildInfoRow(
+              Icons.calendar_today_rounded,
+              'Ngày gốc',
+              DateFormat('dd/MM/yyyy').format(ann.date),
+              cardColor,
+              showEdit: true,
+            ),
           ),
           if (ann.isYearly) ...[
             const Divider(color: Colors.white12, height: 24),
@@ -580,11 +610,16 @@ class _DetailScreenState extends State<DetailScreen>
             ),
           ],
           const Divider(color: Colors.white12, height: 24),
-          _buildInfoRow(
-            ann.isYearly ? Icons.repeat_rounded : Icons.event_rounded,
-            'Loại sự kiện',
-            ann.isYearly ? 'Lặp lại hàng năm' : 'Một lần',
-            cardColor,
+          InkWell(
+            onTap: _editType,
+            borderRadius: BorderRadius.circular(16),
+            child: _buildInfoRow(
+              ann.isYearly ? Icons.repeat_rounded : Icons.event_rounded,
+              'Loại sự kiện',
+              ann.isYearly ? 'Lặp lại hàng năm' : 'Một lần',
+              cardColor,
+              showEdit: true,
+            ),
           ),
         ],
       ),
@@ -592,7 +627,7 @@ class _DetailScreenState extends State<DetailScreen>
   }
 
   Widget _buildInfoRow(
-      IconData icon, String label, String value, Color cardColor) {
+      IconData icon, String label, String value, Color cardColor, {bool showEdit = false}) {
     return Row(
       children: [
         Icon(icon, color: cardColor, size: 20),
@@ -610,6 +645,10 @@ class _DetailScreenState extends State<DetailScreen>
             color: Colors.white,
           ),
         ),
+        if (showEdit) ...[
+          const SizedBox(width: 8),
+          const Icon(Icons.chevron_right_rounded, color: Colors.white24, size: 18),
+        ],
       ],
     );
   }
@@ -660,7 +699,7 @@ class _DetailScreenState extends State<DetailScreen>
           borderRadius: BorderRadius.circular(18),
           onTap: () {
             // Đóng DetailScreen và báo cho HomeScreen mở tab Quà tặng
-            Navigator.pop(context, 'gift:${widget.anniversary.category.id}');
+            Navigator.pop(context, 'gift:${_currentAnniversary.category.id}');
           },
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
@@ -701,6 +740,214 @@ class _DetailScreenState extends State<DetailScreen>
                 Icon(Icons.open_in_new_rounded, color: Colors.white.withValues(alpha: 0.5), size: 18),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _editTitle() async {
+    final controller = TextEditingController(text: _currentAnniversary.title);
+    final newTitle = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A2E),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Đổi tên sự kiện', style: GoogleFonts.quicksand(color: Colors.white, fontWeight: FontWeight.bold)),
+        content: TextField(
+          controller: controller,
+          style: GoogleFonts.quicksand(color: Colors.white),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white.withValues(alpha: 0.05),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Hủy', style: GoogleFonts.quicksand(color: Colors.white54)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            child: Text('Lưu', style: GoogleFonts.quicksand(color: const Color(0xFFEC4899), fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (newTitle != null && newTitle.isNotEmpty && newTitle != _currentAnniversary.title) {
+      setState(() {
+        _currentAnniversary = Anniversary(
+          id: _currentAnniversary.id,
+          title: newTitle,
+          date: _currentAnniversary.date,
+          emoji: _currentAnniversary.emoji,
+          colorValue: _currentAnniversary.colorValue,
+          isYearly: _currentAnniversary.isYearly,
+          isLunar: _currentAnniversary.isLunar,
+          note: _currentAnniversary.note,
+          categoryId: _currentAnniversary.categoryId,
+        );
+        _hasChanged = true;
+        _updateRemaining();
+      });
+    }
+  }
+
+  Future<void> _editDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _currentAnniversary.date,
+      firstDate: DateTime(1900),
+      lastDate: DateTime(2100),
+      builder: (context, child) {
+        return Theme(
+          data: ThemeData.dark().copyWith(
+            colorScheme: ColorScheme.dark(
+              primary: _currentAnniversary.color,
+              surface: const Color(0xFF1A1A2E),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null && picked != _currentAnniversary.date) {
+      setState(() {
+        _currentAnniversary = Anniversary(
+          id: _currentAnniversary.id,
+          title: _currentAnniversary.title,
+          date: picked,
+          emoji: _currentAnniversary.emoji,
+          colorValue: _currentAnniversary.colorValue,
+          isYearly: _currentAnniversary.isYearly,
+          isLunar: _currentAnniversary.isLunar,
+          note: _currentAnniversary.note,
+          categoryId: _currentAnniversary.categoryId,
+        );
+        _hasChanged = true;
+        _updateRemaining();
+      });
+    }
+  }
+
+  void _editCategory() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        decoration: const BoxDecoration(
+          color: Color(0xFF1A1A2E),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Chọn danh mục', style: GoogleFonts.quicksand(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+            const SizedBox(height: 20),
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: EventCategory.all.length,
+                itemBuilder: (context, index) {
+                  final cat = EventCategory.all[index];
+                  return ListTile(
+                    leading: Text(cat.emoji, style: const TextStyle(fontSize: 24)),
+                    title: Text(cat.name, style: GoogleFonts.quicksand(color: Colors.white)),
+                    onTap: () {
+                      setState(() {
+                        _currentAnniversary = Anniversary(
+                          id: _currentAnniversary.id,
+                          title: _currentAnniversary.title,
+                          date: _currentAnniversary.date,
+                          emoji: cat.emoji,
+                          colorValue: cat.colorValue,
+                          isYearly: _currentAnniversary.isYearly,
+                          isLunar: _currentAnniversary.isLunar,
+                          note: _currentAnniversary.note,
+                          categoryId: cat.id,
+                        );
+                        _hasChanged = true;
+                        _updateRemaining();
+                      });
+                      Navigator.pop(context);
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _editType() {
+    bool tempYearly = _currentAnniversary.isYearly;
+    bool tempLunar = _currentAnniversary.isLunar;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          padding: const EdgeInsets.all(24),
+          decoration: const BoxDecoration(
+            color: Color(0xFF1A1A2E),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Loại sự kiện', style: GoogleFonts.quicksand(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+              const SizedBox(height: 24),
+              SwitchListTile(
+                title: Text('Lặp lại hàng năm', style: GoogleFonts.quicksand(color: Colors.white)),
+                activeTrackColor: _currentAnniversary.color,
+                value: tempYearly,
+                onChanged: (val) => setModalState(() => tempYearly = val),
+              ),
+              SwitchListTile(
+                title: Text('Tính theo Âm lịch', style: GoogleFonts.quicksand(color: Colors.white)),
+                activeTrackColor: _currentAnniversary.color,
+                value: tempLunar,
+                onChanged: (val) => setModalState(() => tempLunar = val),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _currentAnniversary.color,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _currentAnniversary = Anniversary(
+                        id: _currentAnniversary.id,
+                        title: _currentAnniversary.title,
+                        date: _currentAnniversary.date,
+                        emoji: _currentAnniversary.emoji,
+                        colorValue: _currentAnniversary.colorValue,
+                        isYearly: tempYearly,
+                        isLunar: tempLunar,
+                        note: _currentAnniversary.note,
+                        categoryId: _currentAnniversary.categoryId,
+                      );
+                      _hasChanged = true;
+                      _updateRemaining();
+                    });
+                    Navigator.pop(context);
+                  },
+                  child: Text('Lưu', style: GoogleFonts.quicksand(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                ),
+              ),
+            ],
           ),
         ),
       ),
