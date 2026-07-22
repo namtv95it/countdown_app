@@ -103,7 +103,7 @@ class _DetailScreenState extends State<DetailScreen>
     );
     if (confirm == true) {
       await _storageService.deleteAnniversary(widget.anniversary.id);
-      if (mounted) Navigator.pop(context, null);
+      if (mounted) Navigator.pop(context, 'deleted');
     }
   }
 
@@ -158,7 +158,7 @@ class _DetailScreenState extends State<DetailScreen>
                 Icons.arrow_back_ios_rounded,
                 color: Colors.white,
               ),
-              onPressed: () => Navigator.pop(context, ann),
+              onPressed: () => Navigator.pop(context),
             ),
             actions: [
               IconButton(
@@ -658,11 +658,9 @@ class _DetailScreenState extends State<DetailScreen>
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(18),
-          onTap: () async {
-            final url = Uri.parse('https://shopee.vn/search?keyword=qu%C3%A0%20t%E1%BA%B7ng');
-            if (await canLaunchUrl(url)) {
-              await launchUrl(url, mode: LaunchMode.externalApplication);
-            }
+          onTap: () {
+            // Đóng DetailScreen và báo cho HomeScreen mở tab Quà tặng
+            Navigator.pop(context, 'gift:${widget.anniversary.category.id}');
           },
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),

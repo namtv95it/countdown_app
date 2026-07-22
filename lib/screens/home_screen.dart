@@ -349,17 +349,25 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _navigateToDetail(Anniversary item) async {
-    final updated = await Navigator.push<Anniversary?>(
+    final result = await Navigator.push<dynamic>(
       context,
       MaterialPageRoute(builder: (_) => DetailScreen(anniversary: item)),
     );
-    if (updated == null) {
+    
+    if (result == 'deleted') {
       setState(() {
         _anniversaries.removeWhere((a) => a.id == item.id);
         _sortAnniversaries();
         _featuredIndex = 0;
       });
       await _storageService.saveAnniversaries(_anniversaries);
+    } else if (result is String && result.startsWith('gift:')) {
+      final categoryId = result.substring(5);
+      setState(() {
+        _currentTab = 2; // Chuyển sang tab Quà tặng
+        _hasVisitedGiftTab = true;
+        _selectedGiftCategory = categoryId;
+      });
     }
   }
 
