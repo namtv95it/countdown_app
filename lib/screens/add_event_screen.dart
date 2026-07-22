@@ -28,23 +28,13 @@ class _AddEventScreenState extends State<AddEventScreen> {
   String _selectedCategoryId = 'other';
   int _selectedColorValue = 0xFF64748B;
   bool _isYearly = false;
-  bool _isPremiumColorsUnlocked = false;
 
   String get _selectedEmoji => EventCategory.findById(_selectedCategoryId).emoji;
 
   @override
   void initState() {
     super.initState();
-    _loadPremiumStatus();
-  }
-
-  Future<void> _loadPremiumStatus() async {
-    final unlocked = await StorageService().isFeatureUnlocked('premium_colors');
-    if (mounted) {
-      setState(() {
-        _isPremiumColorsUnlocked = unlocked;
-      });
-    }
+    StorageService().unlockFeature('premium_colors');
   }
 
   static const List<int> _colorOptions = [
@@ -420,16 +410,10 @@ class _AddEventScreenState extends State<AddEventScreen> {
       children: List.generate(_colorOptions.length, (index) {
         final colorVal = _colorOptions[index];
         final selected = colorVal == _selectedColorValue;
-        final isPremium = index >= 5;
-        final isLocked = isPremium && !_isPremiumColorsUnlocked;
 
         return GestureDetector(
           onTap: () {
-            if (isLocked) {
-              _showUnlockColorsDialog(colorVal);
-            } else {
-              setState(() => _selectedColorValue = colorVal);
-            }
+            setState(() => _selectedColorValue = colorVal);
           },
           child: Stack(
             alignment: Alignment.center,
@@ -458,84 +442,10 @@ class _AddEventScreenState extends State<AddEventScreen> {
                     ? const Icon(Icons.check_rounded, color: Colors.white, size: 18)
                     : null,
               ),
-              if (isLocked)
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.black.withValues(alpha: 0.4),
-                  ),
-                  child: const Icon(Icons.lock_rounded, color: Colors.white, size: 18),
-                ),
             ],
           ),
         );
       }),
-    );
-  }
-
-  void _showUnlockColorsDialog(int targetColor) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A2E),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: Colors.white12),
-        ),
-        title: Row(
-          children: [
-            const Icon(Icons.stars_rounded, color: Colors.amber),
-            const SizedBox(width: 10),
-            Text('Mở khóa Màu Premium',
-                style: GoogleFonts.quicksand(
-                    color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
-          ],
-        ),
-        content: Text(
-          'Xem 1 đoạn video ngắn để mở khóa vĩnh viễn trọn bộ màu nền đặc biệt cho sự kiện này nhé!',
-          style: GoogleFonts.quicksand(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Hủy', style: GoogleFonts.quicksand(color: Colors.white54)),
-          ),
-          ElevatedButton.icon(
-            icon: const Icon(Icons.play_circle_filled_rounded),
-            label: Text('Xem Video', style: GoogleFonts.quicksand(fontWeight: FontWeight.bold)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF7C3AED),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () {
-              Navigator.pop(context); // Đóng dialog
-              // Gọi dịch vụ hiển thị quảng cáo
-              AdService.showRewardedAd(
-                onEarnedReward: () async {
-                  await StorageService().unlockFeature('premium_colors');
-                  if (mounted) {
-                    setState(() {
-                      _isPremiumColorsUnlocked = true;
-                      _selectedColorValue = targetColor;
-                    });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text('🎉 Đã mở khóa vĩnh viễn bộ màu Premium!'),
-                        backgroundColor: const Color(0xFF10B981),
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                    );
-                  }
-                },
-              );
-            },
-          ),
-        ],
-      ),
     );
   }
 
