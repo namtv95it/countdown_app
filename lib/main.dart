@@ -7,6 +7,8 @@ import 'services/widget_service.dart';
 import 'services/notification_service.dart';
 import 'services/font_service.dart';
 import 'services/localization_service.dart';
+import 'services/storage_service.dart';
+import 'screens/onboarding_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,11 +26,14 @@ void main() async {
   WidgetService.initialize();
   NotificationService().initialize();
 
-  runApp(const MyApp());
+  bool isFirstLaunch = await StorageService().getIsFirstLaunch();
+
+  runApp(MyApp(isFirstLaunch: isFirstLaunch));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool isFirstLaunch;
+  const MyApp({super.key, required this.isFirstLaunch});
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +44,7 @@ class MyApp extends StatelessWidget {
           title: t('app_name'),
           debugShowCheckedModeBanner: false,
           theme: _buildTheme(),
-          home: const HomeScreen(),
+          home: isFirstLaunch ? const OnboardingScreen() : const HomeScreen(),
         );
       },
     );

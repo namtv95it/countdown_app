@@ -7,6 +7,17 @@ class StorageService {
   static const String _oldKey = 'anniversaries_list';
   static const String _bubbleEffectKey = 'bubble_effect_enabled';
   static const String _premiumKey = 'is_premium_account';
+  static const String _firstLaunchKey = 'is_first_launch';
+
+  Future<bool> getIsFirstLaunch() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_firstLaunchKey) ?? true;
+  }
+
+  Future<void> setFirstLaunchCompleted() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_firstLaunchKey, false);
+  }
 
   Future<bool> getIsPremium() async {
     final prefs = await SharedPreferences.getInstance();

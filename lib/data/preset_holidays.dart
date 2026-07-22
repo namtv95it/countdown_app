@@ -47,7 +47,7 @@ class PresetHolidays {
     PresetHoliday(title: 'Halloween', month: 10, day: 31, emoji: '🎃', colorValue: 0xFFF59E0B, badge: 'Quốc tế', categoryId: 'festival'),
     PresetHoliday(title: 'Quốc tế Nam giới', month: 11, day: 19, emoji: '👨', colorValue: 0xFF3B82F6, badge: 'Quốc tế', categoryId: 'gratitude'),
     PresetHoliday(title: 'Nhà giáo Việt Nam', month: 11, day: 20, emoji: '👩‍🏫', colorValue: 0xFF10B981, badge: 'Việt Nam', categoryId: 'gratitude'),
-    PresetHoliday(title: 'Quân đội Nhân dân', month: 12, day: 22, emoji: '🪖', colorValue: 0xFF8B5CF6, badge: 'Việt Nam', categoryId: 'profession'),
+    PresetHoliday(title: 'Quân đội Nhân dân', month: 12, day: 22, emoji: '🎖️', colorValue: 0xFF8B5CF6, badge: 'Việt Nam', categoryId: 'profession'),
     PresetHoliday(title: 'Lễ Giáng sinh', month: 12, day: 25, emoji: '🎄', colorValue: 0xFF10B981, badge: 'Quốc tế', categoryId: 'festival'),
 
     // --- ÂM LỊCH ---
@@ -55,7 +55,7 @@ class PresetHolidays {
     PresetHoliday(title: 'Tết Nguyên tiêu', month: 1, day: 15, emoji: '🌕', colorValue: 0xFFF59E0B, badge: 'Việt Nam', isLunar: true, categoryId: 'festival'),
     PresetHoliday(title: 'Tết Hàn thực', month: 3, day: 3, emoji: '🍡', colorValue: 0xFF10B981, badge: 'Việt Nam', isLunar: true, categoryId: 'festival'),
     PresetHoliday(title: 'Giỗ Tổ Hùng Vương', month: 3, day: 10, emoji: '🥁', colorValue: 0xFFEF4444, badge: 'Việt Nam', isLunar: true, categoryId: 'national'),
-    PresetHoliday(title: 'Lễ Phật Đản', month: 4, day: 15, emoji: '🪷', colorValue: 0xFFF59E0B, badge: 'Việt Nam', isLunar: true, categoryId: 'festival'),
+    PresetHoliday(title: 'Lễ Phật Đản', month: 4, day: 15, emoji: '🌸', colorValue: 0xFFF59E0B, badge: 'Việt Nam', isLunar: true, categoryId: 'festival'),
     PresetHoliday(title: 'Tết Đoan ngọ', month: 5, day: 5, emoji: '🥟', colorValue: 0xFF10B981, badge: 'Việt Nam', isLunar: true, categoryId: 'festival'),
     PresetHoliday(title: 'Lễ Vu Lan', month: 7, day: 15, emoji: '🙏', colorValue: 0xFF8B5CF6, badge: 'Việt Nam', isLunar: true, categoryId: 'family'),
     PresetHoliday(title: 'Tết Trung thu', month: 8, day: 15, emoji: '🥮', colorValue: 0xFFF59E0B, badge: 'Việt Nam', isLunar: true, categoryId: 'festival'),
