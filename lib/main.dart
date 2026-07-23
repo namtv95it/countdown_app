@@ -9,8 +9,22 @@ import 'services/localization_service.dart';
 import 'services/storage_service.dart';
 import 'screens/onboarding_screen.dart';
 
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'services/app_firebase_service.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    await AppFirebaseService().init();
+  } catch (e) {
+    debugPrint('Firebase init error: $e');
+  }
+
   await initializeDateFormatting('vi', null);
   await initializeDateFormatting('en', null);
   

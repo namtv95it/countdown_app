@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "730119079486",
+    "project_id": "lovin-c69f3",
+    "storage_bucket": "lovin-c69f3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:730119079486:android:4fa00525fde83d392d736f",
+        "android_client_info": {
+          "package_name": "com.example.countdown_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC9NBlTH_UStt0Y_Ex9ftwzIOYBj9dJI-I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

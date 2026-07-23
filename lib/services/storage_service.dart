@@ -1,7 +1,12 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:countdown_app/services/app_firebase_service.dart';
 import '../models/anniversary.dart';
 
 class StorageService {
+  static final StorageService _instance = StorageService._internal();
+  factory StorageService() => _instance;
+  StorageService._internal();
+
   static const String _key = 'anniversaries_list_v2';
   static const String _oldKey = 'anniversaries_list';
   static const String _bubbleEffectKey = 'bubble_effect_enabled';
@@ -144,5 +149,29 @@ class StorageService {
   Future<void> unlockFeature(String featureKey) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(featureKey, true);
+
+    // Đồng bộ lên Firebase (nếu đã init)
+    try {
+      if (AppFirebaseService().currentUser != null) {
+        await AppFirebaseService().syncUnlockedFeature(featureKey);
+      }
+    } catch (e) {
+      // Bỏ qua lỗi nếu chưa setup Firebase
+    }
+  }
+
+  Future<bool> isPromoCodeUsed(String code) async {
+    final prefs = await SharedPreferences.getInstance();
+    final usedCodes = prefs.getStringList('used_promo_codes') ?? [];
+    return usedCodes.contains(code.toUpperCase());
+  }
+
+  Future<void> markPromoCodeAsUsed(String code) async {
+    final prefs = await SharedPreferences.getInstance();
+    final usedCodes = prefs.getStringList('used_promo_codes') ?? [];
+    if (!usedCodes.contains(code.toUpperCase())) {
+      usedCodes.add(code.toUpperCase());
+      await prefs.setStringList('used_promo_codes', usedCodes);
+    }
   }
 }

@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:countdown_app/services/app_firebase_service.dart';
 import 'storage_service.dart';
 import 'ad_service.dart';
 
@@ -143,6 +145,63 @@ class PromoService {
       return const PromoResult(success: false, message: 'Vui lòng nhập gift code!');
     }
 
+    // 1. Kiểm tra trên Firestore trước
+    try {
+      final firestoreData = await AppFirebaseService().checkPromoCode(cleanCode);
+      if (firestoreData != null) {
+        final docId = firestoreData['_docId'] as String;
+
+        // 1.1 Kiểm tra đã nhập ở máy này chưa
+        if (await StorageService().isPromoCodeUsed(cleanCode)) {
+          return const PromoResult(success: false, message: 'Bạn đã sử dụng mã này rồi!');
+        }
+
+        // 1.2 Kiểm tra hạn sử dụng (nếu có)
+        if (firestoreData['expirationDate'] != null) {
+          final expirationTimestamp = firestoreData['expirationDate']; // Giả sử là Timestamp
+          final expirationDate = expirationTimestamp.toDate();
+          final networkTime = await getNetworkTime();
+          if (networkTime.isAfter(expirationDate)) {
+            return const PromoResult(success: false, message: 'Mã này đã hết hạn!');
+          }
+        }
+
+        // 1.3 Kiểm tra giới hạn số lượt sử dụng (nếu có)
+        if (firestoreData['maxUsage'] != null) {
+          final int maxUsage = firestoreData['maxUsage'];
+          final int usedCount = firestoreData['usedCount'] ?? 0;
+          if (usedCount >= maxUsage) {
+            return const PromoResult(success: false, message: 'Mã này đã đạt giới hạn số lần sử dụng!');
+          }
+        }
+
+        // 1.4 Áp dụng phần thưởng
+        final String type = firestoreData['type'] ?? '';
+        final String description = firestoreData['description'] ?? 'Quà tặng từ server';
+        final String? effectId = firestoreData['unlockedEffectId'];
+
+        if (type == 'premium') {
+          await StorageService().setPremium(true);
+          AdService.isPremium = true;
+        } else if (type == 'giftEffect' && effectId != null) {
+          await StorageService().unlockFeature('${effectId}_effect_unlocked');
+          await StorageService().setSelectedEffect(effectId);
+        }
+
+        // 1.5 Cập nhật Database và Local
+        await AppFirebaseService().incrementPromoUsage(docId);
+        await StorageService().markPromoCodeAsUsed(cleanCode);
+
+        return PromoResult(
+          success: true,
+          message: '🎉 Kích hoạt thành công $description!',
+        );
+      }
+    } catch (e) {
+      debugPrint('Firestore check failed, falling back to local codes: $e');
+    }
+
+    // 2. Dự phòng: Kiểm tra mã cục bộ (như cũ)
     final matched = validCodes.firstWhere(
       (c) => c.code.toUpperCase() == cleanCode,
       orElse: () => PromoCode(code: '', expirationDate: _epoch, description: ''),
