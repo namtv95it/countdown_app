@@ -38,7 +38,7 @@ const products = [
         priceRange: '3tr - 5tr',
         imageUrl: 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=400&q=80',
         isPopular: true,
-        gender: 'unisex',
+        gender: 'male',
         platform: 'Shopee',
         affiliateUrl: 'https://shopee.vn'
     },
@@ -75,7 +75,7 @@ const products = [
         priceRange: '1.2tr - 2tr',
         imageUrl: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&q=80',
         isPopular: true,
-        gender: 'female',
+        gender: 'male',
         platform: 'Shopee',
         affiliateUrl: 'https://shopee.vn'
     },
