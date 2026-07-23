@@ -1,10 +1,12 @@
-import '../services/localization_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/localization_service.dart';
 import '../services/storage_service.dart';
-import '../services/ad_service.dart';
 import '../services/font_service.dart';
+import '../services/ad_service.dart';
+import '../services/audio_service.dart';
 import '../widgets/premium_dialog.dart';
 
 class ThemePickerSheet extends StatefulWidget {
@@ -24,14 +26,16 @@ class ThemePickerSheet extends StatefulWidget {
 class _ThemePickerSheetState extends State<ThemePickerSheet> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   String _selectedEffect = 'none';
+  String _selectedMusic = 'none';
+  String? _customMusicName;
+  bool _isLoading = true;
   bool _isPremium = false;
   final Map<String, bool> _effectUnlocked = {};
-  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this, initialIndex: widget.initialTabIndex);
+    _tabController = TabController(length: 3, vsync: this, initialIndex: widget.initialTabIndex);
     _loadData();
   }
 
@@ -46,9 +50,17 @@ class _ThemePickerSheetState extends State<ThemePickerSheet> with SingleTickerPr
     final unlockResults = await Future.wait(
       effectIds.map((id) => storage.isFeatureUnlocked('${id}_effect_unlocked')),
     );
+    
+    final music = await storage.getSelectedMusicId();
+    final customPath = await storage.getCustomMusicPath();
+    
     if (mounted) {
       setState(() {
         _selectedEffect = effect;
+        _selectedMusic = music;
+        if (customPath != null) {
+          _customMusicName = customPath.split('/').last.split('\\').last;
+        }
         _isPremium = AdService.isPremium;
         for (int i = 0; i < effectIds.length; i++) {
           _effectUnlocked[effectIds[i]] = unlockResults[i];
@@ -195,6 +207,36 @@ class _ThemePickerSheetState extends State<ThemePickerSheet> with SingleTickerPr
     await prefs.setString('app_font', fontName);
     // Gửi lại effect hiện hành để kích hoạt setState ở màn hình chính, giúp cập nhật font
     widget.onEffectChanged?.call(_selectedEffect);
+  }
+
+  Future<void> _clearMusic() async {
+    setState(() {
+      _selectedMusic = 'none';
+      _customMusicName = null;
+    });
+    await StorageService().setSelectedMusicId('none');
+    AudioService().updateMusicSource();
+  }
+
+  Future<void> _pickCustomMusic() async {
+    try {
+      final result = await FilePicker.pickFiles(
+        type: FileType.audio,
+      );
+
+      if (result != null && result.files.single.path != null) {
+        String path = result.files.single.path!;
+        setState(() {
+          _selectedMusic = 'custom';
+          _customMusicName = path.split('/').last.split('\\').last;
+        });
+        await StorageService().setCustomMusicPath(path);
+        await StorageService().setSelectedMusicId('custom');
+        AudioService().updateMusicSource();
+      }
+    } catch (e) {
+      debugPrint("Error picking audio: $e");
+    }
   }
 
   Widget _buildEffectChip(String id, String name, IconData icon) {
@@ -348,6 +390,7 @@ class _ThemePickerSheetState extends State<ThemePickerSheet> with SingleTickerPr
             tabs: [
               Tab(text: t('background_effect')),
               Tab(text: t('font_style')),
+              Tab(text: t('tab_music') == 'tab_music' ? 'Nhạc nền' : t('tab_music')),
             ],
           ),
           Expanded(
@@ -396,6 +439,98 @@ class _ThemePickerSheetState extends State<ThemePickerSheet> with SingleTickerPr
                       'Pacifico',
                       'Dancing Script',
                     ].map((fontName) => _buildFontChip(fontName)).toList(),
+                  ),
+                ),
+                // Tab Nhạc nền
+                SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      if (_selectedMusic == 'custom' && _customMusicName != null)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          margin: const EdgeInsets.only(bottom: 20),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEC4899).withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: const Color(0xFFEC4899).withValues(alpha: 0.3)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.music_note_rounded, color: Color(0xFFEC4899), size: 28),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Đang phát',
+                                      style: GoogleFonts.quicksand(
+                                        color: const Color(0xFFEC4899),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    Text(
+                                      _customMusicName!,
+                                      style: GoogleFonts.quicksand(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: _pickCustomMusic,
+                          icon: const Icon(Icons.folder_open_rounded, size: 24),
+                          label: Text(
+                            t('music_custom') == 'music_custom' ? 'Chọn từ thiết bị' : t('music_custom'),
+                            style: GoogleFonts.quicksand(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFEC4899),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      if (_selectedMusic != 'none')
+                        SizedBox(
+                          width: double.infinity,
+                          child: TextButton.icon(
+                            onPressed: _clearMusic,
+                            icon: const Icon(Icons.delete_outline_rounded, size: 20),
+                            label: Text(
+                              'Xóa nhạc nền',
+                              style: GoogleFonts.quicksand(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.white60,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ],

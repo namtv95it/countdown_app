@@ -7,6 +7,50 @@ class StorageService {
   static const String _bubbleEffectKey = 'bubble_effect_enabled';
   static const String _premiumKey = 'is_premium_account';
   static const String _firstLaunchKey = 'is_first_launch';
+  static const String _tutorialShownKey = 'is_tutorial_shown';
+  static const String _musicEnabledKey = 'is_music_enabled';
+  static const String _selectedMusicIdKey = 'selected_music_id';
+  static const String _customMusicPathKey = 'custom_music_path';
+
+  Future<String> getSelectedMusicId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_selectedMusicIdKey) ?? 'none';
+  }
+
+  Future<void> setSelectedMusicId(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_selectedMusicIdKey, id);
+  }
+
+  Future<String?> getCustomMusicPath() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_customMusicPathKey);
+  }
+
+  Future<void> setCustomMusicPath(String path) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_customMusicPathKey, path);
+  }
+
+  Future<bool> getIsMusicEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_musicEnabledKey) ?? true;
+  }
+
+  Future<void> setMusicEnabled(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_musicEnabledKey, value);
+  }
+
+  Future<bool> getIsTutorialShown() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_tutorialShownKey) ?? false;
+  }
+
+  Future<void> setTutorialShown() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_tutorialShownKey, true);
+  }
 
   Future<bool> getIsFirstLaunch() async {
     final prefs = await SharedPreferences.getInstance();

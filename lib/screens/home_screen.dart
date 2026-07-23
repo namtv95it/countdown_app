@@ -18,6 +18,7 @@ import '../services/storage_service.dart';
 import '../services/font_service.dart';
 import '../services/ad_service.dart';
 import '../services/notification_service.dart';
+import '../services/audio_service.dart';
 import '../widgets/countdown_card.dart';
 import '../widgets/time_unit_box.dart';
 import '../widgets/effect_background.dart';
@@ -25,6 +26,7 @@ import '../widgets/premium_dialog.dart';
 import '../widgets/theme_picker_sheet.dart';
 import '../widgets/congratulations_view.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
 import 'add_event_screen.dart';
 import 'detail_screen.dart';
@@ -58,6 +60,7 @@ class _HomeScreenState extends State<HomeScreen>
   bool _showFullscreenExitButton = false;
   Timer? _hideExitButtonTimer;
   final GlobalKey _repaintBoundaryKey = GlobalKey();
+  final GlobalKey _themeButtonKey = GlobalKey();
   bool _isCapturing = false;
   DateTime? _customCountdownTarget;
   void _showCustomTimerDialog() {
@@ -188,6 +191,72 @@ class _HomeScreenState extends State<HomeScreen>
     _loadAnniversaries();
     _loadThemeSettings();
     _loadBannerAd();
+    
+    AudioService().init().then((_) {
+      if (mounted) setState(() {});
+    });
+    
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _checkAndShowTutorial();
+    });
+  }
+
+  Future<void> _checkAndShowTutorial() async {
+    final storage = StorageService();
+    final isTutorialShown = await storage.getIsTutorialShown();
+    if (!isTutorialShown && mounted) {
+      _showTutorial();
+    }
+  }
+
+  void _showTutorial() {
+    TutorialCoachMark(
+      targets: [
+        TargetFocus(
+          identify: "theme_button",
+          keyTarget: _themeButtonKey,
+          alignSkip: Alignment.topLeft,
+          enableOverlayTab: true,
+          contents: [
+            TargetContent(
+              align: ContentAlign.bottom,
+              builder: (context, controller) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      t('tutorial_theme_btn') == 'tutorial_theme_btn' ? "Bấm vào đây để thay đổi hiệu ứng và phông chữ!" : t('tutorial_theme_btn'),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                      ),
+                      textAlign: TextAlign.right,
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ],
+      colorShadow: const Color(0xFF7C3AED),
+      textSkip: t('skip') == 'skip' ? "Bỏ qua" : t('skip'),
+      alignSkip: Alignment.topLeft,
+      paddingFocus: 10,
+      opacityShadow: 0.8,
+      onFinish: () {
+        StorageService().setTutorialShown();
+      },
+      onClickTarget: (target) {
+        StorageService().setTutorialShown();
+      },
+      onSkip: () {
+        StorageService().setTutorialShown();
+        return true;
+      },
+    ).show(context: context);
   }
 
   Future<void> _loadThemeSettings() async {
@@ -258,8 +327,9 @@ class _HomeScreenState extends State<HomeScreen>
   void dispose() {
     _pageController.dispose();
     _eventsScrollController.dispose();
-    _hideExitButtonTimer?.cancel();
     _bannerAd?.dispose();
+    _hideExitButtonTimer?.cancel();
+    AudioService().dispose();
     super.dispose();
   }
 
@@ -854,9 +924,9 @@ class _HomeScreenState extends State<HomeScreen>
                         ],
                       ),
                     
-                    const SizedBox(width: 12),
                     // Nút Theme
                     PopupMenuButton<String>(
+                      key: _themeButtonKey,
                       icon: const Icon(Icons.palette_rounded, color: Colors.amber),
                       color: const Color(0xFF1A1A2E),
                       shape: RoundedRectangleBorder(
@@ -864,13 +934,13 @@ class _HomeScreenState extends State<HomeScreen>
                         side: const BorderSide(color: Colors.white12),
                       ),
                       onSelected: (value) {
-                        if (value == 'effect' || value == 'font') {
+                        if (value == 'effect' || value == 'font' || value == 'music') {
                           showModalBottomSheet(
                             context: context,
                             isScrollControlled: true,
                             backgroundColor: Colors.transparent,
                             builder: (_) => ThemePickerSheet(
-                              initialTabIndex: value == 'effect' ? 0 : 1,
+                              initialTabIndex: value == 'effect' ? 0 : (value == 'font' ? 1 : 2),
                               onEffectChanged: (effect) {
                                 setState(() => _selectedEffect = effect);
                               },
@@ -900,6 +970,16 @@ class _HomeScreenState extends State<HomeScreen>
                               const Icon(Icons.font_download_rounded, color: Colors.blueAccent, size: 20),
                               const SizedBox(width: 12),
                               Text(t('font_style'), style: GoogleFonts.quicksand(color: Colors.white)),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: 'music',
+                          child: Row(
+                            children: [
+                              const Icon(Icons.library_music_rounded, color: Colors.pinkAccent, size: 20),
+                              const SizedBox(width: 12),
+                              Text(t('tab_music') == 'tab_music' ? 'Nhạc nền' : t('tab_music'), style: GoogleFonts.quicksand(color: Colors.white)),
                             ],
                           ),
                         ),

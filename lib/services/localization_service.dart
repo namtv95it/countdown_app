@@ -353,6 +353,17 @@ class LocalizationService {
       'effect_cherry_blossom': 'Hoa đào',
       'effect_galaxy': 'Ngân hà',
 
+      // Music picker
+      'tab_music': 'Nhạc nền',
+      'music_none': 'Không có',
+      'music_track_1': 'Giai điệu 1',
+      'music_track_2': 'Giai điệu 2',
+      'music_track_3': 'Giai điệu 3',
+      'music_track_4': 'Giai điệu 4',
+      'music_track_5': 'Giai điệu 5',
+      'music_custom': 'Từ thiết bị',
+      'unlock_music_msg': 'Xem 1 đoạn video quảng cáo ngắn hoặc Nâng cấp Premium để sở hữu ngay bản nhạc {music} nhé!',
+
       // Gift screen & wishes
       'wish_button': '💌 Tạo lời chúc',
       'wish_button_short': 'Lời chúc',
@@ -718,6 +729,17 @@ class LocalizationService {
       'effect_fireworks': 'Fireworks',
       'effect_cherry_blossom': 'Cherry Blossom',
       'effect_galaxy': 'Galaxy',
+
+      // Music picker
+      'tab_music': 'Music',
+      'music_none': 'None',
+      'music_track_1': 'Track 1',
+      'music_track_2': 'Track 2',
+      'music_track_3': 'Track 3',
+      'music_track_4': 'Track 4',
+      'music_track_5': 'Track 5',
+      'music_custom': 'From device',
+      'unlock_music_msg': 'Watch a short ad or Upgrade to Premium to unlock the {music} track!',
 
       // Gift screen & wishes
       'wish_button': '💌 Create wish',
