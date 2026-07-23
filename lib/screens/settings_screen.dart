@@ -62,8 +62,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final effect = await StorageService().getSelectedEffect();
     // Pre-load trạng thái mở khóa
     final effectIds = [
-      'bubbles',
       'hearts',
+      'bubbles',
       'snow',
       'stars',
       'meteor',

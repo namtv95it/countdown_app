@@ -38,7 +38,7 @@ class _ThemePickerSheetState extends State<ThemePickerSheet> with SingleTickerPr
   Future<void> _loadData() async {
     final effect = await StorageService().getSelectedEffect();
     final effectIds = [
-      'bubbles', 'hearts', 'snow', 'stars', 'meteor', 'rain',
+      'hearts', 'bubbles', 'snow', 'stars', 'meteor', 'rain',
       'rain_ripple', 'rainbow', 'waves', 'leaves', 'sunset_birds',
       'aurora', 'fireflies', 'fireworks', 'cherry_blossom', 'galaxy',
     ];
@@ -59,10 +59,10 @@ class _ThemePickerSheetState extends State<ThemePickerSheet> with SingleTickerPr
   }
 
   Future<void> _selectEffect(String effectId, String effectName) async {
-    if (effectId == 'none') {
-      setState(() => _selectedEffect = 'none');
-      await StorageService().setSelectedEffect('none');
-      widget.onEffectChanged?.call('none');
+    if (effectId == 'none' || effectId == 'hearts') {
+      setState(() => _selectedEffect = effectId);
+      await StorageService().setSelectedEffect(effectId);
+      widget.onEffectChanged?.call(effectId);
       return;
     }
 
@@ -199,7 +199,7 @@ class _ThemePickerSheetState extends State<ThemePickerSheet> with SingleTickerPr
 
   Widget _buildEffectChip(String id, String name, IconData icon) {
     final isSelected = _selectedEffect == id;
-    final isUnlocked = id == 'none' || (_effectUnlocked[id] ?? false) || _isPremium;
+    final isUnlocked = id == 'none' || id == 'hearts' || (_effectUnlocked[id] ?? false) || _isPremium;
     
     return InkWell(
       onTap: () => _selectEffect(id, name),
@@ -363,8 +363,8 @@ class _ThemePickerSheetState extends State<ThemePickerSheet> with SingleTickerPr
                     alignment: WrapAlignment.start,
                     children: [
                       SizedBox(width: (MediaQuery.of(context).size.width - 40 - 20) / 3, child: _buildEffectChip('none', t('none'), Icons.block)),
-                      SizedBox(width: (MediaQuery.of(context).size.width - 40 - 20) / 3, child: _buildEffectChip('bubbles', t('effect_bubbles'), Icons.bubble_chart)),
                       SizedBox(width: (MediaQuery.of(context).size.width - 40 - 20) / 3, child: _buildEffectChip('hearts', t('effect_hearts'), Icons.favorite)),
+                      SizedBox(width: (MediaQuery.of(context).size.width - 40 - 20) / 3, child: _buildEffectChip('bubbles', t('effect_bubbles'), Icons.bubble_chart)),
                       SizedBox(width: (MediaQuery.of(context).size.width - 40 - 20) / 3, child: _buildEffectChip('snow', t('effect_snow'), Icons.ac_unit)),
                       SizedBox(width: (MediaQuery.of(context).size.width - 40 - 20) / 3, child: _buildEffectChip('stars', t('effect_stars'), Icons.star)),
                       SizedBox(width: (MediaQuery.of(context).size.width - 40 - 20) / 3, child: _buildEffectChip('meteor', t('effect_meteor'), Icons.auto_awesome)),
