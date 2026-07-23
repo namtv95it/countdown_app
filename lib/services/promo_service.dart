@@ -141,8 +141,24 @@ class PromoService {
   /// Kiểm tra và áp dụng mã kích hoạt / gift code
   static Future<PromoResult> redeemCode(String inputCode) async {
     final cleanCode = inputCode.trim().toUpperCase();
-    if (cleanCode.isEmpty) {
-      return const PromoResult(success: false, message: 'Vui lòng nhập gift code!');
+    if (cleanCode.length < 5) {
+      return const PromoResult(success: false, message: 'Mã không hợp lệ (quá ngắn)!');
+    }
+
+    // --- ANTI SPAM CHECK ---
+    final storage = StorageService();
+    final lockUntil = await storage.getPromoLockUntil();
+    if (lockUntil != null) {
+      if (DateTime.now().isBefore(lockUntil)) {
+        final minutesLeft = lockUntil.difference(DateTime.now()).inMinutes + 1;
+        return PromoResult(
+            success: false,
+            message: 'Bạn nhập sai quá nhiều. Vui lòng thử lại sau $minutesLeft phút!');
+      } else {
+        // Hết thời gian khóa, reset lại
+        await storage.setPromoLockUntil(null);
+        await storage.setFailedPromoAttempts(0);
+      }
     }
 
     // 1. Kiểm tra trên Firestore trước
@@ -191,10 +207,18 @@ class PromoService {
         // 1.5 Cập nhật Database và Local
         await AppFirebaseService().incrementPromoUsage(docId);
         await StorageService().markPromoCodeAsUsed(cleanCode);
+        await storage.setFailedPromoAttempts(0); // Thành công thì reset
 
         return PromoResult(
           success: true,
           message: '🎉 Kích hoạt thành công $description!',
+          matchedCode: PromoCode(
+            code: cleanCode,
+            expirationDate: firestoreData['expirationDate']?.toDate() ?? _epoch,
+            description: description,
+            type: type == 'premium' ? PromoType.premium : PromoType.giftEffect,
+            unlockedEffectId: effectId,
+          ),
         );
       }
     } catch (e) {
@@ -208,6 +232,13 @@ class PromoService {
     );
 
     if (matched.code.isEmpty) {
+      int attempts = await storage.getFailedPromoAttempts() + 1;
+      await storage.setFailedPromoAttempts(attempts);
+      if (attempts >= 3) {
+        await storage.setPromoLockUntil(DateTime.now().add(const Duration(minutes: 10)));
+        return const PromoResult(
+            success: false, message: 'Bạn nhập sai quá 3 lần. Tính năng bị khóa 10 phút!');
+      }
       return const PromoResult(success: false, message: 'Mã kích hoạt hoặc Gift Code không hợp lệ!');
     }
 
@@ -234,6 +265,8 @@ class PromoService {
     } else if (matched.type == PromoType.testMode) {
       await StorageService().setTestModeUnlocked(true);
     }
+    
+    await storage.setFailedPromoAttempts(0); // Thành công thì reset
 
     return PromoResult(
       success: true,

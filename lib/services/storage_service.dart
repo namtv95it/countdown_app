@@ -75,6 +75,17 @@ class StorageService {
   Future<void> setPremium(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_premiumKey, value);
+
+    if (value) {
+      // Đồng bộ lên Firebase
+      try {
+        if (AppFirebaseService().currentUser != null) {
+          await AppFirebaseService().syncUnlockedFeature('premium');
+        }
+      } catch (e) {
+        // Bỏ qua lỗi
+      }
+    }
   }
 
   Future<bool> getIsTestModeUnlocked() async {
@@ -172,6 +183,33 @@ class StorageService {
     if (!usedCodes.contains(code.toUpperCase())) {
       usedCodes.add(code.toUpperCase());
       await prefs.setStringList('used_promo_codes', usedCodes);
+    }
+  }
+
+  // --- ANTI SPAM PROMO CODE ---
+  Future<int> getFailedPromoAttempts() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('promo_failed_attempts') ?? 0;
+  }
+
+  Future<void> setFailedPromoAttempts(int attempts) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('promo_failed_attempts', attempts);
+  }
+
+  Future<DateTime?> getPromoLockUntil() async {
+    final prefs = await SharedPreferences.getInstance();
+    final lockStr = prefs.getString('promo_lock_until');
+    if (lockStr == null) return null;
+    return DateTime.tryParse(lockStr);
+  }
+
+  Future<void> setPromoLockUntil(DateTime? time) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (time == null) {
+      await prefs.remove('promo_lock_until');
+    } else {
+      await prefs.setString('promo_lock_until', time.toIso8601String());
     }
   }
 }
