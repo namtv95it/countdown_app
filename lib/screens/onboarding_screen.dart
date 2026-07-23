@@ -93,25 +93,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  // Sắp xếp: VN ngôn ngữ -> Việt Nam lên trước, EN -> quốc tế lên trước
+  // Sắp xếp: Luôn xếp Quốc tế lên trước, Việt Nam sau
   List<PresetHoliday> get _sortedHolidays {
-    final lang = LocalizationService.languageNotifier.value;
     final all = List<PresetHoliday>.from(PresetHolidays.all);
-    if (lang == 'vi') {
-      // Việt Nam lên trước, Quốc tế sau
-      all.sort((a, b) {
-        final aVn = a.badge == 'vn' ? 0 : 1;
-        final bVn = b.badge == 'vn' ? 0 : 1;
-        return aVn.compareTo(bVn);
-      });
-    } else {
-      // Quốc tế lên trước, Việt Nam sau
-      all.sort((a, b) {
-        final aInt = a.badge == 'intl' ? 0 : 1;
-        final bInt = b.badge == 'intl' ? 0 : 1;
-        return aInt.compareTo(bInt);
-      });
-    }
+    all.sort((a, b) {
+      final aInt = a.badge == 'intl' ? 0 : 1;
+      final bInt = b.badge == 'intl' ? 0 : 1;
+      return aInt.compareTo(bInt);
+    });
     return all;
   }
 
