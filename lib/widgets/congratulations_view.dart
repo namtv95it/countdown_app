@@ -65,22 +65,27 @@ class _CongratulationsViewState extends State<CongratulationsView> {
             ),
           ],
         ),
-        // Pháo hoa nổ từ trên xuống
+        // Pháo hoa nổ từ vị trí cao hơn (gần khu vực trên cùng của thẻ sự kiện)
         Positioned(
-          top: -350, // Nằm tít phía trên cao sát nóc màn hình
-          child: ConfettiWidget(
-            confettiController: _confettiController,
-            blastDirectionality: BlastDirectionality.explosive, // Nổ tỏa ra mọi hướng
-            maxBlastForce: 40, // Lực nổ vừa phải
-            minBlastForce: 10,
-            emissionFrequency: 0.05,
-            numberOfParticles: 50, // Nhiều pháo hoa để trông rực rỡ
-            gravity: 0.2, // Rơi từ từ xuống
-            shouldLoop: false,
-            colors: const [
-              Colors.green, Colors.blue, Colors.pink, 
-              Colors.orange, Colors.purple, Colors.yellow,
-            ],
+          top: -250,
+          left: 0,
+          right: 0,
+          child: Align(
+            alignment: Alignment.center,
+            child: ConfettiWidget(
+              confettiController: _confettiController,
+              blastDirectionality: BlastDirectionality.explosive, // Nổ tỏa ra mọi hướng
+              maxBlastForce: 60, // Lực nổ mạnh hơn một chút
+              minBlastForce: 20,
+              emissionFrequency: 0.05,
+              numberOfParticles: 40, // Đủ để trông rực rỡ
+              gravity: 0.2, // Rơi từ từ xuống
+              shouldLoop: false,
+              colors: const [
+                Colors.green, Colors.blue, Colors.pink, 
+                Colors.orange, Colors.purple, Colors.yellow,
+              ],
+            ),
           ),
         ),
       ],

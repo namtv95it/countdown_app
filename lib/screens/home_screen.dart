@@ -601,7 +601,7 @@ class _HomeScreenState extends State<HomeScreen>
                       top: 40,
                       right: 20,
                       child: AnimatedOpacity(
-                        opacity: _showFullscreenExitButton ? 1.0 : 0.0,
+                        opacity: (_showFullscreenExitButton && !_isCapturing) ? 1.0 : 0.0,
                         duration: const Duration(milliseconds: 300),
                         child: IgnorePointer(
                           ignoring: !_showFullscreenExitButton,
@@ -624,7 +624,7 @@ class _HomeScreenState extends State<HomeScreen>
                       right: 0,
                       child: Center(
                         child: AnimatedOpacity(
-                          opacity: _showFullscreenExitButton ? 1.0 : 0.0,
+                          opacity: (_showFullscreenExitButton && !_isCapturing) ? 1.0 : 0.0,
                           duration: const Duration(milliseconds: 300),
                           child: IgnorePointer(
                             ignoring: !_showFullscreenExitButton,
@@ -953,6 +953,7 @@ class _HomeScreenState extends State<HomeScreen>
                       child: Center(
                         child: SingleChildScrollView(
                           physics: const BouncingScrollPhysics(),
+                          clipBehavior: Clip.none,
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                         children: [
