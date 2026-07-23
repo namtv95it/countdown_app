@@ -11,30 +11,45 @@ class AdService {
     await MobileAds.instance.initialize();
   }
 
-  // Lấy Banner Ad Unit ID (Test)
+  // Lấy Banner Ad Unit ID
   static String get bannerAdUnitId {
+    if (kDebugMode) {
+      return Platform.isAndroid
+          ? 'ca-app-pub-3940256099942544/6300978111'
+          : 'ca-app-pub-3940256099942544/2934735716';
+    }
     if (Platform.isAndroid) {
-      return 'ca-app-pub-3940256099942544/6300978111';
+      return 'ca-app-pub-2777782666936638/7961408150';
     } else if (Platform.isIOS) {
       return 'ca-app-pub-3940256099942544/2934735716';
     }
     throw UnsupportedError('Unsupported platform');
   }
 
-  // Lấy Interstitial Ad Unit ID (Test)
+  // Lấy Interstitial Ad Unit ID
   static String get interstitialAdUnitId {
+    if (kDebugMode) {
+      return Platform.isAndroid
+          ? 'ca-app-pub-3940256099942544/1033173712'
+          : 'ca-app-pub-3940256099942544/4411468910';
+    }
     if (Platform.isAndroid) {
-      return 'ca-app-pub-3940256099942544/1033173712';
+      return 'ca-app-pub-2777782666936638/3655211498';
     } else if (Platform.isIOS) {
       return 'ca-app-pub-3940256099942544/4411468910';
     }
     throw UnsupportedError('Unsupported platform');
   }
 
-  // Lấy Rewarded Ad Unit ID (Test)
+  // Lấy Rewarded Ad Unit ID
   static String get rewardedAdUnitId {
+    if (kDebugMode) {
+      return Platform.isAndroid
+          ? 'ca-app-pub-3940256099942544/5224354917'
+          : 'ca-app-pub-3940256099942544/1712485313';
+    }
     if (Platform.isAndroid) {
-      return 'ca-app-pub-3940256099942544/5224354917';
+      return 'ca-app-pub-2777782666936638/4487011669';
     } else if (Platform.isIOS) {
       return 'ca-app-pub-3940256099942544/1712485313';
     }

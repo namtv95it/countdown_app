@@ -469,72 +469,44 @@ class _PremiumDialogState extends State<PremiumDialog> {
                 child: SizedBox(
                   width: double.infinity,
                   height: 52,
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      await StorageService().setPremium(true);
-                      AdService.isPremium = true;
-                      widget.onPremiumUnlocked?.call();
-
-                      if (context.mounted) {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Row(
-                              children: [
-                                const Icon(Icons.stars_rounded, color: Colors.amber),
-                                const SizedBox(width: 10),
-                                Text(
-                                  t('upgrade_success'),
-                                  style: GoogleFonts.quicksand(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            backgroundColor: const Color(0xFF10B981),
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 8,
-                      shadowColor: const Color(0xFFFFA500).withValues(alpha: 0.5),
-                    ),
-                    child: Ink(
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFFFD700), Color(0xFFFF8C00)],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
+                  child: Opacity(
+                    opacity: 0.5,
+                    child: ElevatedButton(
+                      onPressed: null,
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                        borderRadius: BorderRadius.circular(16),
+                        elevation: 0,
                       ),
-                      child: Container(
-                        alignment: Alignment.center,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.flash_on_rounded, color: Color(0xFF1A1A2E)),
-                            const SizedBox(width: 8),
-                            Text(
-                              'NÂNG CẤP NGAY (\$2.00)',
-                              style: GoogleFonts.quicksand(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w900,
-                                color: const Color(0xFF1A1A2E),
-                                letterSpacing: 0.8,
+                      child: Ink(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF888888), Color(0xFF666666)],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Container(
+                          alignment: Alignment.center,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.build_circle_rounded, color: Colors.white70),
+                              const SizedBox(width: 8),
+                              Text(
+                                'ĐANG PHÁT TRIỂN',
+                                style: GoogleFonts.quicksand(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white70,
+                                  letterSpacing: 0.8,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
