@@ -26,6 +26,7 @@ const products = [
         priceRange: '350k - 600k',
         imageUrl: 'https://images.unsplash.com/photo-1601002360216-563b7e734c26?w=400&q=80',
         isPopular: true,
+        gender: 'unisex',
         platform: 'Tiktok Shop',
         affiliateUrl: 'https://shopee.vn/search?keyword=b%C3%A1nh%20trung%20thu'
     },
@@ -37,6 +38,7 @@ const products = [
         priceRange: '3tr - 5tr',
         imageUrl: 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=400&q=80',
         isPopular: true,
+        gender: 'unisex',
         platform: 'Shopee',
         affiliateUrl: 'https://shopee.vn'
     },
@@ -48,6 +50,7 @@ const products = [
         priceRange: '400k - 700k',
         imageUrl: 'https://images.unsplash.com/photo-1559454403-b8fb88521f11?w=400&q=80',
         isPopular: false,
+        gender: 'female',
         platform: 'Shopee',
         affiliateUrl: 'https://shopee.vn'
     },
@@ -59,6 +62,7 @@ const products = [
         priceRange: '800k - 1.5tr',
         imageUrl: 'https://images.unsplash.com/photo-1545239351-ef35f43d514b?w=400&q=80',
         isPopular: true,
+        gender: 'unisex',
         platform: 'Shopee',
         affiliateUrl: 'https://shopee.vn'
     },
@@ -71,6 +75,7 @@ const products = [
         priceRange: '1.2tr - 2tr',
         imageUrl: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&q=80',
         isPopular: true,
+        gender: 'female',
         platform: 'Shopee',
         affiliateUrl: 'https://shopee.vn'
     },
@@ -82,6 +87,7 @@ const products = [
         priceRange: '450k - 800k',
         imageUrl: 'https://images.unsplash.com/photo-1599643478514-4a410f0814a0?w=400&q=80',
         isPopular: false,
+        gender: 'female',
         platform: 'Shopee',
         affiliateUrl: 'https://shopee.vn'
     },
@@ -94,6 +100,7 @@ const products = [
         priceRange: '300k - 550k',
         imageUrl: 'https://images.unsplash.com/photo-1563241527-3004b7be0ffd?w=400&q=80',
         isPopular: true,
+        gender: 'female',
         platform: 'Shopee',
         affiliateUrl: 'https://shopee.vn'
     },
@@ -105,6 +112,7 @@ const products = [
         priceRange: '250k - 500k',
         imageUrl: 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=400&q=80',
         isPopular: true,
+        gender: 'unisex',
         platform: 'Shopee',
         affiliateUrl: 'https://shopee.vn'
     }

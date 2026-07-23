@@ -93,13 +93,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  // Sắp xếp: Luôn xếp Quốc tế lên trước, Việt Nam sau
+  // Sắp xếp: Luôn xếp Quốc tế lên trước, Việt Nam sau, sau đó sắp xếp theo ngày tháng
   List<PresetHoliday> get _sortedHolidays {
     final all = List<PresetHoliday>.from(PresetHolidays.all);
     all.sort((a, b) {
       final aInt = a.badge == 'intl' ? 0 : 1;
       final bInt = b.badge == 'intl' ? 0 : 1;
-      return aInt.compareTo(bInt);
+      
+      if (aInt != bInt) {
+        return aInt.compareTo(bInt);
+      }
+      
+      if (a.month != b.month) {
+        return a.month.compareTo(b.month);
+      }
+      
+      return a.day.compareTo(b.day);
     });
     return all;
   }

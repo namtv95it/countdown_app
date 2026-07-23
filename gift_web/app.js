@@ -95,9 +95,7 @@ function renderOccasions() {
         `;
 
         btn.onclick = () => {
-            currentCategory = occ.categoryId || 'all';
-            renderCategories();
-            renderProducts();
+            window.location.href = `${occ.id}.html?lang=${currentLang}`;
         };
 
         container.appendChild(btn);
@@ -223,6 +221,14 @@ function renderProducts() {
             <!-- Image Hero Section -->
             <div class="h-28 w-full relative overflow-hidden" style="background-color: rgba(${catColorRgb}, 0.15)">
                 <img src="${product.imageUrl}" alt="${productName}" class="w-full h-full object-cover">
+                
+                <!-- Gender Badge -->
+                ${product.gender ? `
+                <div class="absolute top-2 left-2 w-6 h-6 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/20 shadow-sm">
+                    <span class="text-xs leading-none" style="margin-top: 1px">${product.gender === 'male' ? '♂️' : product.gender === 'female' ? '♀️' : '⚧️'}</span>
+                </div>
+                ` : ''}
+
                 ${product.isPopular ? `
                 <div class="absolute top-2 right-2 px-2 h-5 bg-gradient-to-r from-yellow-500 to-amber-600 rounded-md shadow-lg flex items-center justify-center">
                     <span class="text-[10px] font-bold text-white tracking-wider uppercase leading-none mt-[1px]">${ui('hot')}</span>
