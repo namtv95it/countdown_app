@@ -180,13 +180,13 @@ class _GiftScreenState extends State<GiftScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            FloatingActionButton.small(
-            heroTag: 'refresh_fab',
-            onPressed: () => _webViewController.reload(),
-            backgroundColor: const Color(0xFF1A1A2E),
-            foregroundColor: Colors.white70,
-            child: const Icon(Icons.refresh_rounded),
-          ),
+          //   FloatingActionButton.small(
+          //   heroTag: 'refresh_fab',
+          //   onPressed: () => _webViewController.reload(),
+          //   backgroundColor: const Color(0xFF1A1A2E),
+          //   foregroundColor: Colors.white70,
+          //   child: const Icon(Icons.refresh_rounded),
+          // ),
           const SizedBox(height: 12),
           FloatingActionButton.extended(
             heroTag: 'wish_fab',

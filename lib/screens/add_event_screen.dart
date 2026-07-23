@@ -84,7 +84,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
   void _saveEvent() {
     if (_formKey.currentState!.validate() && _selectedDate != null) {
-      if (_customEmoji != null && !AdService.isPremium) {
+      final defaultEmoji = EventCategory.findById(_selectedCategoryId).emoji;
+      if (_customEmoji != null && _customEmoji != defaultEmoji && !AdService.isPremium) {
         AdPremiumDialog.show(
           context,
           title: t('custom_icon'),
