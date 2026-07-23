@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'screens/home_screen.dart';
 import 'services/ad_service.dart';
-import 'services/widget_service.dart';
 import 'services/notification_service.dart';
 import 'services/font_service.dart';
 import 'services/localization_service.dart';
@@ -23,7 +22,6 @@ void main() async {
   // Các service nặng như AdMob, Widget, Notification có thể load song song 
   // và không nhất thiết phải block quá trình vẽ frame đầu tiên của app.
   AdService.init(); 
-  WidgetService.initialize();
   NotificationService().initialize();
 
   bool isFirstLaunch = await StorageService().getIsFirstLaunch();

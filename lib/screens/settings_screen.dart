@@ -12,7 +12,6 @@ import '../services/localization_service.dart';
 import '../widgets/premium_dialog.dart';
 import '../widgets/success_promo_dialog.dart';
 import '../widgets/theme_picker_sheet.dart';
-import '../services/widget_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   final ValueChanged<String>? onEffectChanged;
@@ -705,38 +704,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 );
               },
             ),
-            if (Platform.isAndroid)
-              _buildListTile(
-                title: t('add_widget'),
-                subtitle: t('add_widget_desc'),
-                trailing: const Icon(Icons.add_to_home_screen_rounded, color: Colors.blueAccent),
-                onTap: () async {
-                  final success = await WidgetService.requestPinWidget();
-                  if (context.mounted) {
-                    if (success == true) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Đã yêu cầu thêm! (Với máy Xiaomi/Oppo, nếu không thấy gì, vui lòng thêm thủ công bằng cách nhấn giữ màn hình chính)', 
-                            style: GoogleFonts.quicksand()
-                          ),
-                          backgroundColor: const Color(0xFF10B981),
-                          behavior: SnackBarBehavior.floating,
-                          duration: const Duration(seconds: 4),
-                        ),
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(t('add_widget_failed'), style: GoogleFonts.quicksand()),
-                          backgroundColor: const Color(0xFF1A1A2E),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    }
-                  }
-                },
-              ),
 
             // const SizedBox(height: 24),
             // _buildSectionHeader('🎁 Quà tặng & Lời chúc'),
