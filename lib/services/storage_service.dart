@@ -11,6 +11,7 @@ class StorageService {
   static const String _oldKey = 'anniversaries_list';
   static const String _bubbleEffectKey = 'bubble_effect_enabled';
   static const String _premiumKey = 'is_premium_account';
+  static const String _adminUnlockedKey = 'is_admin_unlocked';
   static const String _firstLaunchKey = 'is_first_launch';
   static const String _tutorialShownKey = 'is_tutorial_shown';
   static const String _musicEnabledKey = 'is_music_enabled';
@@ -96,6 +97,16 @@ class StorageService {
   Future<void> setTestModeUnlocked(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('test_mode_unlocked', value);
+  }
+
+  Future<bool> getIsAdminUnlocked() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_adminUnlockedKey) ?? false;
+  }
+
+  Future<void> setIsAdminUnlocked(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_adminUnlockedKey, value);
   }
 
 

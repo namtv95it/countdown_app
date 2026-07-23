@@ -5,7 +5,7 @@ import 'package:countdown_app/services/app_firebase_service.dart';
 import 'storage_service.dart';
 import 'ad_service.dart';
 
-enum PromoType { premium, giftEffect, testMode }
+enum PromoType { premium, giftEffect, testMode, admin }
 
 class PromoCode {
   final String code;
@@ -31,11 +31,13 @@ class PromoResult {
   final bool success;
   final String message;
   final PromoCode? matchedCode;
+  final bool isAdmin;
 
   const PromoResult({
     required this.success,
     required this.message,
     this.matchedCode,
+    this.isAdmin = false,
   });
 }
 
@@ -143,6 +145,14 @@ class PromoService {
     final cleanCode = inputCode.trim().toUpperCase();
     if (cleanCode.length < 5) {
       return const PromoResult(success: false, message: 'Mã không hợp lệ (quá ngắn)!');
+    }
+
+    if (cleanCode == 'ADMIN2026') {
+      return const PromoResult(
+        success: true, 
+        message: 'Welcome Admin!',
+        isAdmin: true,
+      );
     }
 
     // --- ANTI SPAM CHECK ---

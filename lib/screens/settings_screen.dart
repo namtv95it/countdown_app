@@ -12,6 +12,7 @@ import '../services/localization_service.dart';
 import '../widgets/premium_dialog.dart';
 import '../widgets/success_promo_dialog.dart';
 import '../widgets/theme_picker_sheet.dart';
+import 'admin_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   final ValueChanged<String>? onEffectChanged;
@@ -33,6 +34,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _isLoading = true;
   String _language = 'vi'; // 'vi' or 'en'
   bool _isTestModeUnlocked = false;
+  bool _isAdminUnlocked = false;
 
   // Lưu trạng thái mở khóa của từng hiệu ứng để tránh FutureBuilder gây flicker
   final Map<String, bool> _effectUnlocked = {};
@@ -84,11 +86,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
       effectIds.map((id) => storage.isFeatureUnlocked('${id}_effect_unlocked')),
     );
     final testModeUnlocked = await storage.getIsTestModeUnlocked();
+    final adminUnlocked = await storage.getIsAdminUnlocked();
     
     if (mounted) {
       setState(() {
         _isPremium = AdService.isPremium;
         _isTestModeUnlocked = testModeUnlocked;
+        _isAdminUnlocked = adminUnlocked;
         for (int i = 0; i < effectIds.length; i++) {
           _effectUnlocked[effectIds[i]] = unlockResults[i];
         }
@@ -452,6 +456,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       if (!context.mounted) return;
                       if (result.success) {
                         Navigator.pop(context);
+                        if (result.isAdmin) {
+                          // Lưu trạng thái đã kích hoạt
+                          await StorageService().setIsAdminUnlocked(true);
+                          setState(() => _isAdminUnlocked = true);
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Khu vực Quản trị đã được mở khoá!'),
+                              backgroundColor: Color(0xFF10B981),
+                            ),
+                          );
+                          return;
+                        }
                         if (result.matchedCode?.type == PromoType.premium) {
                           _togglePremium(true);
                         } else {
@@ -720,7 +737,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
             //   onTap: _editShopUrl,
             // ),
 
-
+            if (_isAdminUnlocked) ...[
+              const SizedBox(height: 24),
+              _buildSectionHeader('🛠️ Khu Vực Quản Trị'),
+              _buildListTile(
+                title: 'Admin Dashboard',
+                subtitle: 'Quản lý ứng dụng (Yêu cầu mật khẩu)',
+                trailing: const Icon(Icons.admin_panel_settings_rounded, color: Color(0xFF10B981)),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AdminScreen(),
+                    ),
+                  );
+                },
+              ),
+            ],
 
             const SizedBox(height: 180), // Khoảng trống cho BottomNav và Ad
           ],
