@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'admin/admin_gift_dashboard.dart' as admin_dash;
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
@@ -214,7 +215,7 @@ class _AdminScreenState extends State<AdminScreen> {
           ),
           const SizedBox(height: 12),
           Text(
-            'Tính năng đang được phát triển.\nSắp tới bạn có thể quản lý quà tặng, đăng tải ảnh lên Firebase Storage và Firestore tại đây.',
+            'Mật khẩu đúng. Đang chuyển hướng...',
             style: GoogleFonts.quicksand(
               fontSize: 16,
               color: Colors.white54,
@@ -223,36 +224,29 @@ class _AdminScreenState extends State<AdminScreen> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 48),
-          SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: ElevatedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.cloud_upload_rounded, color: Colors.white),
-              label: Text(
-                'Upload Ảnh (Sắp ra mắt)',
-                style: GoogleFonts.quicksand(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF7C3AED),
-                disabledBackgroundColor: const Color(0xFF7C3AED).withValues(alpha: 0.5),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-            ),
-          ),
+          const CircularProgressIndicator(color: Color(0xFF7C3AED)),
         ],
       ),
     );
   }
 
+  void _navigateToDashboard() {
+    Future.microtask(() {
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const admin_dash.AdminGiftDashboard()),
+        );
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_isUnlocked) {
+      _navigateToDashboard();
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFF0F0F1A), // Dark elegant background
       appBar: AppBar(

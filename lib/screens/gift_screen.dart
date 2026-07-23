@@ -5,12 +5,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:webview_flutter/webview_flutter.dart';
-import '../data/gift_products.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../models/event_category.dart';
 import '../models/gift_product.dart';
+import '../models/anniversary.dart';
 import '../services/wish_service.dart';
 import '../services/ad_service.dart';
+import '../services/storage_service.dart';
+import '../widgets/gift_product_card.dart';
 
 class GiftScreen extends StatefulWidget {
   /// Nếu được truyền, sẽ tự động chọn danh mục này ở tab Gợi ý quà
@@ -33,84 +36,50 @@ class _GiftScreenState extends State<GiftScreen> {
   final _wishScrollController = ScrollController();
   final _wishesHeaderKey = GlobalKey(); // dùng để scroll đến đầu danh sách lời chúc
 
-  // ── Gợi ý quà (WebView) ──
-  late final WebViewController _webViewController;
-  bool _isWebViewLoading = true;
-  late String _currentLang;
-  bool _hasInternet = true;
-  bool _isCheckingInternet = true;
+  // ── Native Gift Tab ──
+  String _giftCategoryFilter = 'all';
+  Anniversary? _closestEvent;
+  final ScrollController _giftScrollController = ScrollController();
+  bool _isLoadingEvent = true;
 
   @override
   void initState() {
     super.initState();
-    
-    _currentLang = LocalizationService.languageNotifier.value;
-    
-    _webViewController = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(const Color(0x00000000))
-      ..setNavigationDelegate(
-        NavigationDelegate(
-          onPageStarted: (String url) {
-            if (mounted) setState(() => _isWebViewLoading = true);
-          },
-          onPageFinished: (String url) {
-            if (mounted) setState(() => _isWebViewLoading = false);
-          },
-          onWebResourceError: (WebResourceError error) {
-            // Không set _hasInternet = false ở đây vì nó sẽ bắt cả những lỗi lặt vặt (như ảnh 404, script bị block)
-            // gây ra hiện tượng webview vừa hiện lên đã bị ẩn đi.
-            // Chúng ta đã check mạng thực sự ở _checkInternetAndLoad rồi.
-            if (mounted) {
-              setState(() {
-                _isWebViewLoading = false;
-              });
-            }
-          },
-          onNavigationRequest: (NavigationRequest request) {
-            // Chỉ cho phép điều hướng nội bộ trên Github Pages
-            if (request.url.startsWith('https://namtv95it.github.io')) {
-              return NavigationDecision.navigate;
-            }
-            // Các link bên ngoài (Shopee, web khác) -> mở ứng dụng bên ngoài
-            _openUrl(request.url);
-            return NavigationDecision.prevent;
-          },
-        ),
-      );
-      
-    _checkInternetAndLoad();
-  }
-
-  Future<void> _checkInternetAndLoad() async {
-    setState(() => _isCheckingInternet = true);
-    bool isConnected = false;
-    try {
-      final result = await InternetAddress.lookup('google.com');
-      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
-        isConnected = true;
-      }
-    } catch (_) {
-      isConnected = false;
-    }
-
-    if (!mounted) return;
-    setState(() {
-      _hasInternet = isConnected;
-      _isCheckingInternet = false;
-    });
-
-    if (isConnected) {
-      _loadWebViewUrl();
-    }
-  }
-  
-  void _loadWebViewUrl() {
-    String url = 'https://namtv95it.github.io/countdown_gift_web/?lang=$_currentLang';
     if (widget.initialCategoryId != null) {
-      url += '&category=${widget.initialCategoryId}';
+      _giftCategoryFilter = widget.initialCategoryId!;
     }
-    _webViewController.loadRequest(Uri.parse(url));
+    _loadClosestEvent();
+  }
+
+  Future<void> _loadClosestEvent() async {
+    try {
+      final storage = StorageService();
+      final anniversaries = await storage.getAnniversaries();
+      if (anniversaries.isNotEmpty) {
+        // Find the closest upcoming event
+        Anniversary? closest;
+        int minDays = 999999;
+        for (var ann in anniversaries) {
+          final days = ann.daysRemaining;
+          if (days >= 0 && days < minDays) {
+            minDays = days;
+            closest = ann;
+          }
+        }
+        if (mounted) {
+          setState(() {
+            _closestEvent = closest;
+            _isLoadingEvent = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() => _isLoadingEvent = false);
+        }
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoadingEvent = false);
+    }
   }
 
   @override
@@ -199,12 +168,6 @@ class _GiftScreenState extends State<GiftScreen> {
   // ──────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    // Check for language change and reload WebView if necessary
-    final currentAppLang = LocalizationService.languageNotifier.value;
-    if (_currentLang != currentAppLang) {
-      _currentLang = currentAppLang;
-      _loadWebViewUrl();
-    }
 
     // Giảm padding nếu đã nâng cấp premium vì quảng cáo bị ẩn
     final double fabBottomPadding = widget.isPremium ? 90.0 : 150.0;
@@ -558,109 +521,254 @@ class _GiftScreenState extends State<GiftScreen> {
   // TAB 2: Gợi ý quà
   // ──────────────────────────────────────────────────────────────
   Widget _buildGiftTab() {
-    if (_isCheckingInternet) {
-      return const Center(
-        child: CircularProgressIndicator(color: Color(0xFFEC4899)),
-      );
-    }
-    
-    if (!_hasInternet) {
-      return Center(
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          margin: const EdgeInsets.symmetric(horizontal: 32),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1A1A2E).withValues(alpha: 0.8),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white12),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.wifi_off_rounded, color: Colors.red.shade400, size: 64),
-              const SizedBox(height: 16),
-              Text(
-                t('no_internet_title'),
-                style: GoogleFonts.quicksand(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
+    return Column(
+      children: [
+        // 1. Banner Sự Kiện
+        if (!_isLoadingEvent && _closestEvent != null)
+          _buildEventBanner(_closestEvent!),
+
+        // 2. Filter Bar
+        _buildCategoryFilterBar(),
+
+        // 3. Grid Sản phẩm (StreamBuilder)
+        Expanded(
+          child: StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('gifts')
+                .orderBy('order')
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Center(
+                  child: Text('Đã có lỗi xảy ra', style: GoogleFonts.quicksand(color: Colors.white)),
+                );
+              }
+
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator(color: Color(0xFFEC4899)));
+              }
+
+              final docs = snapshot.data?.docs ?? [];
+              
+              // Lọc thủ công client-side (vì array-contains không support kết hợp orderBy order tốt)
+              final gifts = docs.map((d) {
+                final data = d.data() as Map<String, dynamic>;
+                return GiftProduct.fromFirestore(d.id, data);
+              }).where((g) {
+                if (_giftCategoryFilter == 'all') return true;
+                return g.categoryIds.contains(_giftCategoryFilter);
+              }).toList();
+
+              if (gifts.isEmpty) {
+                return Center(
+                  child: Text('Không có món quà nào phù hợp.', style: GoogleFonts.quicksand(color: Colors.white54)),
+                );
+              }
+
+              return GridView.builder(
+                controller: _giftScrollController,
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 120),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 0.65,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                t('no_internet_desc'),
-                style: GoogleFonts.quicksand(
-                  color: Colors.white70,
-                  fontSize: 14,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: _checkInternetAndLoad,
-                icon: const Icon(Icons.refresh_rounded, color: Colors.white),
-                label: Text(
-                  t('retry'),
-                  style: GoogleFonts.quicksand(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFEC4899),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ],
+                itemCount: gifts.length,
+                itemBuilder: (context, index) {
+                  final gift = gifts[index];
+                  final catId = gift.categoryIds.isNotEmpty ? gift.categoryIds.first : null;
+                  final catColor = EventCategory.findById(catId).colorValue;
+                  // Nếu màu quá tối (như màu dark purple của một số danh mục), có thể mix thêm màu trắng hoặc dùng một màu sáng hơn. 
+                  // Tạm thời mình cứ dùng màu của category, nếu category "all" thì dùng màu có sẵn.
+                  return GiftProductCard(
+                    gift: gift,
+                    themeColor: Color(catColor),
+                  );
+                },
+              );
+            },
           ),
         ),
-      );
-    }
+      ],
+    );
+  }
 
-    return Stack(
-      children: [
-        WebViewWidget(controller: _webViewController),
-        if (_isWebViewLoading)
-          Center(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1A1A2E).withValues(alpha: 0.8),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white12),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFFEC4899).withValues(alpha: 0.15),
-                    blurRadius: 30,
-                    spreadRadius: 5,
+  Widget _buildEventBanner(Anniversary event) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFEC4899), Color(0xFF8B5CF6)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFEC4899).withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Text(event.emoji, style: const TextStyle(fontSize: 24)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  event.title,
+                  style: GoogleFonts.quicksand(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
                   ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const CircularProgressIndicator(
-                    strokeWidth: 3,
-                    color: Color(0xFFEC4899),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    t('loading_gifts'),
-                    style: GoogleFonts.quicksand(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(Icons.calendar_month, color: Colors.white70, size: 14),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${event.displayDate.day} tháng ${event.displayDate.month}',
+                      style: GoogleFonts.quicksand(
+                        color: Colors.white70,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
             ),
           ),
-      ],
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  'CÒN',
+                  style: GoogleFonts.quicksand(
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 10,
+                  ),
+                ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      '${event.daysRemaining}',
+                      style: GoogleFonts.quicksand(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 2),
+                    Text(
+                      'ngày',
+                      style: GoogleFonts.quicksand(
+                        color: Colors.white70,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryFilterBar() {
+    final categories = EventCategory.all.where((c) => c.canSuggestProducts).toList();
+    
+    return Container(
+      height: 46,
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        children: [
+          _buildFilterChip('all', 'Tất cả', null, const Color(0xFF8B5CF6)),
+          ...categories.map((c) => _buildFilterChip(c.id, c.name, c.emoji, Color(c.colorValue))),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(String id, String name, String? emoji, Color color) {
+    final isSelected = _giftCategoryFilter == id;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _giftCategoryFilter = id;
+          // Cuộn lên top mượt mà
+          if (_giftScrollController.hasClients) {
+            _giftScrollController.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+          }
+        });
+      },
+      child: Container(
+        margin: const EdgeInsets.only(right: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? color : color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: isSelected ? color : color.withValues(alpha: 0.3),
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  )
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (emoji != null) ...[
+              Text(emoji, style: const TextStyle(fontSize: 14)),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              name,
+              style: GoogleFonts.quicksand(
+                color: isSelected ? Colors.white : Colors.white70,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

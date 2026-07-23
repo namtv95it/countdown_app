@@ -1,0 +1,59 @@
+/* Custom Minimal CSS to complement Tailwind */
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.5); /* gray-400 */
+    border-radius: 10px;
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.2);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(156, 163, 175, 0.8);
+}
+
+/* Modal animations via custom classes mapped to JS */
+.modal-overlay.active {
+    display: flex;
+}
+.modal-overlay.active .modal-content {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Toast animations via custom classes mapped to JS */
+.toast.active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(-50%, -1rem);
+}
+
+/* Checkbox wrapper custom borders for active state */
+.category-cb-wrapper.checked {
+    border-color: #EC4899; /* primary */
+    background: rgba(236, 72, 153, 0.05);
+}
+
+/* SortableJS Ghost Class */
+.sortable-ghost {
+    opacity: 0.4;
+    background-color: rgba(236, 72, 153, 0.1);
+    border: 2px dashed #EC4899 !important;
+}
+
+/* Auto-numbering for sortable list */
+#gift-list {
+    counter-reset: gift-counter;
+}
+
+.order-badge::before {
+    counter-increment: gift-counter;
+    content: counter(gift-counter);
+}
+

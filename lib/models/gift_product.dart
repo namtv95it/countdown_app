@@ -1,21 +1,66 @@
 class GiftProduct {
   final String id;
-  final String name;
-  final String emoji;
-  final String description;
+  final Map<String, String> name;
+  final Map<String, String> description;
   final String priceRange;
-  final String categoryId;
+  final List<String> categoryIds;
   final String affiliateUrl;
-  final bool isPopular;
+  final String imageUrl;
+  final String badge;
+  final String gender;
+  final String platform;
+  final int order;
 
   const GiftProduct({
     required this.id,
     required this.name,
-    required this.emoji,
     required this.description,
     required this.priceRange,
-    required this.categoryId,
+    required this.categoryIds,
     required this.affiliateUrl,
-    this.isPopular = false,
+    required this.imageUrl,
+    required this.badge,
+    required this.gender,
+    required this.platform,
+    required this.order,
   });
+
+  String getName(String langCode) {
+    return name[langCode] ?? name['vi'] ?? '';
+  }
+
+  String getDescription(String langCode) {
+    return description[langCode] ?? description['vi'] ?? '';
+  }
+
+  factory GiftProduct.fromFirestore(String id, Map<String, dynamic> data) {
+    return GiftProduct(
+      id: id,
+      name: Map<String, String>.from(data['name'] ?? {}),
+      description: Map<String, String>.from(data['description'] ?? {}),
+      priceRange: data['priceRange'] ?? '',
+      categoryIds: List<String>.from(data['categoryIds'] ?? []),
+      affiliateUrl: data['affiliateUrl'] ?? '',
+      imageUrl: data['imageUrl'] ?? '',
+      badge: data['badge'] ?? '',
+      gender: data['gender'] ?? 'unisex',
+      platform: data['platform'] ?? 'Khác',
+      order: data['order'] ?? 99999,
+    );
+  }
+
+  Map<String, dynamic> toFirestore() {
+    return {
+      'name': name,
+      'description': description,
+      'priceRange': priceRange,
+      'categoryIds': categoryIds,
+      'affiliateUrl': affiliateUrl,
+      'imageUrl': imageUrl,
+      'badge': badge,
+      'gender': gender,
+      'platform': platform,
+      'order': order,
+    };
+  }
 }
