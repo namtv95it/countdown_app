@@ -720,20 +720,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             //   onTap: _editShopUrl,
             // ),
 
-            const SizedBox(height: 24),
-            _buildSectionHeader('ℹ️ ${t('info')}'),
-            _buildListTile(
-              title: t('rate_app'),
-              subtitle: t('rate_app_desc'),
-              trailing: const Icon(Icons.star_rounded, color: Colors.amber),
-              onTap: () => _showMessage(t('thank_you_rating')),
-            ),
-            _buildListTile(
-              title: t('version'),
-              subtitle: '1.0.0',
-              trailing: const SizedBox(),
-            ),
-            
+
 
             const SizedBox(height: 180), // Khoảng trống cho BottomNav và Ad
           ],
