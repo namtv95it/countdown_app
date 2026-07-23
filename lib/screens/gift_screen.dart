@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import '../services/localization_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -35,6 +37,8 @@ class _GiftScreenState extends State<GiftScreen> {
   late final WebViewController _webViewController;
   bool _isWebViewLoading = true;
   late String _currentLang;
+  bool _hasInternet = true;
+  bool _isCheckingInternet = true;
 
   @override
   void initState() {
@@ -53,6 +57,16 @@ class _GiftScreenState extends State<GiftScreen> {
           onPageFinished: (String url) {
             if (mounted) setState(() => _isWebViewLoading = false);
           },
+          onWebResourceError: (WebResourceError error) {
+            // Không set _hasInternet = false ở đây vì nó sẽ bắt cả những lỗi lặt vặt (như ảnh 404, script bị block)
+            // gây ra hiện tượng webview vừa hiện lên đã bị ẩn đi.
+            // Chúng ta đã check mạng thực sự ở _checkInternetAndLoad rồi.
+            if (mounted) {
+              setState(() {
+                _isWebViewLoading = false;
+              });
+            }
+          },
           onNavigationRequest: (NavigationRequest request) {
             // Chỉ cho phép điều hướng nội bộ trên Github Pages
             if (request.url.startsWith('https://namtv95it.github.io')) {
@@ -65,7 +79,30 @@ class _GiftScreenState extends State<GiftScreen> {
         ),
       );
       
-    _loadWebViewUrl();
+    _checkInternetAndLoad();
+  }
+
+  Future<void> _checkInternetAndLoad() async {
+    setState(() => _isCheckingInternet = true);
+    bool isConnected = false;
+    try {
+      final result = await InternetAddress.lookup('google.com');
+      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+        isConnected = true;
+      }
+    } catch (_) {
+      isConnected = false;
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _hasInternet = isConnected;
+      _isCheckingInternet = false;
+    });
+
+    if (isConnected) {
+      _loadWebViewUrl();
+    }
   }
   
   void _loadWebViewUrl() {
@@ -521,6 +558,69 @@ class _GiftScreenState extends State<GiftScreen> {
   // TAB 2: Gợi ý quà
   // ──────────────────────────────────────────────────────────────
   Widget _buildGiftTab() {
+    if (_isCheckingInternet) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFFEC4899)),
+      );
+    }
+    
+    if (!_hasInternet) {
+      return Center(
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          margin: const EdgeInsets.symmetric(horizontal: 32),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A1A2E).withValues(alpha: 0.8),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white12),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.wifi_off_rounded, color: Colors.red.shade400, size: 64),
+              const SizedBox(height: 16),
+              Text(
+                t('no_internet_title'),
+                style: GoogleFonts.quicksand(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                t('no_internet_desc'),
+                style: GoogleFonts.quicksand(
+                  color: Colors.white70,
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: _checkInternetAndLoad,
+                icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+                label: Text(
+                  t('retry'),
+                  style: GoogleFonts.quicksand(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFEC4899),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Stack(
       children: [
         WebViewWidget(controller: _webViewController),

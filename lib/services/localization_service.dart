@@ -365,6 +365,9 @@ class LocalizationService {
       'err_no_repaint_boundary': 'Không tìm thấy RenderRepaintBoundary',
       'err_convert_image': 'Lỗi khi chuyển đổi ảnh (ByteData null)',
       'err_permission_denied': 'Bạn chưa cấp quyền lưu ảnh. Vui lòng cấp quyền trong Cài đặt.',
+      'no_internet_title': 'Không có kết nối mạng',
+      'no_internet_desc': 'Vui lòng kiểm tra lại kết nối internet của bạn và thử lại.',
+      'retry': 'Thử lại',
     },
     'en': {
       // General
@@ -725,6 +728,9 @@ class LocalizationService {
       'err_no_repaint_boundary': 'RenderRepaintBoundary not found',
       'err_convert_image': 'Error converting image (ByteData null)',
       'err_permission_denied': 'Storage permission denied. Please grant permission in Settings.',
+      'no_internet_title': 'No Internet Connection',
+      'no_internet_desc': 'Please check your internet connection and try again.',
+      'retry': 'Retry',
     }
   };
 
