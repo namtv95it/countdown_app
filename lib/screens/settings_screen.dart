@@ -32,6 +32,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _isPremium = false;
   bool _isLoading = true;
   String _language = 'vi'; // 'vi' or 'en'
+  bool _isTestModeUnlocked = false;
 
   // Lưu trạng thái mở khóa của từng hiệu ứng để tránh FutureBuilder gây flicker
   final Map<String, bool> _effectUnlocked = {};
@@ -82,9 +83,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final unlockResults = await Future.wait(
       effectIds.map((id) => storage.isFeatureUnlocked('${id}_effect_unlocked')),
     );
+    final testModeUnlocked = await storage.getIsTestModeUnlocked();
+    
     if (mounted) {
       setState(() {
         _isPremium = AdService.isPremium;
+        _isTestModeUnlocked = testModeUnlocked;
         for (int i = 0; i < effectIds.length; i++) {
           _effectUnlocked[effectIds[i]] = unlockResults[i];
         }
@@ -630,17 +634,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
               trailing: const Icon(Icons.vpn_key_rounded, color: Colors.amber),
               onTap: _showPromoCodeDialog,
             ),
-            const SizedBox(height: 10),
-            _buildListTile(
-              title: t('test_premium'),
-              subtitle: t('test_premium_desc'),
-              trailing: Switch(
-                value: _isPremium,
-                onChanged: _togglePremium,
-                activeThumbColor: Colors.amber,
-                activeTrackColor: Colors.amber.withValues(alpha: 0.3),
+            if (_isTestModeUnlocked) ...[
+              const SizedBox(height: 10),
+              _buildListTile(
+                title: t('test_premium'),
+                subtitle: t('test_premium_desc'),
+                trailing: Switch(
+                  value: _isPremium,
+                  onChanged: _togglePremium,
+                  activeThumbColor: Colors.amber,
+                  activeTrackColor: Colors.amber.withValues(alpha: 0.3),
+                ),
               ),
-            ),
+            ],
             const SizedBox(height: 24),
 
             _buildSectionHeader('🔔 ${t('notifications')}'),
@@ -728,33 +734,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               trailing: const SizedBox(),
             ),
             
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () async {
-                try {
-                  await NotificationService().scheduleTestNotification();
-                  if (mounted) {
-                    _showMessage(t('test_notification_msg'));
-                  }
-                } catch (e) {
-                  if (mounted) {
-                    _showMessage('${t('error')}: $e', isError: true);
-                  }
-                }
-              },
-              icon: const Icon(Icons.timer),
-              label: Text(t('test_notification_btn')),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF7C3AED),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-            ),
-            
-            const SizedBox(height: 100), // Khoảng trống cho BottomNav
+
+            const SizedBox(height: 180), // Khoảng trống cho BottomNav và Ad
           ],
         ),
       ),

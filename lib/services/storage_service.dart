@@ -28,6 +28,17 @@ class StorageService {
     await prefs.setBool(_premiumKey, value);
   }
 
+  Future<bool> getIsTestModeUnlocked() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('test_mode_unlocked') ?? false;
+  }
+
+  Future<void> setTestModeUnlocked(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('test_mode_unlocked', value);
+  }
+
+
   Future<List<Anniversary>> getAnniversaries() async {
     final prefs = await SharedPreferences.getInstance();
 

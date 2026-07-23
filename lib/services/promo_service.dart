@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'storage_service.dart';
 import 'ad_service.dart';
 
-enum PromoType { premium, giftEffect }
+enum PromoType { premium, giftEffect, testMode }
 
 class PromoCode {
   final String code;
@@ -65,6 +65,12 @@ class PromoService {
       code: 'HETHAN',
       expirationDate: DateTime.utc(2025, 1, 1, 0, 0, 0),
       description: 'Mã Hết Hạn',
+    ),
+    PromoCode(
+      code: 'NAMTVTEST',
+      expirationDate: DateTime.utc(2030, 12, 31, 23, 59, 59),
+      description: 'Chế độ Cài Đặt Ẩn',
+      type: PromoType.testMode,
     ),
     
     // Gift Code mở hiệu ứng đặc biệt (Phát triển sẵn)
@@ -166,6 +172,8 @@ class PromoService {
     } else if (matched.type == PromoType.giftEffect && matched.unlockedEffectId != null) {
       await StorageService().unlockFeature('${matched.unlockedEffectId}_effect_unlocked');
       await StorageService().setSelectedEffect(matched.unlockedEffectId!);
+    } else if (matched.type == PromoType.testMode) {
+      await StorageService().setTestModeUnlocked(true);
     }
 
     return PromoResult(
