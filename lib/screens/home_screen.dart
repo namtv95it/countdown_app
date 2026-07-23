@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/physics.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/intl.dart';
@@ -934,7 +935,7 @@ class _HomeScreenState extends State<HomeScreen>
               Expanded(
                 child: PageView.builder(
                   controller: _pageController,
-                  physics: const BouncingScrollPhysics(),
+                  physics: const CustomPageScrollPhysics(parent: BouncingScrollPhysics()),
                   clipBehavior: Clip.none,
                   onPageChanged: (index) {
                     setState(() {
@@ -1802,4 +1803,59 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 }
+
+class CustomPageScrollPhysics extends ScrollPhysics {
+  const CustomPageScrollPhysics({super.parent});
+
+  @override
+  CustomPageScrollPhysics applyTo(ScrollPhysics? ancestor) {
+    return CustomPageScrollPhysics(parent: buildParent(ancestor));
+  }
+
+  double _getPage(ScrollMetrics position) {
+    if (position.viewportDimension == 0.0) return 0.0;
+    return position.pixels / position.viewportDimension;
+  }
+
+  double _getPixels(ScrollMetrics position, double page) {
+    return page * position.viewportDimension;
+  }
+
+  @override
+  Simulation? createBallisticSimulation(ScrollMetrics position, double velocity) {
+    if ((velocity <= 0.0 && position.pixels <= position.minScrollExtent) ||
+        (velocity >= 0.0 && position.pixels >= position.maxScrollExtent)) {
+      return super.createBallisticSimulation(position, velocity);
+    }
+
+    final Tolerance tolerance = toleranceFor(position);
+    final double page = _getPage(position);
+    double targetPage;
+
+    // Giảm ngưỡng vận tốc để fling dễ dàng hơn (nhạy hơn với vận tốc vuốt)
+    if (velocity.abs() > tolerance.velocity * 0.5) {
+      targetPage = velocity > 0 ? page.ceilToDouble() : page.floorToDouble();
+    } else {
+      // Giảm ngưỡng vuốt tay từ 50% xuống 20% (chỉ cần vuốt qua 1/5 màn hình là chuyển trang)
+      final double fraction = page - page.truncate();
+      if (fraction > 0.2) {
+        targetPage = page.truncate() + 1.0;
+      } else if (fraction < -0.2) {
+        targetPage = page.truncate() - 1.0;
+      } else {
+        targetPage = page.roundToDouble();
+      }
+    }
+
+    final double targetPixels = _getPixels(position, targetPage);
+    if (targetPixels != position.pixels) {
+      return SpringSimulation(spring, position.pixels, targetPixels, velocity, tolerance: tolerance);
+    }
+    return null;
+  }
+
+  @override
+  bool get allowImplicitScrolling => false;
+}
+
 

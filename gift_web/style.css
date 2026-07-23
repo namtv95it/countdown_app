@@ -5,6 +5,11 @@ html, body {
     background: transparent !important;
 }
 
+/* Ensure main content is not overlapped by Flutter app's bottom bar and FAB */
+main {
+    padding-bottom: 300px !important;
+}
+
 /* Hide scrollbar for Chrome, Safari and Opera */
 
 .scrollbar-hide::-webkit-scrollbar {
@@ -30,11 +35,6 @@ html, body {
     transition: all 0.3s ease;
 }
 
-.product-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
-    border-color: rgba(255, 255, 255, 0.2);
-}
 
 /* Category Chip styling */
 .category-chip {
