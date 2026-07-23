@@ -1,4 +1,4 @@
-﻿import 'package:home_widget/home_widget.dart';
+import 'package:home_widget/home_widget.dart';
 import '../models/anniversary.dart';
 
 class WidgetService {
@@ -7,6 +7,15 @@ class WidgetService {
 
   static Future<void> initialize() async {
     await HomeWidget.setAppGroupId(appGroupId);
+  }
+
+  static Future<bool> requestPinWidget() async {
+    try {
+      await HomeWidget.requestPinWidget(name: androidWidgetName);
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
   static Future<void> updateWidgetWithClosestEvent(List<Anniversary> anniversaries) async {
