@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../models/gift_product.dart';
+import '../../models/special_occasion.dart';
 import '../../services/gift_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AdminEditGiftScreen extends StatefulWidget {
   final GiftProduct? gift;
@@ -45,6 +47,9 @@ class _AdminEditGiftScreenState extends State<AdminEditGiftScreen> {
   };
 
   final List<String> _selectedCategories = [];
+  
+  List<SpecialOccasion> _availableOccasions = [];
+  final List<String> _selectedOccasions = [];
 
   @override
   void initState() {
@@ -60,7 +65,20 @@ class _AdminEditGiftScreenState extends State<AdminEditGiftScreen> {
       _selectedBadge = g.badge;
       _selectedGender = g.gender;
       _selectedCategories.addAll(g.categoryIds);
+      _selectedOccasions.addAll(g.occasionIds);
     }
+    _loadOccasions();
+  }
+
+  Future<void> _loadOccasions() async {
+    try {
+      final snap = await FirebaseFirestore.instance.collection('special_occasions').get();
+      if (mounted) {
+        setState(() {
+          _availableOccasions = snap.docs.map((d) => SpecialOccasion.fromFirestore(d.id, d.data())).toList();
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _save() async {
@@ -79,6 +97,7 @@ class _AdminEditGiftScreenState extends State<AdminEditGiftScreen> {
       final gift = GiftProduct(
         id: widget.gift?.id ?? '',
         categoryIds: _selectedCategories,
+        occasionIds: _selectedOccasions,
         name: {'vi': _nameViCtrl.text, 'en': _nameEnCtrl.text},
         description: {'vi': '', 'en': ''},
         priceRange: _priceCtrl.text,
@@ -244,7 +263,7 @@ class _AdminEditGiftScreenState extends State<AdminEditGiftScreen> {
                     Text('Giới tính phù hợp', style: GoogleFonts.quicksand(color: Colors.white70, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
-                      value: _selectedGender,
+                      initialValue: _selectedGender,
                       dropdownColor: const Color(0xFF1A1A2E),
                       style: GoogleFonts.quicksand(color: Colors.white),
                       decoration: InputDecoration(
@@ -277,6 +296,32 @@ class _AdminEditGiftScreenState extends State<AdminEditGiftScreen> {
                                 _selectedCategories.add(cat);
                               } else {
                                 _selectedCategories.remove(cat);
+                              }
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 24),
+                    Text('Sự kiện đặc biệt', style: GoogleFonts.quicksand(color: Colors.white70, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    _availableOccasions.isEmpty 
+                      ? const Text('Đang tải sự kiện...', style: TextStyle(color: Colors.white54))
+                      : Wrap(
+                      spacing: 8,
+                      children: _availableOccasions.map((occ) {
+                        final isSelected = _selectedOccasions.contains(occ.id);
+                        return FilterChip(
+                          label: Text('${occ.emoji} ${occ.nameVi}', style: TextStyle(color: isSelected ? Colors.white : Colors.white54)),
+                          selected: isSelected,
+                          selectedColor: const Color(0xFFEC4899),
+                          backgroundColor: Colors.white.withValues(alpha: 0.1),
+                          onSelected: (selected) {
+                            setState(() {
+                              if (selected) {
+                                _selectedOccasions.add(occ.id);
+                              } else {
+                                _selectedOccasions.remove(occ.id);
                               }
                             });
                           },

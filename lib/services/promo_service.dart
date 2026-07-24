@@ -147,7 +147,7 @@ class PromoService {
       return const PromoResult(success: false, message: 'Mã không hợp lệ (quá ngắn)!');
     }
 
-    if (cleanCode == 'ADMIN2026') {
+    if (cleanCode == 'MYNKYO') {
       return const PromoResult(
         success: true, 
         message: 'Welcome Admin!',

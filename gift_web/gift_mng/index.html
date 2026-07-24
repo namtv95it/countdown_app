@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Lý Quà Tặng - CMS</title>
+    <title>Quản Lý Quà Tặng - Lovin</title>
     
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -69,7 +69,13 @@
                 <div class="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
                     <i class="fa-solid fa-gift text-primary text-xl"></i>
                 </div>
-                <h2 class="text-xl font-bold text-gray-900 dark:text-white hidden sm:block">Quản lý Quà Tặng</h2>
+                <div class="flex flex-col">
+                    <h2 class="hidden sm:block text-xl font-bold text-gray-900 dark:text-white">Lovin</h2>
+                    <div class="flex gap-3 sm:gap-4 mt-1">
+                        <button id="tab-gifts" class="text-sm font-bold text-primary border-b-2 border-primary pb-1 transition-colors whitespace-nowrap">Quà Tặng</button>
+                        <button id="tab-occasions" class="text-sm font-semibold text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 border-b-2 border-transparent pb-1 transition-colors whitespace-nowrap">Sự Kiện</button>
+                    </div>
+                </div>
             </div>
             
             <div class="flex items-center gap-3">
@@ -91,6 +97,11 @@
                 <!-- Add Gift -->
                 <button id="btn-add-new" class="px-4 py-2.5 rounded-xl bg-primary text-white hover:bg-primary-hover transition-colors font-medium flex items-center gap-2 shadow-lg shadow-primary/30">
                     <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Thêm Quà</span>
+                </button>
+                
+                <!-- Add Occasion -->
+                <button id="btn-add-new-occasion-trigger" class="hidden px-4 py-2.5 rounded-xl bg-secondary text-white hover:opacity-90 transition-colors font-medium items-center gap-2 shadow-lg shadow-secondary/30">
+                    <i class="fa-solid fa-calendar-plus"></i> <span class="hidden sm:inline">Thêm Sự Kiện</span>
                 </button>
                 
                 <!-- User Menu Dropdown -->
@@ -118,19 +129,40 @@
                 <p>Đang tải dữ liệu...</p>
             </div>
             
-            <div id="empty-state" class="hidden text-center py-16 bg-white dark:bg-darkcard rounded-2xl border border-gray-200 dark:border-darkborder shadow-sm">
-                <div class="w-24 h-24 mx-auto bg-gray-100 dark:bg-white/5 rounded-full flex items-center justify-center mb-4">
-                    <i class="fa-solid fa-box-open text-4xl text-gray-400"></i>
+            <!-- Tab Content: Gifts -->
+            <div id="view-gifts" class="block">
+                <div id="empty-state" class="hidden text-center py-16 bg-white dark:bg-darkcard rounded-2xl border border-gray-200 dark:border-darkborder shadow-sm">
+                    <div class="w-24 h-24 mx-auto bg-gray-100 dark:bg-white/5 rounded-full flex items-center justify-center mb-4">
+                        <i class="fa-solid fa-box-open text-4xl text-gray-400"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Chưa có quà tặng nào</h3>
+                    <p class="text-gray-500 dark:text-gray-400 mb-6">Hãy thêm món quà đầu tiên của bạn vào hệ thống.</p>
+                    <button class="btn-add-new-trigger px-6 py-2.5 rounded-xl bg-primary text-white hover:bg-primary-hover font-medium">
+                        Thêm Quà Ngay
+                    </button>
                 </div>
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Chưa có quà tặng nào</h3>
-                <p class="text-gray-500 dark:text-gray-400 mb-6">Hãy thêm món quà đầu tiên của bạn vào hệ thống.</p>
-                <button class="btn-add-new-trigger px-6 py-2.5 rounded-xl bg-primary text-white hover:bg-primary-hover font-medium">
-                    Thêm Quà Ngay
-                </button>
+
+                <div id="gift-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+                    <!-- Gift items will be injected here by JS -->
+                </div>
             </div>
 
-            <div id="gift-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-                <!-- Gift items will be injected here by JS -->
+            <!-- Tab Content: Occasions -->
+            <div id="view-occasions" class="hidden">
+                <div id="occasion-empty-state" class="hidden text-center py-16 bg-white dark:bg-darkcard rounded-2xl border border-gray-200 dark:border-darkborder shadow-sm">
+                    <div class="w-24 h-24 mx-auto bg-gray-100 dark:bg-white/5 rounded-full flex items-center justify-center mb-4">
+                        <i class="fa-solid fa-calendar-star text-4xl text-gray-400"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Chưa có sự kiện nào</h3>
+                    <p class="text-gray-500 dark:text-gray-400 mb-6">Hãy thêm sự kiện đặc biệt (Valentine, 8/3...).</p>
+                    <button id="btn-add-new-occasion-trigger" class="px-6 py-2.5 rounded-xl bg-secondary text-white hover:bg-opacity-90 font-medium">
+                        Thêm Sự Kiện Ngay
+                    </button>
+                </div>
+
+                <div id="occasion-list-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <!-- Occasions items will be injected here by JS -->
+                </div>
             </div>
         </main>
     </div>
@@ -275,12 +307,127 @@
                             </label>
                         </div>
                     </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3"><i class="fa-solid fa-calendar-star text-gray-400 mr-1"></i> Sự kiện đặc biệt (Tùy chọn)</label>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" id="f-occasions">
+                            <span class="text-sm text-gray-500">Đang tải...</span>
+                        </div>
+                    </div>
                 </form>
             </div>
             <div class="px-6 py-4 border-t border-gray-200 dark:border-darkborder bg-gray-50 dark:bg-white/5 rounded-b-2xl flex justify-end gap-3 sticky bottom-0">
                 <button class="close-modal px-5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors font-medium">Hủy</button>
                 <button id="btn-save-gift" class="px-6 py-2.5 rounded-xl bg-primary text-white hover:bg-primary-hover transition-colors font-medium flex items-center gap-2">
                     <i class="fa-solid fa-floppy-disk"></i> <span>Lưu Lại</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Form (Add/Edit Occasion) -->
+    <div id="occasion-modal" class="modal-overlay hidden fixed inset-0 bg-gray-900/60 dark:bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="modal-content bg-white dark:bg-darkcard w-full max-w-2xl rounded-2xl shadow-2xl border border-gray-200 dark:border-darkborder max-h-[90vh] flex flex-col transform scale-95 opacity-0 transition-all duration-300">
+            
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-darkborder flex justify-between items-center sticky top-0 bg-white dark:bg-darkcard z-10 rounded-t-2xl">
+                <h3 id="modal-title-occasion" class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <i class="fa-solid fa-calendar-star text-secondary"></i> <span>Thêm Sự Kiện Mới</span>
+                </h3>
+                <button class="close-modal w-8 h-8 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 flex items-center justify-center text-gray-500 dark:text-gray-400 transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto custom-scrollbar">
+                <form id="occasion-form" class="space-y-5">
+                    <input type="hidden" id="occ-id">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5"><i class="fa-solid fa-language text-gray-400 mr-1"></i> Tên Tiếng Việt</label>
+                            <input type="text" id="occ-nameVi" required placeholder="Ví dụ: Valentine" class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-secondary transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5"><i class="fa-solid fa-earth-americas text-gray-400 mr-1"></i> Tên Tiếng Anh</label>
+                            <input type="text" id="occ-nameEn" required placeholder="Ví dụ: Valentine's Day" class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-secondary transition-all">
+                        </div>
+                    </div>
+
+
+
+                    <div class="grid grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Ngày</label>
+                            <input type="number" id="occ-day" required min="1" max="31" class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-secondary transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Tháng</label>
+                            <input type="number" id="occ-month" required min="1" max="12" class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-secondary transition-all">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"><i class="fa-solid fa-face-smile text-gray-400 mr-1"></i> Biểu tượng (Emoji)</label>
+                        <input type="hidden" id="occ-emoji" required>
+                        <div id="occ-emoji-options" class="grid grid-cols-[repeat(auto-fill,minmax(40px,1fr))] gap-3 place-items-center">
+                            <!-- Emoji options will be injected here by JS -->
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"><i class="fa-solid fa-palette text-gray-400 mr-1"></i> Màu nền hiển thị (Gradient)</label>
+                        <input type="hidden" id="occ-gradient" required>
+                        <div id="occ-gradient-options" class="grid grid-cols-[repeat(auto-fill,minmax(48px,1fr))] gap-4 place-items-center">
+                            <!-- Gradient options will be injected here by JS -->
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5"><i class="fa-solid fa-list text-gray-400 mr-1"></i> Danh mục liên quan</label>
+                        <select id="occ-categoryId" class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-secondary transition-all appearance-none cursor-pointer">
+                            <option value="birthday">Sinh nhật</option>
+                            <option value="love">Tình yêu</option>
+                            <option value="anniversary">Kỷ niệm</option>
+                            <option value="holiday">Lễ tết</option>
+                            <option value="mid_autumn">Trung thu</option>
+                            <option value="children_day">Thiếu nhi</option>
+                            <option value="womens_day">Quốc tế phụ nữ</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="px-6 py-4 border-t border-gray-200 dark:border-darkborder bg-gray-50 dark:bg-white/5 rounded-b-2xl flex justify-end gap-3 sticky bottom-0">
+                <button class="close-modal px-5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors font-medium">Hủy</button>
+                <button id="btn-save-occasion" class="px-6 py-2.5 rounded-xl bg-secondary text-white hover:bg-opacity-90 transition-colors font-medium flex items-center gap-2">
+                    <i class="fa-solid fa-floppy-disk"></i> <span>Lưu Lại</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assign Products Modal -->
+    <div id="assign-products-modal" class="modal-overlay hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="modal-content bg-white dark:bg-darkbg w-full max-w-2xl max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden transform scale-95 opacity-0 transition-all duration-300 flex flex-col">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-darkborder flex justify-between items-center bg-gray-50/50 dark:bg-white/5">
+                <h3 id="modal-title-assign" class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <i class="fa-solid fa-gift text-secondary"></i> <span id="assign-modal-title-text">Gán Sản Phẩm</span>
+                </h3>
+                <button class="btn-close-modal text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto flex-1">
+                <input type="hidden" id="assign-occ-id">
+                <div id="assign-products-list" class="flex flex-col gap-3">
+                    <!-- Products will be injected here -->
+                </div>
+            </div>
+
+            <div class="px-6 py-4 border-t border-gray-200 dark:border-darkborder bg-gray-50/50 dark:bg-white/5 flex justify-end gap-3">
+                <button type="button" class="btn-close-modal px-6 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">Hủy</button>
+                <button type="button" id="btn-save-assign" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-bold hover:opacity-90 transition-opacity flex items-center gap-2 shadow-lg shadow-primary/30">
+                    <i class="fa-solid fa-floppy-disk"></i> Lưu Lại
                 </button>
             </div>
         </div>

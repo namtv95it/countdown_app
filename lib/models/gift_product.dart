@@ -10,6 +10,7 @@ class GiftProduct {
   final String gender;
   final String platform;
   final int order;
+  final List<String> occasionIds;
 
   const GiftProduct({
     required this.id,
@@ -23,6 +24,7 @@ class GiftProduct {
     required this.gender,
     required this.platform,
     required this.order,
+    this.occasionIds = const [],
   });
 
   String getName(String langCode) {
@@ -46,6 +48,7 @@ class GiftProduct {
       gender: data['gender'] ?? 'unisex',
       platform: data['platform'] ?? 'Khác',
       order: data['order'] ?? 99999,
+      occasionIds: List<String>.from(data['occasionIds'] ?? []),
     );
   }
 
@@ -61,6 +64,7 @@ class GiftProduct {
       'gender': gender,
       'platform': platform,
       'order': order,
+      'occasionIds': occasionIds,
     };
   }
 }

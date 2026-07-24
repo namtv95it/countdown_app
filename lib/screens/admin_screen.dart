@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'admin/admin_gift_dashboard.dart' as admin_dash;
+import 'admin/admin_dashboard_screen.dart';
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
@@ -235,7 +235,7 @@ class _AdminScreenState extends State<AdminScreen> {
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const admin_dash.AdminGiftDashboard()),
+          MaterialPageRoute(builder: (_) => const AdminDashboardScreen()),
         );
       }
     });

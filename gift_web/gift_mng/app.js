@@ -18,6 +18,7 @@ const db = firebase.firestore();
 // 2. STATE & DOM ELEMENTS
 // ==========================================
 let gifts = [];
+let specialOccasions = [];
 let sortableInstance = null;
 let isReordering = false;
 
@@ -229,7 +230,43 @@ function showDashboard() {
     lockScreen.classList.remove('flex');
     dashboardScreen.classList.remove('hidden');
     dashboardScreen.classList.add('flex');
+    loadOccasions();
     loadGifts();
+}
+
+async function loadOccasions() {
+    const occasionsContainer = document.getElementById('f-occasions');
+    try {
+        const snap = await db.collection('special_occasions').get();
+        specialOccasions = [];
+        let html = '';
+        snap.forEach(doc => {
+            const data = doc.data();
+            data.id = doc.id;
+            specialOccasions.push(data);
+            
+            html += `
+            <label class="category-cb-wrapper flex items-center gap-2 p-3 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 cursor-pointer transition-colors hover:border-primary/50 group occasion-cb-wrapper">
+                <input type="checkbox" name="occasions" value="${data.id}" class="hidden peer occasion-cb">
+                <div class="w-5 h-5 rounded flex-shrink-0 border-2 border-gray-300 dark:border-gray-500 peer-checked:bg-primary peer-checked:border-primary flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-check text-white text-xs opacity-0 peer-checked:opacity-100"></i>
+                </div>
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">${data.emoji} ${data.nameVi}</span>
+            </label>`;
+        });
+        occasionsContainer.innerHTML = html;
+        
+        // Add event listeners for new occasion checkboxes
+        document.querySelectorAll('.occasion-cb').forEach(cb => {
+            cb.addEventListener('change', (e) => {
+                if(e.target.checked) e.target.parentElement.classList.add('checked');
+                else e.target.parentElement.classList.remove('checked');
+            });
+        });
+    } catch (e) {
+        console.error(e);
+        occasionsContainer.innerHTML = '<span class="text-sm text-red-500">Lỗi tải dữ liệu</span>';
+    }
 }
 
 // ==========================================
@@ -414,6 +451,20 @@ function editGift(id) {
         }
     });
 
+    // Set occasion checkboxes
+    const occasionCheckboxes = document.querySelectorAll('.occasion-cb');
+    occasionCheckboxes.forEach(cb => {
+        cb.checked = false;
+        cb.parentElement.classList.remove('border-primary', 'bg-primary/5');
+    });
+    const occasions = gift.occasionIds || [];
+    occasionCheckboxes.forEach(cb => {
+        if (occasions.includes(cb.value)) {
+            cb.checked = true;
+            cb.parentElement.classList.add('border-primary', 'bg-primary/5');
+        }
+    });
+
     giftModal.classList.remove('hidden');
     setTimeout(() => giftModal.querySelector('.modal-content').classList.replace('scale-95', 'scale-100'), 10);
     setTimeout(() => giftModal.querySelector('.modal-content').classList.replace('opacity-0', 'opacity-100'), 10);
@@ -428,6 +479,7 @@ btnAddNew.addEventListener('click', () => {
     
     // Reset checkboxes visual
     categoryCheckboxes.forEach(cb => cb.parentElement.classList.remove('border-primary', 'bg-primary/5'));
+    document.querySelectorAll('.occasion-cb').forEach(cb => cb.parentElement.classList.remove('border-primary', 'bg-primary/5'));
     
     giftModal.classList.remove('hidden');
     setTimeout(() => giftModal.querySelector('.modal-content').classList.replace('scale-95', 'scale-100'), 10);
@@ -464,6 +516,11 @@ btnSaveGift.addEventListener('click', async () => {
         if (cb.checked) selectedCats.push(cb.value);
     });
 
+    const selectedOccasions = [];
+    document.querySelectorAll('.occasion-cb').forEach(cb => {
+        if (cb.checked) selectedOccasions.push(cb.value);
+    });
+
     const giftData = {
         name: {
             vi: document.getElementById('f-nameVi').value,
@@ -476,7 +533,8 @@ btnSaveGift.addEventListener('click', async () => {
         platform: document.getElementById('f-platform').value,
         affiliateUrl: document.getElementById('f-affiliateUrl').value,
         gender: document.getElementById('f-gender').value,
-        categoryIds: selectedCats
+        categoryIds: selectedCats,
+        occasionIds: selectedOccasions
     };
 
     btnSaveGift.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
@@ -581,3 +639,449 @@ function showToast(msg, isError = false) {
         toastEl.classList.replace('opacity-100', 'opacity-0');
     }, 3000);
 }
+
+const availableEmojis = [
+    '💝', '🎂', '🎉', '🎁', '🎈', '💍', '🥂', '🌹', '🎊', '✨', '🔥', '🏆', '⭐', '🌈', '☀️', '🌸', '🎄', '🎃', '🎆', '🎓'
+];
+
+function renderEmojiOptions(selectedEmoji = '') {
+    const container = document.getElementById('occ-emoji-options');
+    const input = document.getElementById('occ-emoji');
+    container.innerHTML = '';
+    
+    if (!selectedEmoji || !availableEmojis.includes(selectedEmoji)) {
+        selectedEmoji = availableEmojis[0];
+    }
+    input.value = selectedEmoji;
+
+    availableEmojis.forEach(emoji => {
+        const btn = document.createElement('div');
+        btn.className = `w-10 h-10 rounded-xl cursor-pointer transition-all flex items-center justify-center text-xl select-none`;
+        
+        if (emoji === selectedEmoji) {
+            btn.classList.add('bg-primary', 'text-white', 'shadow-md', 'scale-110');
+            btn.innerHTML = `<span style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2))">${emoji}</span>`;
+        } else {
+            btn.classList.add('bg-gray-100', 'dark:bg-white/5', 'hover:bg-gray-200', 'dark:hover:bg-white/10');
+            btn.innerText = emoji;
+        }
+        
+        btn.addEventListener('click', () => {
+            input.value = emoji;
+            renderEmojiOptions(emoji);
+        });
+        
+        container.appendChild(btn);
+    });
+}
+
+const availableGradients = [
+    'linear-gradient(135deg, #EC4899, #BE185D)',
+    'linear-gradient(135deg, #F472B6, #A855F7)',
+    'linear-gradient(135deg, #F59E0B, #EF4444)',
+    'linear-gradient(135deg, #3B82F6, #06B6D4)',
+    'linear-gradient(135deg, #1D4ED8, #3B82F6)',
+    'linear-gradient(135deg, #F59E0B, #D97706)',
+    'linear-gradient(135deg, #EC4899, #7C3AED)',
+    'linear-gradient(135deg, #10B981, #0EA5E9)',
+    'linear-gradient(135deg, #EF4444, #16A34A)',
+    'linear-gradient(135deg, #7C3AED, #0EA5E9)',
+    'linear-gradient(135deg, #7C3AED, #EC4899)',
+    'linear-gradient(135deg, #EF4444, #F59E0B)',
+    'linear-gradient(135deg, #14B8A6, #06B6D4)',
+    'linear-gradient(135deg, #8B5CF6, #3B82F6)',
+    'linear-gradient(135deg, #6366F1, #A855F7)',
+    'linear-gradient(135deg, #F43F5E, #FB923C)',
+    'linear-gradient(135deg, #FBBF24, #F59E0B)',
+    'linear-gradient(135deg, #10B981, #34D399)',
+    'linear-gradient(135deg, #3B82F6, #93C5FD)',
+    'linear-gradient(135deg, #6B7280, #374151)'
+];
+
+function renderGradientOptions(selectedGradient = '') {
+    const container = document.getElementById('occ-gradient-options');
+    const input = document.getElementById('occ-gradient');
+    container.innerHTML = '';
+    
+    // Đảm bảo selectedGradient hợp lệ
+    if (!selectedGradient || !availableGradients.includes(selectedGradient)) {
+        selectedGradient = availableGradients[0];
+    }
+    input.value = selectedGradient;
+
+    availableGradients.forEach(grad => {
+        const btn = document.createElement('div');
+        btn.className = `w-12 h-12 rounded-full cursor-pointer transition-all flex items-center justify-center border-2 shadow-sm hover:scale-110`;
+        btn.style.background = grad;
+        
+        if (grad === selectedGradient) {
+            btn.classList.add('border-white', 'shadow-md', 'scale-110');
+            btn.innerHTML = '<i class="fa-solid fa-check text-white"></i>';
+        } else {
+            btn.classList.add('border-transparent');
+        }
+        
+        btn.addEventListener('click', () => {
+            input.value = grad;
+            renderGradientOptions(grad); // re-render to update UI
+        });
+        
+        container.appendChild(btn);
+    });
+}
+
+// ==========================================
+// 7. TAB NAVIGATION & OCCASIONS CRUD
+// ==========================================
+const tabGifts = document.getElementById('tab-gifts');
+const tabOccasions = document.getElementById('tab-occasions');
+const viewGifts = document.getElementById('view-gifts');
+const viewOccasions = document.getElementById('view-occasions');
+const occasionModal = document.getElementById('occasion-modal');
+const occasionListContainer = document.getElementById('occasion-list-container');
+const occasionEmptyState = document.getElementById('occasion-empty-state');
+const btnAddNewOccasion = document.getElementById('btn-add-new-occasion-trigger');
+const btnSaveOccasion = document.getElementById('btn-save-occasion');
+let isOccasionView = false;
+
+// Tab Switching
+if (tabGifts && tabOccasions) {
+    tabGifts.addEventListener('click', () => {
+        isOccasionView = false;
+        tabGifts.classList.replace('text-gray-500', 'text-primary');
+        tabGifts.classList.replace('border-transparent', 'border-primary');
+        tabGifts.classList.remove('dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-200');
+        
+        tabOccasions.classList.replace('text-primary', 'text-gray-500');
+        tabOccasions.classList.replace('border-primary', 'border-transparent');
+        tabOccasions.classList.add('dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-200');
+        
+        viewGifts.classList.remove('hidden');
+        viewOccasions.classList.add('hidden');
+        
+        // Show/hide correct buttons
+        if (btnAddNew) btnAddNew.style.display = 'flex';
+        if (btnAddNewOccasion) btnAddNewOccasion.style.display = 'none';
+        if (btnReorder) btnReorder.style.display = 'block';
+    });
+    
+    tabOccasions.addEventListener('click', () => {
+        isOccasionView = true;
+        tabOccasions.classList.replace('text-gray-500', 'text-primary');
+        tabOccasions.classList.replace('border-transparent', 'border-primary');
+        tabOccasions.classList.remove('dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-200');
+        
+        tabGifts.classList.replace('text-primary', 'text-gray-500');
+        tabGifts.classList.replace('border-primary', 'border-transparent');
+        tabGifts.classList.add('dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-200');
+        
+        viewGifts.classList.add('hidden');
+        viewOccasions.classList.remove('hidden');
+        
+        // Hide gift-specific buttons and show occasion button
+        if (btnAddNew) btnAddNew.style.display = 'none';
+        if (btnReorder) btnReorder.style.display = 'none';
+        if (btnAddNewOccasion) btnAddNewOccasion.style.display = 'flex';
+        
+        renderOccasions();
+    });
+}
+
+function renderOccasions() {
+    occasionListContainer.innerHTML = '';
+    
+    if (specialOccasions.length === 0) {
+        occasionEmptyState.classList.remove('hidden');
+        return;
+    }
+    occasionEmptyState.classList.add('hidden');
+
+    specialOccasions.forEach(occ => {
+        const card = document.createElement('div');
+        card.className = 'bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl p-5 relative shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col gap-3';
+        card.innerHTML = `
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shadow-inner" style="background: ${occ.gradient || 'gray'}">
+                    ${occ.emoji || '✨'}
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">${occ.nameVi}</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">${occ.day} tháng ${occ.month}</p>
+                </div>
+            </div>
+            <div class="mt-auto pt-3 border-t border-gray-100 dark:border-white/10 flex flex-col gap-2">
+                <div class="flex gap-2">
+                    <button class="flex-1 py-1.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/20 rounded-lg transition-colors font-semibold text-xs flex justify-center items-center gap-1" onclick="editOccasion('${occ.id}')">
+                        <i class="fa-solid fa-pen-to-square"></i> Sửa
+                    </button>
+                    <button class="flex-1 py-1.5 bg-red-50 dark:bg-red-500/10 text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 rounded-lg transition-colors font-semibold text-xs flex justify-center items-center gap-1" onclick="deleteOccasion('${occ.id}')">
+                        <i class="fa-solid fa-trash-can"></i> Xóa
+                    </button>
+                </div>
+                <button class="w-full py-2.5 bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-500/20 rounded-lg transition-colors font-semibold text-sm flex justify-center items-center gap-2 mt-1" onclick="openAssignProductsModal('${occ.id}')" title="Gán Sản Phẩm">
+                    <i class="fa-solid fa-gift"></i> Gán Sản Phẩm
+                </button>
+            </div>
+        `;
+        occasionListContainer.appendChild(card);
+    });
+}
+
+// Add New Occasion Modal
+if (btnAddNewOccasion) {
+    btnAddNewOccasion.addEventListener('click', () => {
+        document.getElementById('occasion-form').reset();
+        document.getElementById('modal-title-occasion').innerHTML = '<i class="fa-solid fa-calendar-star text-secondary"></i> <span>Thêm Sự Kiện Mới</span>';
+        document.getElementById('occ-id').value = '';
+        renderEmojiOptions();
+        renderGradientOptions();
+        openOccasionModal();
+    });
+}
+
+// Edit Occasion
+window.editOccasion = (id) => {
+    const occ = specialOccasions.find(o => o.id === id);
+    if (!occ) return;
+    
+    document.getElementById('modal-title-occasion').innerHTML = '<i class="fa-solid fa-pen text-secondary"></i> <span>Sửa Sự Kiện</span>';
+    document.getElementById('occ-id').value = occ.id;
+    document.getElementById('occ-nameVi').value = occ.nameVi || '';
+    document.getElementById('occ-nameEn').value = occ.nameEn || '';
+
+    renderEmojiOptions(occ.emoji || '');
+    document.getElementById('occ-month').value = occ.month || 1;
+    document.getElementById('occ-day').value = occ.day || 1;
+    renderGradientOptions(occ.gradient || '');
+    document.getElementById('occ-categoryId').value = occ.categoryId || 'birthday';
+    
+    openOccasionModal();
+};
+
+// Delete Occasion
+window.deleteOccasion = async (id) => {
+    if(confirm('Bạn có chắc chắn muốn xóa sự kiện này?')) {
+        try {
+            await db.collection('special_occasions').doc(id).delete();
+            showToast("Đã xóa sự kiện");
+            await loadOccasions();
+            renderOccasions();
+        } catch (e) {
+            showToast("Lỗi khi xóa sự kiện", true);
+        }
+    }
+};
+
+function openOccasionModal() {
+    occasionModal.classList.remove('hidden');
+    setTimeout(() => occasionModal.querySelector('.modal-content').classList.replace('scale-95', 'scale-100'), 10);
+    setTimeout(() => occasionModal.querySelector('.modal-content').classList.replace('opacity-0', 'opacity-100'), 10);
+}
+
+// Ensure occasionModal is closed by closeModals
+closeModals.forEach(btn => {
+    btn.addEventListener('click', () => {
+        occasionModal?.querySelector('.modal-content')?.classList.replace('scale-100', 'scale-95');
+        occasionModal?.querySelector('.modal-content')?.classList.replace('opacity-100', 'opacity-0');
+        setTimeout(() => {
+            occasionModal?.classList.add('hidden');
+        }, 300);
+    });
+});
+
+// Generate Occasion ID from Vietnamese name
+function generateOccasionId(nameVi, day, month) {
+    let str = nameVi.toLowerCase();
+    str = str.replace(/[àáạảãâầấậẩẫăằắặẳẵ]/g, "a");
+    str = str.replace(/[èéẹẻẽêềếệểễ]/g, "e");
+    str = str.replace(/[ìíịỉĩ]/g, "i");
+    str = str.replace(/[òóọỏõôồốộổỗơờớợởỡ]/g, "o");
+    str = str.replace(/[ùúụủũưừứựửữ]/g, "u");
+    str = str.replace(/[ỳýỵỷỹ]/g, "y");
+    str = str.replace(/đ/g, "d");
+    str = str.replace(/[^a-z0-9\s]/g, ""); // remove special chars
+    str = str.trim().replace(/\s+/g, "_"); // replace spaces with _
+    
+    const randomStr = Math.random().toString(36).substring(2, 6);
+    return `${str}_${day}${month}_${randomStr}`;
+}
+
+// Save Occasion
+if (btnSaveOccasion) {
+    btnSaveOccasion.addEventListener('click', async () => {
+        const form = document.getElementById('occasion-form');
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        let id = document.getElementById('occ-id').value;
+        const occData = {
+            nameVi: document.getElementById('occ-nameVi').value,
+            nameEn: document.getElementById('occ-nameEn').value,
+
+            emoji: document.getElementById('occ-emoji').value,
+            month: parseInt(document.getElementById('occ-month').value) || 1,
+            day: parseInt(document.getElementById('occ-day').value) || 1,
+            gradient: document.getElementById('occ-gradient').value,
+            categoryId: document.getElementById('occ-categoryId').value
+        };
+        
+        if (!id) {
+            id = generateOccasionId(occData.nameVi, occData.day, occData.month);
+        }
+
+        btnSaveOccasion.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
+        btnSaveOccasion.disabled = true;
+
+        try {
+            if (document.getElementById('occ-id').value) {
+                // Update
+                await db.collection('special_occasions').doc(id).update(occData);
+                showToast("Đã cập nhật sự kiện!");
+            } else {
+                // Add with specific ID
+                await db.collection('special_occasions').doc(id).set(occData);
+                showToast("Đã thêm sự kiện mới!");
+            }
+            
+            occasionModal.classList.add('hidden');
+            await loadOccasions();
+            renderOccasions();
+            
+        } catch (e) {
+            showToast("Có lỗi xảy ra khi lưu", true);
+            console.error(e);
+        }
+
+        btnSaveOccasion.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu Lại';
+        btnSaveOccasion.disabled = false;
+    });
+}
+
+// ==========================================
+// ASSIGN PRODUCTS TO OCCASION LOGIC
+// ==========================================
+const assignProductsModal = document.getElementById('assign-products-modal');
+const btnSaveAssign = document.getElementById('btn-save-assign');
+let initialAssignState = {};
+
+window.openAssignProductsModal = (id) => {
+    const occ = specialOccasions.find(o => o.id === id);
+    if (!occ) return;
+
+    document.getElementById('assign-modal-title-text').innerText = `Gán SP cho ${occ.nameVi}`;
+    document.getElementById('assign-occ-id').value = id;
+
+    const listContainer = document.getElementById('assign-products-list');
+    listContainer.innerHTML = '';
+    initialAssignState = {};
+
+    if (gifts.length === 0) {
+        listContainer.innerHTML = '<p class="text-gray-500">Chưa có sản phẩm nào.</p>';
+    } else {
+        gifts.forEach(gift => {
+            const isSelected = gift.occasionIds && gift.occasionIds.includes(id);
+            initialAssignState[gift.id] = isSelected;
+
+            const item = document.createElement('label');
+            item.className = `flex items-center justify-between p-3 rounded-xl border ${isSelected ? 'border-primary bg-primary/5' : 'border-gray-200 dark:border-white/10 bg-white dark:bg-white/5'} cursor-pointer transition-colors`;
+            item.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <input type="checkbox" class="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary" value="${gift.id}" ${isSelected ? 'checked' : ''}>
+                    <div>
+                        <p class="font-bold text-gray-900 dark:text-white">${gift.name.vi || gift.name.en || 'No Name'}</p>
+                        <p class="text-xs text-gray-500">${gift.priceRange}</p>
+                    </div>
+                </div>
+                <img src="${gift.imageUrl}" class="w-10 h-10 rounded-lg object-cover bg-gray-100" onerror="this.src='https://via.placeholder.com/40'">
+            `;
+            
+            // Add click listener to toggle styling
+            const checkbox = item.querySelector('input[type="checkbox"]');
+            checkbox.addEventListener('change', () => {
+                if(checkbox.checked) {
+                    item.classList.replace('border-gray-200', 'border-primary');
+                    item.classList.replace('dark:border-white/10', 'border-primary');
+                    item.classList.replace('bg-white', 'bg-primary/5');
+                    item.classList.replace('dark:bg-white/5', 'bg-primary/5');
+                } else {
+                    item.classList.replace('border-primary', 'border-gray-200');
+                    // Need to reset dark mode borders correctly, simplify logic:
+                    item.className = `flex items-center justify-between p-3 rounded-xl border ${checkbox.checked ? 'border-primary bg-primary/5' : 'border-gray-200 dark:border-white/10 bg-white dark:bg-white/5'} cursor-pointer transition-colors`;
+                }
+            });
+
+            listContainer.appendChild(item);
+        });
+    }
+
+    assignProductsModal.classList.remove('hidden');
+    setTimeout(() => assignProductsModal.querySelector('.modal-content').classList.replace('scale-95', 'scale-100'), 10);
+    setTimeout(() => assignProductsModal.querySelector('.modal-content').classList.replace('opacity-0', 'opacity-100'), 10);
+};
+
+// Close assign modal logic
+document.querySelectorAll('#assign-products-modal .btn-close-modal').forEach(btn => {
+    btn.addEventListener('click', () => {
+        assignProductsModal.querySelector('.modal-content').classList.replace('scale-100', 'scale-95');
+        assignProductsModal.querySelector('.modal-content').classList.replace('opacity-100', 'opacity-0');
+        setTimeout(() => {
+            assignProductsModal.classList.add('hidden');
+        }, 300);
+    });
+});
+
+if (btnSaveAssign) {
+    btnSaveAssign.addEventListener('click', async () => {
+        const id = document.getElementById('assign-occ-id').value;
+        if (!id) return;
+
+        btnSaveAssign.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
+        btnSaveAssign.disabled = true;
+
+        try {
+            const checkboxes = document.querySelectorAll('#assign-products-list input[type="checkbox"]');
+            const batch = db.batch();
+            let updatesCount = 0;
+
+            checkboxes.forEach(chk => {
+                const giftId = chk.value;
+                const wasSelected = initialAssignState[giftId];
+                const isSelected = chk.checked;
+
+                if (isSelected && !wasSelected) {
+                    // Add
+                    const ref = db.collection('gifts').doc(giftId);
+                    batch.update(ref, {
+                        occasionIds: firebase.firestore.FieldValue.arrayUnion(id)
+                    });
+                    updatesCount++;
+                } else if (!isSelected && wasSelected) {
+                    // Remove
+                    const ref = db.collection('gifts').doc(giftId);
+                    batch.update(ref, {
+                        occasionIds: firebase.firestore.FieldValue.arrayRemove(id)
+                    });
+                    updatesCount++;
+                }
+            });
+
+            if (updatesCount > 0) {
+                await batch.commit();
+                showToast("Đã cập nhật sản phẩm thành công!");
+                // Reload gifts to update state
+                loadGifts();
+            }
+
+            document.querySelector('#assign-products-modal .btn-close-modal').click();
+        } catch (e) {
+            console.error(e);
+            showToast("Lỗi khi lưu gán sản phẩm", true);
+        }
+
+        btnSaveAssign.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu Lại';
+        btnSaveAssign.disabled = false;
+    });
+}
+

@@ -1,4 +1,4 @@
-﻿/// Danh mục sự kiện — mỗi sự kiện thuộc 1 danh mục.
+/// Danh mục sự kiện — mỗi sự kiện thuộc 1 danh mục.
 /// Mỗi danh mục có emoji, màu, và cờ [canSuggestProducts]
 /// để sau này gắn gợi ý mua hàng.
 class EventCategory {
@@ -153,6 +153,24 @@ class EventCategory {
     canSuggestProducts: false,
   );
 
+  static const holiday = EventCategory(
+    id: 'holiday',
+    name: 'Kỳ nghỉ',
+    emoji: '🏖️',
+    colorValue: 0xFFEF4444,
+    canSuggestProducts: true,
+    suggestedProductTypes: ['Quà du lịch', 'Quà kỷ niệm', 'Đồ ăn'],
+  );
+
+  static const midAutumn = EventCategory(
+    id: 'mid_autumn',
+    name: 'Trung thu',
+    emoji: '🥮',
+    colorValue: 0xFFF59E0B,
+    canSuggestProducts: true,
+    suggestedProductTypes: ['Bánh trung thu', 'Lồng đèn', 'Quà thiếu nhi'],
+  );
+
   static const awareness = EventCategory(
     id: 'awareness',
     name: 'Nhận thức',
@@ -181,6 +199,8 @@ class EventCategory {
     national,
     profession,
     awareness,
+    holiday,
+    midAutumn,
     other,
   ];
 }

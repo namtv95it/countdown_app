@@ -128,18 +128,18 @@ products.sort((a, b) => {
 
 // Các ngày lễ trong năm (month: 1-indexed)
 const specialOccasions = [
-    { id: 'valentine',      name: { vi: 'Valentine',               en: 'Valentine\'s Day'       }, dateLabel: { vi: '14 tháng 2',   en: 'Feb 14'  }, emoji: '💝', month: 2,  day: 14, gradient: 'linear-gradient(135deg, #EC4899, #BE185D)', categoryId: 'love' },
-    { id: 'womens_day',     name: { vi: 'Ngày Quốc tế Phụ nữ',    en: 'Int\'l Women\'s Day'    }, dateLabel: { vi: '8 tháng 3',    en: 'Mar 8'   }, emoji: '🌸', month: 3,  day: 8,  gradient: 'linear-gradient(135deg, #F472B6, #A855F7)', categoryId: 'love' },
-    { id: 'mothers_day',    name: { vi: 'Ngày của Mẹ',             en: 'Mother\'s Day'          }, dateLabel: { vi: '12 tháng 5',   en: 'May 12'  }, emoji: '💐', month: 5,  day: 12, gradient: 'linear-gradient(135deg, #F59E0B, #EF4444)', categoryId: 'birthday' },
-    { id: 'children_day',   name: { vi: 'Tết Thiếu nhi',           en: 'Children\'s Day'        }, dateLabel: { vi: '1 tháng 6',    en: 'Jun 1'   }, emoji: '🎈', month: 6,  day: 1,  gradient: 'linear-gradient(135deg, #3B82F6, #06B6D4)', categoryId: 'birthday' },
-    { id: 'fathers_day',    name: { vi: 'Ngày của Bố',             en: 'Father\'s Day'          }, dateLabel: { vi: '21 tháng 6',   en: 'Jun 21'  }, emoji: '👔', month: 6,  day: 21, gradient: 'linear-gradient(135deg, #1D4ED8, #3B82F6)', categoryId: 'birthday' },
-    { id: 'tet_trung_thu',  name: { vi: 'Tết Trung Thu',           en: 'Mid-Autumn Festival'   }, dateLabel: { vi: '17 tháng 9',   en: 'Sep 17'  }, emoji: '🥮', month: 9,  day: 17, gradient: 'linear-gradient(135deg, #F59E0B, #D97706)', categoryId: 'mid_autumn' },
-    { id: 'womens_day_vn',  name: { vi: 'Ngày Phụ nữ Việt Nam',   en: 'Vietnamese Women\'s Day' }, dateLabel: { vi: '20 tháng 10', en: 'Oct 20'  }, emoji: '🌺', month: 10, day: 20, gradient: 'linear-gradient(135deg, #EC4899, #7C3AED)', categoryId: 'love' },
-    { id: 'teachers_day',   name: { vi: 'Ngày Nhà giáo VN',        en: 'Teachers\' Day'         }, dateLabel: { vi: '20 tháng 11', en: 'Nov 20'  }, emoji: '📚', month: 11, day: 20, gradient: 'linear-gradient(135deg, #10B981, #0EA5E9)', categoryId: 'birthday' },
-    { id: 'christmas',      name: { vi: 'Giáng Sinh',              en: 'Christmas'              }, dateLabel: { vi: '25 tháng 12', en: 'Dec 25'  }, emoji: '🎄', month: 12, day: 25, gradient: 'linear-gradient(135deg, #EF4444, #16A34A)', categoryId: 'holiday' },
-    { id: 'noel_eve',       name: { vi: 'Tất niên',                en: 'New Year\'s Eve'        }, dateLabel: { vi: '31 tháng 12', en: 'Dec 31'  }, emoji: '🥂', month: 12, day: 31, gradient: 'linear-gradient(135deg, #7C3AED, #0EA5E9)', categoryId: 'holiday' },
-    { id: 'new_year',       name: { vi: 'Năm Mới',                 en: 'New Year'               }, dateLabel: { vi: '1 tháng 1',   en: 'Jan 1'   }, emoji: '🎆', month: 1,  day: 1,  gradient: 'linear-gradient(135deg, #7C3AED, #EC4899)', categoryId: 'holiday' },
-    { id: 'tet',            name: { vi: 'Tết Nguyên Đán',          en: 'Lunar New Year'         }, dateLabel: { vi: '29 tháng 1',  en: 'Jan 29'  }, emoji: '🧧', month: 1,  day: 29, gradient: 'linear-gradient(135deg, #EF4444, #F59E0B)', categoryId: 'holiday' },
+    { id: 'valentine',      name: { vi: 'Valentine',               en: 'Valentine\'s Day'       }, emoji: '💝', month: 2,  day: 14, gradient: 'linear-gradient(135deg, #EC4899, #BE185D)', categoryId: 'love' },
+    { id: 'womens_day',     name: { vi: 'Ngày Quốc tế Phụ nữ',    en: 'Int\'l Women\'s Day'    }, emoji: '🌸', month: 3,  day: 8,  gradient: 'linear-gradient(135deg, #F472B6, #A855F7)', categoryId: 'love' },
+    { id: 'mothers_day',    name: { vi: 'Ngày của Mẹ',             en: 'Mother\'s Day'          }, emoji: '💐', month: 5,  day: 12, gradient: 'linear-gradient(135deg, #F59E0B, #EF4444)', categoryId: 'birthday' },
+    { id: 'children_day',   name: { vi: 'Tết Thiếu nhi',           en: 'Children\'s Day'        }, emoji: '🎈', month: 6,  day: 1,  gradient: 'linear-gradient(135deg, #3B82F6, #06B6D4)', categoryId: 'birthday' },
+    { id: 'fathers_day',    name: { vi: 'Ngày của Bố',             en: 'Father\'s Day'          }, emoji: '👔', month: 6,  day: 21, gradient: 'linear-gradient(135deg, #1D4ED8, #3B82F6)', categoryId: 'birthday' },
+    { id: 'tet_trung_thu',  name: { vi: 'Tết Trung Thu',           en: 'Mid-Autumn Festival'   }, emoji: '🥮', month: 9,  day: 17, gradient: 'linear-gradient(135deg, #F59E0B, #D97706)', categoryId: 'mid_autumn' },
+    { id: 'womens_day_vn',  name: { vi: 'Ngày Phụ nữ Việt Nam',   en: 'Vietnamese Women\'s Day' }, emoji: '🌺', month: 10, day: 20, gradient: 'linear-gradient(135deg, #EC4899, #7C3AED)', categoryId: 'love' },
+    { id: 'teachers_day',   name: { vi: 'Ngày Nhà giáo VN',        en: 'Teachers\' Day'         }, emoji: '📚', month: 11, day: 20, gradient: 'linear-gradient(135deg, #10B981, #0EA5E9)', categoryId: 'birthday' },
+    { id: 'christmas',      name: { vi: 'Giáng Sinh',              en: 'Christmas'              }, emoji: '🎄', month: 12, day: 25, gradient: 'linear-gradient(135deg, #EF4444, #16A34A)', categoryId: 'holiday' },
+    { id: 'noel_eve',       name: { vi: 'Tất niên',                en: 'New Year\'s Eve'        }, emoji: '🥂', month: 12, day: 31, gradient: 'linear-gradient(135deg, #7C3AED, #0EA5E9)', categoryId: 'holiday' },
+    { id: 'new_year',       name: { vi: 'Năm Mới',                 en: 'New Year'               }, emoji: '🎆', month: 1,  day: 1,  gradient: 'linear-gradient(135deg, #7C3AED, #EC4899)', categoryId: 'holiday' },
+    { id: 'tet',            name: { vi: 'Tết Nguyên Đán',          en: 'Lunar New Year'         }, emoji: '🧧', month: 1,  day: 29, gradient: 'linear-gradient(135deg, #EF4444, #F59E0B)', categoryId: 'holiday' },
 ];
 
 // UI string translations

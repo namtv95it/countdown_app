@@ -49,4 +49,26 @@ class GiftService {
     }
     await batch.commit();
   }
+
+  // Update occasion assignment in batch
+  Future<void> updateGiftOccasionBatch(String eventId, List<String> productsToAdd, List<String> productsToRemove) async {
+    // Note: Firestore batch has a limit of 500 operations, assuming total modifications < 500 here.
+    final batch = _firestore.batch();
+    
+    for (String productId in productsToAdd) {
+      final docRef = _firestore.collection(_collectionPath).doc(productId);
+      batch.update(docRef, {
+        'occasionIds': FieldValue.arrayUnion([eventId])
+      });
+    }
+
+    for (String productId in productsToRemove) {
+      final docRef = _firestore.collection(_collectionPath).doc(productId);
+      batch.update(docRef, {
+        'occasionIds': FieldValue.arrayRemove([eventId])
+      });
+    }
+
+    await batch.commit();
+  }
 }

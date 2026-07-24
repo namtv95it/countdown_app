@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import '../services/localization_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,11 +7,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/event_category.dart';
 import '../models/gift_product.dart';
-import '../models/anniversary.dart';
+import '../models/special_occasion.dart';
 import '../services/wish_service.dart';
-import '../services/ad_service.dart';
-import '../services/storage_service.dart';
 import '../widgets/gift_product_card.dart';
+import 'special_occasion_screen.dart';
 
 class GiftScreen extends StatefulWidget {
   /// Nếu được truyền, sẽ tự động chọn danh mục này ở tab Gợi ý quà
@@ -38,7 +35,7 @@ class _GiftScreenState extends State<GiftScreen> {
 
   // ── Native Gift Tab ──
   String _giftCategoryFilter = 'all';
-  Anniversary? _closestEvent;
+  SpecialOccasion? _closestEvent;
   final ScrollController _giftScrollController = ScrollController();
   bool _isLoadingEvent = true;
 
@@ -53,19 +50,11 @@ class _GiftScreenState extends State<GiftScreen> {
 
   Future<void> _loadClosestEvent() async {
     try {
-      final storage = StorageService();
-      final anniversaries = await storage.getAnniversaries();
-      if (anniversaries.isNotEmpty) {
-        // Find the closest upcoming event
-        Anniversary? closest;
-        int minDays = 999999;
-        for (var ann in anniversaries) {
-          final days = ann.daysRemaining;
-          if (days >= 0 && days < minDays) {
-            minDays = days;
-            closest = ann;
-          }
-        }
+      final snap = await FirebaseFirestore.instance.collection('special_occasions').get();
+      if (snap.docs.isNotEmpty) {
+        final occasions = snap.docs.map((d) => SpecialOccasion.fromFirestore(d.id, d.data())).toList();
+        final closest = SpecialOccasion.getClosestOccasion(occasions);
+        
         if (mounted) {
           setState(() {
             _closestEvent = closest;
@@ -594,64 +583,71 @@ class _GiftScreenState extends State<GiftScreen> {
     );
   }
 
-  Widget _buildEventBanner(Anniversary event) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFEC4899), Color(0xFF8B5CF6)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFFEC4899).withValues(alpha: 0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+  Widget _buildEventBanner(SpecialOccasion event) {
+    final lang = LocalizationService.languageNotifier.value;
+    final colors = event.colors;
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => SpecialOccasionScreen(occasion: event)));
+      },
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: colors,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: colors.first.withValues(alpha: 0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
-            child: Text(event.emoji, style: const TextStyle(fontSize: 24)),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  event.title,
-                  style: GoogleFonts.quicksand(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(Icons.calendar_month, color: Colors.white70, size: 14),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${event.displayDate.day} tháng ${event.displayDate.month}',
-                      style: GoogleFonts.quicksand(
-                        color: Colors.white70,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                      ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+              ),
+              child: Text(event.emoji, style: const TextStyle(fontSize: 24)),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    event.getName(lang),
+                    style: GoogleFonts.quicksand(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
                     ),
-                  ],
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.calendar_month, color: Colors.white70, size: 14),
+                      const SizedBox(width: 4),
+                      Text(
+                        event.getDateLabel(lang),
+                        style: GoogleFonts.quicksand(
+                          color: Colors.white70,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
                 ),
               ],
             ),
@@ -700,6 +696,7 @@ class _GiftScreenState extends State<GiftScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 

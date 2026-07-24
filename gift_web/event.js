@@ -26,7 +26,17 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('event-title').innerText = eventName;
     document.getElementById('event-emoji').innerText = event.emoji;
     document.getElementById('event-name').innerText = eventName;
-    document.getElementById('event-date').innerText = L(event.dateLabel);
+    
+    // Động tính toán dateLabel
+    let dateLabel = '';
+    if (currentLang === 'vi') {
+        dateLabel = `${event.day} tháng ${event.month}`;
+    } else {
+        const enMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const monthStr = (event.month >= 1 && event.month <= 12) ? enMonths[event.month - 1] : 'Jan';
+        dateLabel = `${monthStr} ${event.day}`;
+    }
+    document.getElementById('event-date').innerText = dateLabel;
     
     // Cập nhật banner background
     document.getElementById('event-banner').style.background = event.gradient;
@@ -90,7 +100,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Lọc sản phẩm theo danh mục của sự kiện
-    const eventProducts = products.filter(p => p.categoryIds && p.categoryIds.includes(event.categoryId));
+    let eventProducts = products.filter(p => p.occasionIds && p.occasionIds.includes(event.id));
+    if (eventProducts.length === 0) {
+        eventProducts = products.filter(p => p.categoryIds && p.categoryIds.includes(event.categoryId));
+    }
     
     document.getElementById('product-count').innerText = `${eventProducts.length} món`;
 
