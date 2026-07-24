@@ -123,7 +123,13 @@ class _AdminGiftDashboardState extends State<AdminGiftDashboard> {
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
-          if (_isReordering)
+          if (_isReordering) ...[
+            TextButton(
+              onPressed: () {
+                setState(() => _isReordering = false);
+              },
+              child: Text('Hủy', style: GoogleFonts.quicksand(color: Colors.white54, fontWeight: FontWeight.bold)),
+            ),
             TextButton(
               onPressed: () async {
                 await _giftService.updateGiftsOrder(_reorderList);
@@ -134,9 +140,9 @@ class _AdminGiftDashboardState extends State<AdminGiftDashboard> {
                   );
                 }
               },
-              child: Text('Lưu thứ tự', style: GoogleFonts.quicksand(color: Colors.greenAccent, fontWeight: FontWeight.bold)),
-            )
-          else
+              child: Text('Lưu', style: GoogleFonts.quicksand(color: Colors.greenAccent, fontWeight: FontWeight.bold)),
+            ),
+          ] else
             IconButton(
               icon: const Icon(Icons.sort, color: Colors.white),
               tooltip: 'Sắp xếp thứ tự',

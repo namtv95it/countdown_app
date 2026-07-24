@@ -52,52 +52,90 @@ class _AdminSpecialOccasionsDashboardState extends State<AdminSpecialOccasionsDa
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Padding(
         padding: const EdgeInsets.all(12),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Text(occ.emoji, style: const TextStyle(fontSize: 24)),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    occ.getName('vi'),
-                    style: GoogleFonts.quicksand(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+            Row(
+              children: [
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Ngày: ${occ.getDateLabel('vi')}',
-                    style: GoogleFonts.quicksand(color: Colors.white70, fontSize: 13),
+                  child: Center(
+                    child: Text(occ.emoji, style: const TextStyle(fontSize: 24)),
                   ),
-                ],
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        occ.getName('vi'),
+                        style: GoogleFonts.quicksand(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Ngày: ${occ.getDateLabel('vi')}',
+                        style: GoogleFonts.quicksand(color: Colors.white70, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const Divider(color: Colors.white10, height: 1),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton.icon(
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => AdminEditSpecialOccasionScreen(occasion: occ)));
+                    },
+                    icon: const Icon(Icons.edit, color: Colors.blueAccent, size: 18),
+                    label: Text('Sửa', style: GoogleFonts.quicksand(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.blueAccent.withValues(alpha: 0.1),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextButton.icon(
+                    onPressed: () => _confirmDelete(occ),
+                    icon: const Icon(Icons.delete, color: Colors.redAccent, size: 18),
+                    label: Text('Xóa', style: GoogleFonts.quicksand(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.redAccent.withValues(alpha: 0.1),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: TextButton.icon(
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => AdminAssignProductsScreen(occasion: occ)));
+                },
+                icon: const Icon(Icons.card_giftcard, color: Colors.amberAccent, size: 18),
+                label: Text('Gán Sản Phẩm', style: GoogleFonts.quicksand(color: Colors.amberAccent, fontWeight: FontWeight.bold)),
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.amberAccent.withValues(alpha: 0.1),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
               ),
-            ),
-            IconButton(
-              icon: const Icon(Icons.card_giftcard, color: Colors.amberAccent),
-              tooltip: 'Gán Sản Phẩm',
-              onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => AdminAssignProductsScreen(occasion: occ)));
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.edit, color: Colors.blueAccent),
-              onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => AdminEditSpecialOccasionScreen(occasion: occ)));
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.delete, color: Colors.redAccent),
-              onPressed: () => _confirmDelete(occ),
             ),
           ],
         ),
