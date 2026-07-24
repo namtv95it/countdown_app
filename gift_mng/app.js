@@ -46,6 +46,27 @@ const btnSaveReorder = document.getElementById('btn-save-reorder');
 const btnCancelReorder = document.getElementById('btn-cancel-reorder');
 const closeModals = document.querySelectorAll('.close-modal');
 
+// Sidebar DOM
+const sidebar = document.getElementById('sidebar');
+const sidebarOverlay = document.getElementById('sidebar-overlay');
+const btnMobileMenu = document.getElementById('btn-mobile-menu');
+const pageTitle = document.getElementById('page-title');
+
+// Sidebar Toggle Logic
+if (btnMobileMenu && sidebar && sidebarOverlay) {
+    function closeSidebar() {
+        sidebar.classList.add('-translate-x-full');
+        sidebarOverlay.classList.add('hidden');
+    }
+    
+    btnMobileMenu.addEventListener('click', () => {
+        sidebar.classList.remove('-translate-x-full');
+        sidebarOverlay.classList.remove('hidden');
+    });
+
+    sidebarOverlay.addEventListener('click', closeSidebar);
+}
+
 // Checkbox custom styles
 const categoryCheckboxes = document.querySelectorAll('#f-categories input[type="checkbox"]');
 categoryCheckboxes.forEach(cb => {
@@ -748,13 +769,16 @@ let isOccasionView = false;
 if (tabGifts && tabOccasions) {
     tabGifts.addEventListener('click', () => {
         isOccasionView = false;
-        tabGifts.classList.replace('text-gray-500', 'text-primary');
-        tabGifts.classList.replace('border-transparent', 'border-primary');
-        tabGifts.classList.remove('dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-200');
         
-        tabOccasions.classList.replace('text-primary', 'text-gray-500');
-        tabOccasions.classList.replace('border-primary', 'border-transparent');
-        tabOccasions.classList.add('dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-200');
+        // Update Title
+        if (pageTitle) pageTitle.textContent = "Quản Lý Quà Tặng";
+        
+        // Update Sidebar active state
+        tabGifts.classList.add('bg-primary/10', 'text-primary');
+        tabGifts.classList.remove('text-gray-500', 'hover:bg-gray-100', 'dark:text-gray-400', 'dark:hover:bg-white/5');
+        
+        tabOccasions.classList.remove('bg-primary/10', 'text-primary');
+        tabOccasions.classList.add('text-gray-500', 'hover:bg-gray-100', 'dark:text-gray-400', 'dark:hover:bg-white/5');
         
         viewGifts.classList.remove('hidden');
         viewOccasions.classList.add('hidden');
@@ -762,18 +786,24 @@ if (tabGifts && tabOccasions) {
         // Show/hide correct buttons
         if (btnAddNew) btnAddNew.style.display = 'flex';
         if (btnAddNewOccasion) btnAddNewOccasion.style.display = 'none';
-        if (btnReorder) btnReorder.style.display = 'block';
+        if (btnReorder) btnReorder.style.display = 'flex'; // Changed to flex for alignment
+        
+        // Close sidebar on mobile
+        if (typeof closeSidebar === 'function') closeSidebar();
     });
     
     tabOccasions.addEventListener('click', () => {
         isOccasionView = true;
-        tabOccasions.classList.replace('text-gray-500', 'text-primary');
-        tabOccasions.classList.replace('border-transparent', 'border-primary');
-        tabOccasions.classList.remove('dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-200');
         
-        tabGifts.classList.replace('text-primary', 'text-gray-500');
-        tabGifts.classList.replace('border-primary', 'border-transparent');
-        tabGifts.classList.add('dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-200');
+        // Update Title
+        if (pageTitle) pageTitle.textContent = "Quản Lý Sự Kiện";
+        
+        // Update Sidebar active state
+        tabOccasions.classList.add('bg-primary/10', 'text-primary');
+        tabOccasions.classList.remove('text-gray-500', 'hover:bg-gray-100', 'dark:text-gray-400', 'dark:hover:bg-white/5');
+        
+        tabGifts.classList.remove('bg-primary/10', 'text-primary');
+        tabGifts.classList.add('text-gray-500', 'hover:bg-gray-100', 'dark:text-gray-400', 'dark:hover:bg-white/5');
         
         viewGifts.classList.add('hidden');
         viewOccasions.classList.remove('hidden');
@@ -782,6 +812,9 @@ if (tabGifts && tabOccasions) {
         if (btnAddNew) btnAddNew.style.display = 'none';
         if (btnReorder) btnReorder.style.display = 'none';
         if (btnAddNewOccasion) btnAddNewOccasion.style.display = 'flex';
+        
+        // Close sidebar on mobile
+        if (typeof closeSidebar === 'function') closeSidebar();
         
         renderOccasions();
     });

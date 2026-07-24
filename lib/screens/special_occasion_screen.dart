@@ -21,47 +21,110 @@ class SpecialOccasionScreen extends StatelessWidget {
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: 200.0,
+            expandedHeight: 280.0,
             floating: false,
             pinned: true,
             backgroundColor: colors.first,
+            elevation: 0,
             flexibleSpace: FlexibleSpaceBar(
+              centerTitle: true,
+              titlePadding: const EdgeInsets.only(bottom: 16, left: 16, right: 16),
               title: Text(
                 occasion.getName(lang),
+                textAlign: TextAlign.center,
                 style: GoogleFonts.quicksand(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
+                  shadows: [const Shadow(color: Colors.black38, blurRadius: 8)],
                 ),
               ),
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: colors,
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+              background: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: colors,
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
                   ),
-                ),
-                child: Center(
-                  child: Column(
+                  Positioned(
+                    top: -50,
+                    right: -50,
+                    child: Container(
+                      width: 180,
+                      height: 180,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withValues(alpha: 0.1),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: -40,
+                    left: -40,
+                    child: Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withValues(alpha: 0.1),
+                      ),
+                    ),
+                  ),
+                  Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const SizedBox(height: 20),
-                      Text(
-                        occasion.emoji,
-                        style: const TextStyle(fontSize: 64),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '${occasion.getDateLabel(lang)} - Còn ${occasion.daysRemaining} ngày',
-                        style: GoogleFonts.quicksand(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                      const SizedBox(height: 10),
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: colors.last.withValues(alpha: 0.4),
+                              blurRadius: 40,
+                              spreadRadius: 10,
+                            )
+                          ],
+                        ),
+                        child: Text(
+                          occasion.emoji,
+                          style: const TextStyle(fontSize: 80),
                         ),
                       ),
+                      const SizedBox(height: 20),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(30),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+                          boxShadow: [
+                            BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10)
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.event, color: Colors.white, size: 16),
+                            const SizedBox(width: 6),
+                            Text(
+                              '${occasion.getDateLabel(lang)} • Còn ${occasion.daysRemaining} ngày',
+                              style: GoogleFonts.quicksand(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 40), // Push up to avoid title
                     ],
                   ),
-                ),
+                ],
               ),
             ),
           ),

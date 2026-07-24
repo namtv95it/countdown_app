@@ -97,4 +97,15 @@ class SpecialOccasion {
     }
     return closest;
   }
+
+  // Find the top upcoming occasions
+  static List<SpecialOccasion> getUpcomingOccasions(List<SpecialOccasion> occasions, {int limit = 5}) {
+    if (occasions.isEmpty) return [];
+    
+    // Sort occasions by days remaining (ascending)
+    final sortedOccasions = List<SpecialOccasion>.from(occasions);
+    sortedOccasions.sort((a, b) => a.daysRemaining.compareTo(b.daysRemaining));
+    
+    return sortedOccasions.take(limit).toList();
+  }
 }

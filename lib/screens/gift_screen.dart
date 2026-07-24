@@ -1,3 +1,4 @@
+import 'dart:async';
 import '../services/localization_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -23,7 +24,7 @@ class GiftScreen extends StatefulWidget {
   State<GiftScreen> createState() => _GiftScreenState();
 }
 
-class _GiftScreenState extends State<GiftScreen> {
+class _GiftScreenState extends State<GiftScreen> with SingleTickerProviderStateMixin {
   // ── Gửi lời chúc ──
   final _senderController = TextEditingController();
   final _receiverController = TextEditingController();
@@ -35,9 +36,16 @@ class _GiftScreenState extends State<GiftScreen> {
 
   // ── Native Gift Tab ──
   String _giftCategoryFilter = 'all';
-  SpecialOccasion? _closestEvent;
+  List<SpecialOccasion> _upcomingEvents = [];
   final ScrollController _giftScrollController = ScrollController();
   bool _isLoadingEvent = true;
+  Timer? _carouselTimer;
+  int _currentCarouselIndex = 0;
+  
+  late AnimationController _blinkController;
+  late Animation<double> _blinkAnimation;
+  
+  late Stream<QuerySnapshot> _giftsStream;
 
   @override
   void initState() {
@@ -45,21 +53,31 @@ class _GiftScreenState extends State<GiftScreen> {
     if (widget.initialCategoryId != null) {
       _giftCategoryFilter = widget.initialCategoryId!;
     }
-    _loadClosestEvent();
+    
+    _blinkController = AnimationController(vsync: this, duration: const Duration(milliseconds: 700));
+    _blinkAnimation = Tween<double>(begin: 0.3, end: 1.0).animate(_blinkController);
+    _blinkController.repeat(reverse: true);
+    
+    _giftsStream = FirebaseFirestore.instance.collection('gifts').orderBy('order').snapshots();
+    
+    _loadUpcomingEvents();
   }
 
-  Future<void> _loadClosestEvent() async {
+  Future<void> _loadUpcomingEvents() async {
     try {
       final snap = await FirebaseFirestore.instance.collection('special_occasions').get();
       if (snap.docs.isNotEmpty) {
         final occasions = snap.docs.map((d) => SpecialOccasion.fromFirestore(d.id, d.data())).toList();
-        final closest = SpecialOccasion.getClosestOccasion(occasions);
+        final upcoming = SpecialOccasion.getUpcomingOccasions(occasions, limit: 5);
         
         if (mounted) {
           setState(() {
-            _closestEvent = closest;
+            _upcomingEvents = upcoming;
             _isLoadingEvent = false;
           });
+          if (upcoming.length > 1) {
+            _startCarouselTimer();
+          }
         }
       } else {
         if (mounted) {
@@ -71,8 +89,28 @@ class _GiftScreenState extends State<GiftScreen> {
     }
   }
 
+  void _startCarouselTimer() {
+    _carouselTimer?.cancel();
+    _carouselTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
+      if (_pageController.hasClients) {
+        int nextPage = _pageController.page!.round() + 1;
+        if (nextPage >= _upcomingEvents.length) {
+          nextPage = 0;
+        }
+        _pageController.animateToPage(
+          nextPage,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
+
   @override
   void dispose() {
+    _blinkController.dispose();
+    _carouselTimer?.cancel();
+    _pageController.dispose();
     _senderController.dispose();
     _receiverController.dispose();
     _wishScrollController.dispose();
@@ -177,30 +215,35 @@ class _GiftScreenState extends State<GiftScreen> {
           //   child: const Icon(Icons.refresh_rounded),
           // ),
           const SizedBox(height: 12),
-          FloatingActionButton.extended(
-            heroTag: 'wish_fab',
-            onPressed: () {
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                showDragHandle: true,
-                backgroundColor: const Color(0xFF1A1A2E),
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          SizedBox(
+            height: 42,
+            child: FloatingActionButton.extended(
+              heroTag: 'wish_fab',
+              extendedPadding: const EdgeInsets.symmetric(horizontal: 14),
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  showDragHandle: true,
+                  backgroundColor: const Color(0xFF1A1A2E),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                  ),
+                  builder: (context) => FractionallySizedBox(
+                    heightFactor: 0.95,
+                    child: _buildWishTab(),
+                  ),
+                );
+              },
+              backgroundColor: const Color(0xFFEC4899),
+              icon: const Icon(Icons.mail_rounded, color: Colors.white, size: 18),
+              label: Text(
+                t('wish_button_short'),
+                style: GoogleFonts.quicksand(
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                  fontSize: 13,
                 ),
-                builder: (context) => FractionallySizedBox(
-                  heightFactor: 0.95,
-                  child: _buildWishTab(),
-                ),
-              );
-            },
-            backgroundColor: const Color(0xFFEC4899),
-            icon: const Icon(Icons.mail_rounded, color: Colors.white),
-            label: Text(
-              t('wish_button_short'),
-              style: GoogleFonts.quicksand(
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
               ),
             ),
           ),
@@ -513,8 +556,8 @@ class _GiftScreenState extends State<GiftScreen> {
     return Column(
       children: [
         // 1. Banner Sự Kiện
-        if (!_isLoadingEvent && _closestEvent != null)
-          _buildEventBanner(_closestEvent!),
+        if (!_isLoadingEvent && _upcomingEvents.isNotEmpty)
+          _buildEventCarousel(),
 
         // 2. Filter Bar
         _buildCategoryFilterBar(),
@@ -522,10 +565,7 @@ class _GiftScreenState extends State<GiftScreen> {
         // 3. Grid Sản phẩm (StreamBuilder)
         Expanded(
           child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('gifts')
-                .orderBy('order')
-                .snapshots(),
+            stream: _giftsStream,
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 return Center(
@@ -556,7 +596,7 @@ class _GiftScreenState extends State<GiftScreen> {
 
               return GridView.builder(
                 controller: _giftScrollController,
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 120),
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 250),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                   childAspectRatio: 0.65,
@@ -583,120 +623,170 @@ class _GiftScreenState extends State<GiftScreen> {
     );
   }
 
-  Widget _buildEventBanner(SpecialOccasion event) {
-    final lang = LocalizationService.languageNotifier.value;
-    final colors = event.colors;
+  final PageController _pageController = PageController(viewportFraction: 0.93);
 
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(context, MaterialPageRoute(builder: (_) => SpecialOccasionScreen(occasion: event)));
-      },
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: colors,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: colors.first.withValues(alpha: 0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
+  Widget _buildEventCarousel() {
+    return Column(
+      children: [
+        SizedBox(
+          height: 120,
+          child: PageView.builder(
+            controller: _pageController,
+            onPageChanged: (index) {
+              setState(() {
+                _currentCarouselIndex = index;
+              });
+            },
+            itemCount: _upcomingEvents.length,
+        itemBuilder: (context, index) {
+          final event = _upcomingEvents[index];
+          final lang = LocalizationService.languageNotifier.value;
+          final colors = event.colors;
+
+          return GestureDetector(
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => SpecialOccasionScreen(occasion: event)));
+            },
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: colors,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(20),
               ),
-              child: Text(event.emoji, style: const TextStyle(fontSize: 24)),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
                 children: [
-                  Text(
-                    event.getName(lang),
-                    style: GoogleFonts.quicksand(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 16,
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    child: Text(event.emoji, style: const TextStyle(fontSize: 24)),
                   ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.calendar_month, color: Colors.white70, size: 14),
-                      const SizedBox(width: 4),
-                      Text(
-                        event.getDateLabel(lang),
-                        style: GoogleFonts.quicksand(
-                          color: Colors.white70,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          event.getName(lang),
+                          style: GoogleFonts.quicksand(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                    ],
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              children: [
-                Text(
-                  'CÒN',
-                  style: GoogleFonts.quicksand(
-                    color: Colors.white70,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 10,
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(Icons.calendar_month, color: Colors.white70, size: 14),
+                            const SizedBox(width: 4),
+                            Text(
+                              event.getDateLabel(lang),
+                              style: GoogleFonts.quicksand(
+                                color: Colors.white70,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        FadeTransition(
+                          opacity: _blinkAnimation,
+                          child: Text(
+                            'Khám phá ngay >>',
+                            style: GoogleFonts.quicksand(
+                              color: Colors.yellowAccent,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 11,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    Text(
-                      '${event.daysRemaining}',
-                      style: GoogleFonts.quicksand(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 22,
-                      ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    const SizedBox(width: 2),
-                    Text(
-                      'ngày',
-                      style: GoogleFonts.quicksand(
-                        color: Colors.white70,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 10,
-                      ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'CÒN',
+                          style: GoogleFonts.quicksand(
+                            color: Colors.white70,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 10,
+                          ),
+                        ),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
+                          children: [
+                            Text(
+                              '${event.daysRemaining}',
+                              style: GoogleFonts.quicksand(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 22,
+                              ),
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              'NGÀY',
+                              style: GoogleFonts.quicksand(
+                                color: Colors.white70,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          );
+        },
       ),
     ),
+    if (_upcomingEvents.length > 1) ...[
+      const SizedBox(height: 8),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(
+          _upcomingEvents.length,
+          (index) => AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            width: _currentCarouselIndex == index ? 16 : 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: _currentCarouselIndex == index
+                  ? Colors.pinkAccent
+                  : Colors.grey.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(3),
+            ),
+          ),
+        ),
+      ),
+    ],
+    ],
     );
   }
 
