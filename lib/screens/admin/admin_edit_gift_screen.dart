@@ -33,6 +33,17 @@ class _AdminEditGiftScreenState extends State<AdminEditGiftScreen> {
   final List<String> _availableCategories = [
     'birthday', 'love', 'anniversary', 'holiday', 'mid_autumn', 'children_day', 'womens_day'
   ];
+  
+  final Map<String, String> _categoryNames = {
+    'birthday': 'Sinh nhật',
+    'love': 'Tình yêu',
+    'anniversary': 'Kỷ niệm',
+    'holiday': 'Ngày lễ',
+    'mid_autumn': 'Trung thu',
+    'children_day': 'Quốc tế Thiếu nhi',
+    'womens_day': 'Ngày Phụ nữ',
+  };
+
   final List<String> _selectedCategories = [];
 
   @override
@@ -256,7 +267,7 @@ class _AdminEditGiftScreenState extends State<AdminEditGiftScreen> {
                       children: _availableCategories.map((cat) {
                         final isSelected = _selectedCategories.contains(cat);
                         return FilterChip(
-                          label: Text(cat, style: TextStyle(color: isSelected ? Colors.white : Colors.white54)),
+                          label: Text(_categoryNames[cat] ?? cat, style: TextStyle(color: isSelected ? Colors.white : Colors.white54)),
                           selected: isSelected,
                           selectedColor: const Color(0xFF7C3AED),
                           backgroundColor: Colors.white.withValues(alpha: 0.1),

@@ -162,7 +162,7 @@ class GiftProductCard extends StatelessWidget {
                       color: _brighten(themeColor),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const Spacer(),
 
                   // Button
                     Container(
