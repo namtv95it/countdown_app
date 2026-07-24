@@ -13,12 +13,14 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:gal/gal.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/anniversary.dart';
 import '../services/storage_service.dart';
 import '../services/font_service.dart';
 import '../services/ad_service.dart';
 import '../services/notification_service.dart';
 import '../services/audio_service.dart';
+import '../services/app_firebase_service.dart';
 import '../widgets/countdown_card.dart';
 import '../widgets/time_unit_box.dart';
 import '../widgets/effect_background.dart';
@@ -32,6 +34,9 @@ import 'add_event_screen.dart';
 import 'detail_screen.dart';
 import 'gift_screen.dart';
 import 'settings_screen.dart';
+import 'special_occasion_screen.dart';
+import '../models/special_occasion.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -42,6 +47,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
+  static bool _hasShownStartupBanner = false;
   final StorageService _storageService = StorageService();
   List<Anniversary> _anniversaries = [];
   bool _isLoading = true;
@@ -206,7 +212,171 @@ class _HomeScreenState extends State<HomeScreen>
     final isTutorialShown = await storage.getIsTutorialShown();
     if (!isTutorialShown && mounted) {
       _showTutorial();
+    } else {
+      _checkAndShowStartupBanner();
     }
+  }
+
+  Future<void> _checkAndShowStartupBanner() async {
+    if (_hasShownStartupBanner || !mounted) return;
+    _hasShownStartupBanner = true;
+
+    final banner = await AppFirebaseService().getStartupBanner();
+    if (banner != null && banner.isActive && mounted) {
+      _showStartupBannerDialog(banner);
+    }
+  }
+
+  void _showStartupBannerDialog(StartupBanner banner) {
+    final activeItems = banner.items.where((item) => item.isActive).toList();
+    if (activeItems.isEmpty) return;
+
+    if (activeItems.length == 1) {
+      _showSingleBannerDialog(activeItems.first);
+    } else {
+      _showCarouselBannerDialog(activeItems);
+    }
+  }
+
+  void _showSingleBannerDialog(StartupBannerItem item) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (item.title.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF1A1A2E),
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                  ),
+                  child: Text(
+                    item.title,
+                    style: GoogleFonts.quicksand(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ClipRRect(
+                borderRadius: item.title.isNotEmpty
+                    ? const BorderRadius.vertical(bottom: Radius.circular(16))
+                    : BorderRadius.circular(16),
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.pop(context);
+                    _handleBannerAction(item);
+                  },
+                  child: Image.network(
+                    item.imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      height: 200,
+                      width: double.infinity,
+                      color: Colors.grey[800],
+                      alignment: Alignment.center,
+                      child: const Icon(Icons.broken_image, color: Colors.white54, size: 50),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              FloatingActionButton.small(
+                onPressed: () => Navigator.pop(context),
+                backgroundColor: Colors.white24,
+                elevation: 0,
+                child: const Icon(Icons.close, color: Colors.white),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _handleBannerAction(StartupBannerItem item) {
+    switch (item.actionType) {
+      case 'gift':
+        if (item.occasionId != null && item.occasionId!.isNotEmpty) {
+          // Navigate to a specific special occasion
+          _navigateToOccasion(item.occasionId!);
+        } else {
+          // Navigate to gift tab (with optional category filter)
+          setState(() => _currentTab = 2);
+          _pageController.animateToPage(2, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+          // If there's a category filter, we push the gift screen directly with it
+          if (item.giftCategoryId != null && item.giftCategoryId!.isNotEmpty) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => GiftScreen(
+                      initialCategoryId: item.giftCategoryId,
+                      isPremium: false,
+                    ),
+                  ),
+                );
+              }
+            });
+          }
+        }
+        break;
+      case 'url':
+        if (item.actionUrl != null && item.actionUrl!.isNotEmpty) {
+          final uri = Uri.tryParse(item.actionUrl!);
+          if (uri != null) {
+            launchUrl(uri, mode: LaunchMode.externalApplication);
+          }
+        }
+        break;
+      case 'none':
+      default:
+        break;
+    }
+  }
+
+  Future<void> _navigateToOccasion(String occasionId) async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('special_occasions')
+          .doc(occasionId)
+          .get();
+      if (doc.exists && mounted) {
+        final occasion = SpecialOccasion.fromFirestore(doc.id, doc.data()!);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => SpecialOccasionScreen(occasion: occasion),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error navigating to occasion: $e');
+    }
+  }
+
+  void _showCarouselBannerDialog(List<StartupBannerItem> items) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return _CarouselBannerDialog(
+          items: items,
+          onAction: (item) {
+            Navigator.pop(context);
+            _handleBannerAction(item);
+          },
+        );
+      },
+    );
   }
 
   void _showTutorial() {
@@ -1938,4 +2108,157 @@ class CustomPageScrollPhysics extends ScrollPhysics {
   bool get allowImplicitScrolling => false;
 }
 
+class _CarouselBannerDialog extends StatefulWidget {
+  final List<StartupBannerItem> items;
+  final Function(StartupBannerItem) onAction;
+
+  const _CarouselBannerDialog({
+    required this.items,
+    required this.onAction,
+  });
+
+  @override
+  State<_CarouselBannerDialog> createState() => _CarouselBannerDialogState();
+}
+
+class _CarouselBannerDialogState extends State<_CarouselBannerDialog> {
+  late PageController _pageController;
+  int _currentIndex = 0;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+    _startTimer();
+  }
+
+  void _startTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 4), (timer) {
+      if (!mounted) return;
+      if (_currentIndex < widget.items.length - 1) {
+        _currentIndex++;
+      } else {
+        _currentIndex = 0;
+      }
+      _pageController.animateToPage(
+        _currentIndex,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.all(20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            height: 350,
+            decoration: BoxDecoration(
+              color: const Color(0xFF1A1A2E),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Stack(
+              children: [
+                PageView.builder(
+                  controller: _pageController,
+                  onPageChanged: (index) {
+                    setState(() {
+                      _currentIndex = index;
+                    });
+                  },
+                  itemCount: widget.items.length,
+                  itemBuilder: (context, index) {
+                    final item = widget.items[index];
+                    return Column(
+                      children: [
+                        if (item.title.isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                            width: double.infinity,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF1A1A2E),
+                              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                            ),
+                            child: Text(
+                              item.title,
+                              style: GoogleFonts.quicksand(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: item.title.isNotEmpty
+                                ? const BorderRadius.vertical(bottom: Radius.circular(16))
+                                : BorderRadius.circular(16),
+                            child: GestureDetector(
+                              onTap: () => widget.onAction(item),
+                              child: Image.network(
+                                item.imageUrl,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                errorBuilder: (context, error, stackTrace) => Container(
+                                  color: Colors.grey[800],
+                                  alignment: Alignment.center,
+                                  child: const Icon(Icons.broken_image, color: Colors.white54, size: 50),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+                Positioned(
+                  bottom: 12,
+                  left: 0,
+                  right: 0,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(
+                      widget.items.length,
+                      (index) => Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        width: _currentIndex == index ? 24 : 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: _currentIndex == index ? const Color(0xFFEC4899) : Colors.white38,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          FloatingActionButton.small(
+            onPressed: () => Navigator.pop(context),
+            backgroundColor: Colors.white24,
+            elevation: 0,
+            child: const Icon(Icons.close, color: Colors.white),
+          ),
+        ],
+      ),
+    );
+  }
+}
 

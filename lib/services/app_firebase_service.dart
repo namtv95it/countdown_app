@@ -2,6 +2,71 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
+class StartupBannerItem {
+  final String id;
+  final bool isActive;
+  final String imageUrl;
+  final String title;
+  final String actionType; // 'none' | 'gift' | 'url'
+  final String? actionUrl;        // for actionType == 'url'
+  final String? giftCategoryId;  // for actionType == 'gift', filter by category
+  final String? occasionId;      // for actionType == 'gift', go to specific occasion
+
+  StartupBannerItem({
+    required this.id,
+    required this.isActive,
+    required this.imageUrl,
+    required this.title,
+    required this.actionType,
+    this.actionUrl,
+    this.giftCategoryId,
+    this.occasionId,
+  });
+
+  factory StartupBannerItem.fromMap(String id, Map<String, dynamic> data) {
+    return StartupBannerItem(
+      id: id,
+      isActive: data['isActive'] ?? false,
+      imageUrl: data['imageUrl'] ?? '',
+      title: data['title'] ?? '',
+      actionType: data['actionType'] ?? 'none',
+      actionUrl: data['actionUrl'],
+      giftCategoryId: data['giftCategoryId'],
+      occasionId: data['occasionId'],
+    );
+  }
+}
+
+class StartupBanner {
+  final bool isActive;
+  final List<StartupBannerItem> items;
+
+  StartupBanner({
+    required this.isActive,
+    required this.items,
+  });
+
+  factory StartupBanner.fromMap(Map<String, dynamic> data) {
+    List<StartupBannerItem> parsedItems = [];
+    if (data['items'] is List) {
+      final list = data['items'] as List;
+      for (int i = 0; i < list.length; i++) {
+        if (list[i] is Map) {
+          final itemData = Map<String, dynamic>.from(list[i]);
+          // Use item id if exists, otherwise generate one from index
+          final id = itemData['id']?.toString() ?? i.toString();
+          parsedItems.add(StartupBannerItem.fromMap(id, itemData));
+        }
+      }
+    }
+
+    return StartupBanner(
+      isActive: data['isActive'] ?? false,
+      items: parsedItems,
+    );
+  }
+}
+
 class AppFirebaseService {
   static final AppFirebaseService _instance = AppFirebaseService._internal();
   factory AppFirebaseService() => _instance;
@@ -89,5 +154,18 @@ class AppFirebaseService {
       debugPrint('Error getting unlocked features: $e');
     }
     return [];
+  }
+
+  /// Lấy cấu hình Startup Banner từ Cloud
+  Future<StartupBanner?> getStartupBanner() async {
+    try {
+      final doc = await _firestore.collection('settings').doc('startup_banner').get();
+      if (doc.exists && doc.data() != null) {
+        return StartupBanner.fromMap(doc.data()!);
+      }
+    } catch (e) {
+      debugPrint('Error fetching startup banner: $e');
+    }
+    return null;
   }
 }

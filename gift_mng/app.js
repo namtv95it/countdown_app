@@ -756,8 +756,10 @@ function renderGradientOptions(selectedGradient = '') {
 // ==========================================
 const tabGifts = document.getElementById('tab-gifts');
 const tabOccasions = document.getElementById('tab-occasions');
+const tabStartupBanner = document.getElementById('tab-startup-banner');
 const viewGifts = document.getElementById('view-gifts');
 const viewOccasions = document.getElementById('view-occasions');
+const viewStartupBanner = document.getElementById('view-startup-banner');
 const occasionModal = document.getElementById('occasion-modal');
 const occasionListContainer = document.getElementById('occasion-list-container');
 const occasionEmptyState = document.getElementById('occasion-empty-state');
@@ -777,11 +779,18 @@ if (tabGifts && tabOccasions) {
         tabGifts.classList.add('bg-primary/10', 'text-primary');
         tabGifts.classList.remove('text-gray-500', 'hover:bg-gray-100', 'dark:text-gray-400', 'dark:hover:bg-white/5');
         
-        tabOccasions.classList.remove('bg-primary/10', 'text-primary');
-        tabOccasions.classList.add('text-gray-500', 'hover:bg-gray-100', 'dark:text-gray-400', 'dark:hover:bg-white/5');
+        if (tabOccasions) {
+            tabOccasions.classList.remove('bg-primary/10', 'text-primary');
+            tabOccasions.classList.add('text-gray-500', 'hover:bg-gray-100', 'dark:text-gray-400', 'dark:hover:bg-white/5');
+        }
+        if (tabStartupBanner) {
+            tabStartupBanner.classList.remove('bg-primary/10', 'text-primary');
+            tabStartupBanner.classList.add('text-gray-500', 'hover:bg-gray-100', 'dark:text-gray-400', 'dark:hover:bg-white/5');
+        }
         
         viewGifts.classList.remove('hidden');
-        viewOccasions.classList.add('hidden');
+        if (viewOccasions) viewOccasions.classList.add('hidden');
+        if (viewStartupBanner) viewStartupBanner.classList.add('hidden');
         
         // Show/hide correct buttons
         if (btnAddNew) btnAddNew.style.display = 'flex';
@@ -802,11 +811,18 @@ if (tabGifts && tabOccasions) {
         tabOccasions.classList.add('bg-primary/10', 'text-primary');
         tabOccasions.classList.remove('text-gray-500', 'hover:bg-gray-100', 'dark:text-gray-400', 'dark:hover:bg-white/5');
         
-        tabGifts.classList.remove('bg-primary/10', 'text-primary');
-        tabGifts.classList.add('text-gray-500', 'hover:bg-gray-100', 'dark:text-gray-400', 'dark:hover:bg-white/5');
+        if (tabGifts) {
+            tabGifts.classList.remove('bg-primary/10', 'text-primary');
+            tabGifts.classList.add('text-gray-500', 'hover:bg-gray-100', 'dark:text-gray-400', 'dark:hover:bg-white/5');
+        }
+        if (tabStartupBanner) {
+            tabStartupBanner.classList.remove('bg-primary/10', 'text-primary');
+            tabStartupBanner.classList.add('text-gray-500', 'hover:bg-gray-100', 'dark:text-gray-400', 'dark:hover:bg-white/5');
+        }
         
-        viewGifts.classList.add('hidden');
+        if (viewGifts) viewGifts.classList.add('hidden');
         viewOccasions.classList.remove('hidden');
+        if (viewStartupBanner) viewStartupBanner.classList.add('hidden');
         
         // Hide gift-specific buttons and show occasion button
         if (btnAddNew) btnAddNew.style.display = 'none';
@@ -1115,6 +1131,334 @@ if (btnSaveAssign) {
 
         btnSaveAssign.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu Lại';
         btnSaveAssign.disabled = false;
+    });
+}
+
+// ==========================================
+// 10. STARTUP BANNER LOGIC
+// ==========================================
+const btnAddNewSb = document.getElementById('btn-add-new-sb-trigger');
+const sbGlobalIsActive = document.getElementById('sb-global-isActive');
+const sbEmptyState = document.getElementById('sb-empty-state');
+const sbListContainer = document.getElementById('sb-list-container');
+const btnAddSbEmpty = document.getElementById('btn-add-sb-empty');
+const sbModal = document.getElementById('sb-modal');
+const sbForm = document.getElementById('sb-form');
+const sbItemId = document.getElementById('sb-item-id');
+const sbItemIsActive = document.getElementById('sb-item-isActive');
+const sbItemTitle = document.getElementById('sb-item-title');
+const sbItemImageUrl = document.getElementById('sb-item-imageUrl');
+const sbItemImgPreview = document.getElementById('sb-item-img-preview');
+const sbItemImgPlaceholder = document.getElementById('sb-item-img-placeholder');
+const btnSaveSbItem = document.getElementById('btn-save-sb-item');
+
+// New action sub-option elements
+const sbActionGiftOptions = document.getElementById('sb-action-gift-options');
+const sbActionUrlOptions = document.getElementById('sb-action-url-options');
+const sbGiftCategoryWrap = document.getElementById('sb-gift-category-wrap');
+const sbGiftOccasionWrap = document.getElementById('sb-gift-occasion-wrap');
+const sbItemOccasionId = document.getElementById('sb-item-occasionId'); // the grid div
+const sbItemActionUrl = document.getElementById('sb-item-actionUrl');
+
+let startupBannerData = { isActive: false, items: [] };
+let sbOccasionsLoaded = false;
+
+// Load occasions into sb-item-occasionId select
+async function loadSbOccasions() {
+    if (sbOccasionsLoaded || !sbItemOccasionId) return;
+    try {
+        const snap = await db.collection('special_occasions').get();
+        let html = '';
+        snap.forEach(doc => {
+            const d = doc.data();
+            html += `
+                <label class="flex items-center gap-2 p-2.5 rounded-xl border border-gray-200 dark:border-white/10 cursor-pointer transition-all hover:border-indigo-300 has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-50 dark:has-[:checked]:bg-indigo-900/30">
+                    <input type="radio" name="sb-item-occasionId" value="${doc.id}" class="hidden">
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300 line-clamp-1">${d.emoji || ''} ${d.nameVi}</span>
+                </label>`;
+        });
+        sbItemOccasionId.innerHTML = html;
+        sbOccasionsLoaded = true;
+    } catch(e) {
+        console.error('Error loading occasions for banner:', e);
+    }
+}
+
+function updateSbActionSubOptions(actionType) {
+    sbActionGiftOptions.classList.toggle('hidden', actionType !== 'gift');
+    sbActionUrlOptions.classList.toggle('hidden', actionType !== 'url');
+    if (actionType === 'gift') loadSbOccasions();
+}
+
+function updateSbGiftDestOptions(dest) {
+    sbGiftCategoryWrap.classList.toggle('hidden', dest !== 'category');
+    sbGiftOccasionWrap.classList.toggle('hidden', dest !== 'occasion');
+}
+
+document.querySelectorAll('input[name="sb-item-actionType"]').forEach(radio => {
+    radio.addEventListener('change', () => updateSbActionSubOptions(radio.value));
+});
+
+document.querySelectorAll('input[name="sb-gift-dest"]').forEach(radio => {
+    radio.addEventListener('change', () => updateSbGiftDestOptions(radio.value));
+});
+
+
+if (tabStartupBanner) {
+    tabStartupBanner.addEventListener('click', () => {
+        isOccasionView = false;
+        if (pageTitle) pageTitle.textContent = "Banner Khởi Động";
+        
+        tabStartupBanner.classList.add('bg-primary/10', 'text-primary');
+        tabStartupBanner.classList.remove('text-gray-500', 'hover:bg-gray-100', 'dark:text-gray-400', 'dark:hover:bg-white/5');
+        
+        if (tabGifts) {
+            tabGifts.classList.remove('bg-primary/10', 'text-primary');
+            tabGifts.classList.add('text-gray-500', 'hover:bg-gray-100', 'dark:text-gray-400', 'dark:hover:bg-white/5');
+        }
+        if (tabOccasions) {
+            tabOccasions.classList.remove('bg-primary/10', 'text-primary');
+            tabOccasions.classList.add('text-gray-500', 'hover:bg-gray-100', 'dark:text-gray-400', 'dark:hover:bg-white/5');
+        }
+        
+        if (viewGifts) viewGifts.classList.add('hidden');
+        if (viewOccasions) viewOccasions.classList.add('hidden');
+        viewStartupBanner.classList.remove('hidden');
+        
+        if (btnAddNew) btnAddNew.style.display = 'none';
+        if (btnReorder) btnReorder.style.display = 'none';
+        if (btnAddNewOccasion) btnAddNewOccasion.style.display = 'none';
+        if (btnAddNewSb) btnAddNewSb.style.display = 'flex';
+        
+        if (typeof closeSidebar === 'function') closeSidebar();
+        
+        loadStartupBanner();
+    });
+}
+
+function loadStartupBanner() {
+    db.collection('settings').doc('startup_banner').get().then(doc => {
+        if (doc.exists) {
+            startupBannerData = doc.data();
+            if (!startupBannerData.items) startupBannerData.items = [];
+        } else {
+            startupBannerData = { isActive: false, items: [] };
+        }
+        
+        if (sbGlobalIsActive) sbGlobalIsActive.checked = startupBannerData.isActive;
+        renderStartupBanners();
+    }).catch(err => {
+        console.error("Error loading startup banner: ", err);
+    });
+}
+
+function renderStartupBanners() {
+    sbListContainer.innerHTML = '';
+    
+    if (startupBannerData.items.length === 0) {
+        sbEmptyState.classList.remove('hidden');
+        return;
+    }
+    sbEmptyState.classList.add('hidden');
+
+    startupBannerData.items.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl overflow-hidden relative shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group';
+        
+        // Is Active badge
+        const badgeColor = item.isActive ? 'bg-green-500' : 'bg-gray-500';
+        const badgeText = item.isActive ? 'Đang bật' : 'Đang tắt';
+        
+        card.innerHTML = `
+            <div class="h-32 w-full relative">
+                <img src="${item.imageUrl}" class="w-full h-full object-cover" onerror="this.src=''; this.onerror=null; this.parentElement.innerHTML='<div class=\\'w-full h-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center\\'><i class=\\'fa-regular fa-image text-3xl text-gray-400\\'></i></div>'">
+                <div class="absolute top-2 right-2 px-2 py-1 rounded text-[10px] font-bold text-white uppercase tracking-wider ${badgeColor}">${badgeText}</div>
+            </div>
+            <div class="p-4 flex flex-col flex-1">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white line-clamp-1 mb-1">${item.title || '(Không tiêu đề)'}</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-4"><i class="fa-solid fa-link mr-1"></i> ${
+                    item.actionType === 'gift'
+                        ? (item.occasionId ? '🎉 Sự kiện đặc biệt' : '🎁 Trang Quà Tặng' + (item.giftCategoryId ? ` (${item.giftCategoryId})` : ''))
+                        : item.actionType === 'url'
+                            ? '🌐 Mở link: ' + (item.actionUrl ? item.actionUrl.substring(0, 30) + '...' : '(chưa nhập)')
+                            : '❌ Chỉ thông báo'
+                }</p>
+                <div class="mt-auto flex gap-2 pt-3 border-t border-gray-100 dark:border-white/10">
+                    <button class="flex-1 py-1.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/20 rounded-lg transition-colors font-semibold text-xs flex justify-center items-center gap-1" onclick="editSbItem('${item.id || index}')">
+                        <i class="fa-solid fa-pen-to-square"></i> Sửa
+                    </button>
+                    <button class="flex-1 py-1.5 bg-red-50 dark:bg-red-500/10 text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 rounded-lg transition-colors font-semibold text-xs flex justify-center items-center gap-1" onclick="deleteSbItem('${item.id || index}')">
+                        <i class="fa-solid fa-trash"></i> Xóa
+                    </button>
+                </div>
+            </div>
+        `;
+        sbListContainer.appendChild(card);
+    });
+}
+
+function openSbModal(isEdit = false, itemData = null) {
+    if (isEdit && itemData) {
+        document.getElementById('modal-title-sb').innerHTML = '<i class="fa-solid fa-pen text-primary"></i> <span>Sửa Banner</span>';
+        sbItemId.value = itemData.id || '';
+        sbItemIsActive.checked = itemData.isActive !== undefined ? itemData.isActive : true;
+        sbItemTitle.value = itemData.title || '';
+        sbItemImageUrl.value = itemData.imageUrl || '';
+        const actionRadio = document.querySelector(`input[name="sb-item-actionType"][value="${itemData.actionType || 'none'}"]`);
+        if (actionRadio) actionRadio.checked = true;
+        
+        // Restore sub-options
+        if (sbItemActionUrl) sbItemActionUrl.value = itemData.actionUrl || '';
+        
+        const giftDest = itemData.occasionId ? 'occasion' : 'category';
+        const radioToCheck = document.getElementById(`sb-gift-dest-${giftDest}`);
+        if (radioToCheck) radioToCheck.checked = true;
+        
+        // Wait for occasions to load, then set value
+        if (itemData.actionType === 'gift') {
+            loadSbOccasions().then(() => {
+                const occRadio = document.querySelector(`input[name="sb-item-occasionId"][value="${itemData.occasionId || ''}"]`);
+                if (occRadio) occRadio.checked = true;
+                const catRadio = document.querySelector(`input[name="sb-item-giftCategoryId"][value="${itemData.giftCategoryId || ''}"]`);
+                if (catRadio) catRadio.checked = true;
+            });
+        } else {
+            const catRadio = document.querySelector(`input[name="sb-item-giftCategoryId"][value="${itemData.giftCategoryId || ''}"]`);
+            if (catRadio) catRadio.checked = true;
+        }
+
+        updateSbActionSubOptions(itemData.actionType || 'none');
+        updateSbGiftDestOptions(giftDest);
+        
+        sbItemImageUrl.dispatchEvent(new Event('input'));
+    } else {
+        document.getElementById('modal-title-sb').innerHTML = '<i class="fa-solid fa-bullhorn text-primary"></i> <span>Thêm Banner Mới</span>';
+        sbForm.reset();
+        sbItemId.value = '';
+        sbItemIsActive.checked = true;
+        sbItemImgPreview.src = '';
+        sbItemImgPreview.classList.add('hidden');
+        sbItemImgPlaceholder.classList.remove('hidden');
+        // Reset sub-options
+        updateSbActionSubOptions('none');
+        const radioCategory = document.getElementById('sb-gift-dest-category');
+        if (radioCategory) radioCategory.checked = true;
+        updateSbGiftDestOptions('category');
+    }
+    
+    sbModal.classList.remove('hidden');
+    setTimeout(() => {
+        sbModal.querySelector('.modal-content').classList.remove('scale-95', 'opacity-0');
+    }, 10);
+}
+
+function closeSbModalFunc() {
+    const content = sbModal.querySelector('.modal-content');
+    content.classList.add('scale-95', 'opacity-0');
+    setTimeout(() => {
+        sbModal.classList.add('hidden');
+        sbForm.reset();
+    }, 300);
+}
+
+if (sbModal) {
+    sbModal.querySelectorAll('.close-modal').forEach(btn => {
+        btn.addEventListener('click', closeSbModalFunc);
+    });
+}
+
+window.editSbItem = function(id) {
+    const item = startupBannerData.items.find((x, idx) => (x.id === id) || (idx.toString() === id.toString()));
+    if (item) openSbModal(true, { ...item, id });
+}
+
+window.deleteSbItem = function(id) {
+    if (confirm('Bạn có chắc chắn muốn xóa banner này?')) {
+        startupBannerData.items = startupBannerData.items.filter((x, idx) => (x.id !== id) && (idx.toString() !== id.toString()));
+        saveStartupBannerData();
+    }
+}
+
+if (sbItemImageUrl) {
+    sbItemImageUrl.addEventListener('input', () => {
+        if (sbItemImageUrl.value) {
+            sbItemImgPreview.src = sbItemImageUrl.value;
+            sbItemImgPreview.classList.remove('hidden');
+            sbItemImgPlaceholder.classList.add('hidden');
+        } else {
+            sbItemImgPreview.src = '';
+            sbItemImgPreview.classList.add('hidden');
+            sbItemImgPlaceholder.classList.remove('hidden');
+        }
+    });
+}
+
+if (sbGlobalIsActive) {
+    sbGlobalIsActive.addEventListener('change', () => {
+        startupBannerData.isActive = sbGlobalIsActive.checked;
+        saveStartupBannerData(false); // don't show toast for global toggle to be quick
+    });
+}
+
+if (btnAddSbEmpty) btnAddSbEmpty.addEventListener('click', () => openSbModal(false));
+if (btnAddNewSb) btnAddNewSb.addEventListener('click', () => openSbModal(false));
+
+if (btnSaveSbItem) {
+    btnSaveSbItem.addEventListener('click', (e) => {
+        if (sbForm && !sbForm.reportValidity()) {
+            return;
+        }
+        
+        const id = sbItemId.value;
+        const selectedAction = document.querySelector('input[name="sb-item-actionType"]:checked');
+        const actionType = selectedAction ? selectedAction.value : 'none';
+        
+        // Build extra action data based on type
+        const selectedGiftDest = document.querySelector('input[name="sb-gift-dest"]:checked');
+        const giftDest = selectedGiftDest ? selectedGiftDest.value : 'category';
+        
+        const selectedCat = document.querySelector('input[name="sb-item-giftCategoryId"]:checked');
+        const catVal = selectedCat ? selectedCat.value : '';
+        const selectedOcc = document.querySelector('input[name="sb-item-occasionId"]:checked');
+        const occVal = selectedOcc ? selectedOcc.value : '';
+        
+        const data = {
+            id: id || Date.now().toString(),
+            isActive: sbItemIsActive ? sbItemIsActive.checked : true,
+            title: sbItemTitle ? sbItemTitle.value.trim() : '',
+            imageUrl: sbItemImageUrl ? sbItemImageUrl.value.trim() : '',
+            actionType: actionType,
+            // Clear all sub-fields first, then fill based on type
+            actionUrl: actionType === 'url' ? (sbItemActionUrl ? sbItemActionUrl.value.trim() : '') : null,
+            giftCategoryId: (actionType === 'gift' && giftDest === 'category') ? catVal : null,
+            occasionId: (actionType === 'gift' && giftDest === 'occasion') ? occVal : null,
+        };
+        
+        if (id) {
+            const index = startupBannerData.items.findIndex((x, idx) => (x.id === id) || (idx.toString() === id.toString()));
+            if (index !== -1) startupBannerData.items[index] = data;
+        } else {
+            startupBannerData.items.push(data);
+        }
+        
+        btnSaveSbItem.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
+        btnSaveSbItem.disabled = true;
+        
+        saveStartupBannerData(true).finally(() => {
+            btnSaveSbItem.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> <span>Lưu Lại</span>';
+            btnSaveSbItem.disabled = false;
+            closeSbModalFunc();
+        });
+    });
+}
+
+function saveStartupBannerData(showToastMsg = true) {
+    return db.collection('settings').doc('startup_banner').set(startupBannerData, { merge: true }).then(() => {
+        if (showToastMsg) showToast("Lưu cấu hình Banner thành công!");
+        renderStartupBanners();
+    }).catch(err => {
+        console.error(err);
+        if (showToastMsg) showToast("Lỗi khi lưu Banner", true);
     });
 }
 
