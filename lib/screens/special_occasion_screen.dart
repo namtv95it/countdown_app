@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/special_occasion.dart';
 import '../models/gift_product.dart';
 import '../widgets/gift_product_card.dart';
 import '../services/localization_service.dart';
+import '../services/sync_service.dart';
 
 class SpecialOccasionScreen extends StatelessWidget {
   final SpecialOccasion occasion;
@@ -130,36 +130,36 @@ class SpecialOccasionScreen extends StatelessWidget {
           ),
           SliverPadding(
             padding: const EdgeInsets.all(16.0),
-            sliver: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance.collection('gifts').orderBy('order').snapshots(),
+            sliver: StreamBuilder<List<GiftProduct>>(
+              stream: SyncService().giftsStream(),
               builder: (context, snapshot) {
-                if (snapshot.hasError) {
+                if (snapshot.hasError && snapshot.error == 'no_internet') {
                   return SliverToBoxAdapter(
-                    child: Center(child: Text('Đã có lỗi xảy ra', style: GoogleFonts.quicksand(color: Colors.white))),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.wifi_off, color: Colors.white54, size: 48),
+                          const SizedBox(height: 16),
+                          Text('Vui lòng kết nối mạng để tải dữ liệu', style: GoogleFonts.quicksand(color: Colors.white70, fontSize: 16)),
+                        ],
+                      ),
+                    ),
                   );
                 }
 
-                if (snapshot.connectionState == ConnectionState.waiting) {
+                if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
                   return const SliverToBoxAdapter(
                     child: Center(child: CircularProgressIndicator(color: Color(0xFFEC4899))),
                   );
                 }
 
-                final docs = snapshot.data?.docs ?? [];
+                final allGifts = snapshot.data ?? [];
                 
-                // Lọc quà tặng thuộc sự kiện này
-                var gifts = docs.map((d) {
-                  final data = d.data() as Map<String, dynamic>;
-                  return GiftProduct.fromFirestore(d.id, data);
-                }).where((g) => g.occasionIds.contains(occasion.id)).toList();
-
-                // Nếu không có quà nào gán riêng cho occasion, dùng categoryId làm fallback
-                if (gifts.isEmpty) {
-                  gifts = docs.map((d) {
-                    final data = d.data() as Map<String, dynamic>;
-                    return GiftProduct.fromFirestore(d.id, data);
-                  }).where((g) => g.categoryIds.contains(occasion.categoryId)).toList();
-                }
+                // Lọc quà tặng thuộc sự kiện này (Chỉ lấy sản phẩm đã được gán)
+                var gifts = allGifts
+                    .where((g) => g.occasionIds.contains(occasion.id))
+                    .toList();
 
                 if (gifts.isEmpty) {
                   return SliverToBoxAdapter(

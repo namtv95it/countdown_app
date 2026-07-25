@@ -44,6 +44,7 @@ const btnSaveGift = document.getElementById('btn-save-gift');
 const btnReorder = document.getElementById('btn-reorder');
 const btnSaveReorder = document.getElementById('btn-save-reorder');
 const btnCancelReorder = document.getElementById('btn-cancel-reorder');
+const btnDeployVersion = document.getElementById('btn-deploy-version');
 const closeModals = document.querySelectorAll('.close-modal');
 
 // Sidebar DOM
@@ -58,7 +59,7 @@ if (btnMobileMenu && sidebar && sidebarOverlay) {
         sidebar.classList.add('-translate-x-full');
         sidebarOverlay.classList.add('hidden');
     }
-    
+
     btnMobileMenu.addEventListener('click', () => {
         sidebar.classList.remove('-translate-x-full');
         sidebarOverlay.classList.remove('hidden');
@@ -71,7 +72,7 @@ if (btnMobileMenu && sidebar && sidebarOverlay) {
 const categoryCheckboxes = document.querySelectorAll('#f-categories input[type="checkbox"]');
 categoryCheckboxes.forEach(cb => {
     cb.addEventListener('change', (e) => {
-        if(e.target.checked) e.target.parentElement.classList.add('checked');
+        if (e.target.checked) e.target.parentElement.classList.add('checked');
         else e.target.parentElement.classList.remove('checked');
     });
 });
@@ -111,8 +112,8 @@ document.getElementById('admin-pwd').addEventListener('keypress', (e) => {
 btnLogin.addEventListener('click', async () => {
     const pwd = document.getElementById('admin-pwd').value;
     const errorEl = document.getElementById('login-error');
-    
-    if(!pwd) {
+
+    if (!pwd) {
         errorEl.textContent = "Vui lòng nhập mật khẩu!";
         errorEl.classList.remove('hidden');
         errorEl.style.display = 'block';
@@ -125,7 +126,7 @@ btnLogin.addEventListener('click', async () => {
     try {
         const hash = await sha256(pwd);
         const doc = await db.collection('config').doc('admin').get();
-        
+
         if (doc.exists && doc.data().passwordHash === hash) {
             // Success
             sessionStorage.setItem('isAdmin', 'true');
@@ -203,7 +204,7 @@ btnSavePwd.addEventListener('click', async () => {
         const oldHash = await sha256(oldPwd);
         const docRef = db.collection('config').doc('admin');
         const doc = await docRef.get();
-        
+
         if (doc.exists && doc.data().passwordHash === oldHash) {
             const newHash = await sha256(newPwd);
             await docRef.update({ passwordHash: newHash });
@@ -226,19 +227,19 @@ btnSavePwd.addEventListener('click', async () => {
 // Theme Toggling
 const btnThemeToggle = document.getElementById('btn-theme-toggle');
 if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-  document.documentElement.classList.add('dark');
+    document.documentElement.classList.add('dark');
 } else {
-  document.documentElement.classList.remove('dark');
+    document.documentElement.classList.remove('dark');
 }
 
 btnThemeToggle.addEventListener('click', () => {
-  if (document.documentElement.classList.contains('dark')) {
-    document.documentElement.classList.remove('dark');
-    localStorage.theme = 'light';
-  } else {
-    document.documentElement.classList.add('dark');
-    localStorage.theme = 'dark';
-  }
+    if (document.documentElement.classList.contains('dark')) {
+        document.documentElement.classList.remove('dark');
+        localStorage.theme = 'light';
+    } else {
+        document.documentElement.classList.add('dark');
+        localStorage.theme = 'dark';
+    }
 });
 
 // Check auth on load
@@ -265,7 +266,7 @@ async function loadOccasions() {
             const data = doc.data();
             data.id = doc.id;
             specialOccasions.push(data);
-            
+
             html += `
             <label class="category-cb-wrapper flex items-center gap-2 p-3 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 cursor-pointer transition-colors hover:border-primary/50 group occasion-cb-wrapper">
                 <input type="checkbox" name="occasions" value="${data.id}" class="hidden peer occasion-cb">
@@ -276,11 +277,11 @@ async function loadOccasions() {
             </label>`;
         });
         occasionsContainer.innerHTML = html;
-        
+
         // Add event listeners for new occasion checkboxes
         document.querySelectorAll('.occasion-cb').forEach(cb => {
             cb.addEventListener('change', (e) => {
-                if(e.target.checked) e.target.parentElement.classList.add('checked');
+                if (e.target.checked) e.target.parentElement.classList.add('checked');
                 else e.target.parentElement.classList.remove('checked');
             });
         });
@@ -300,12 +301,12 @@ function loadGifts() {
 
     db.collection('gifts').orderBy('order', 'asc').onSnapshot(snapshot => {
         if (isReordering) return; // Don't update list while dragging
-        
+
         gifts = [];
         snapshot.forEach(doc => {
             gifts.push({ id: doc.id, ...doc.data() });
         });
-        
+
         renderGifts();
     }, error => {
         showToast("Lỗi tải dữ liệu", true);
@@ -316,7 +317,7 @@ function loadGifts() {
 function renderGifts() {
     loadingEl.style.display = 'none';
     giftListEl.innerHTML = '';
-    
+
     if (gifts.length === 0) {
         emptyStateEl.classList.remove('hidden');
         return;
@@ -328,15 +329,15 @@ function renderGifts() {
         const price = gift.priceRange || '0đ';
         const platformLabel = gift.platform || 'Xem Ngay';
         const badgeText = gift.badge || '';
-        
+
         const card = document.createElement('div');
         // Simulate .glass but adaptive to Light/Dark mode
         card.className = 'gift-card bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 dark:backdrop-blur-md rounded-2xl overflow-hidden flex flex-col relative shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group';
         card.dataset.id = gift.id;
-        
+
         const imgUrl = gift.imageUrl || '';
         const imageErrorAttr = `onerror="this.src='https://via.placeholder.com/400x400/f3f4f6/9ca3af?text=GIFT'"`
-        
+
         // Define primary color rgb (Pink) for backgrounds
         const primaryColor = '#EC4899';
         const primaryColorRgb = '236, 72, 153';
@@ -387,15 +388,15 @@ function renderGifts() {
 
                 <!-- Admin Actions -->
                 <div class="flex gap-2 pt-3 border-t border-gray-100 dark:border-white/10 mt-auto">
-                    ${isReordering ? 
-                        `<button class="drag-handle flex-1 py-1.5 bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary rounded-lg cursor-move transition-colors"><i class="fa-solid fa-grip-lines"></i></button>` : 
-                        `<button class="flex-1 py-1.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/20 rounded-lg transition-colors font-semibold text-xs flex justify-center items-center gap-1" onclick="editGift('${gift.id}')">
+                    ${isReordering ?
+                `<button class="drag-handle flex-1 py-1.5 bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary rounded-lg cursor-move transition-colors"><i class="fa-solid fa-grip-lines"></i></button>` :
+                `<button class="flex-1 py-1.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/20 rounded-lg transition-colors font-semibold text-xs flex justify-center items-center gap-1" onclick="editGift('${gift.id}')">
                             <i class="fa-solid fa-pen-to-square"></i> Sửa
                          </button>
                          <button class="flex-1 py-1.5 bg-red-50 dark:bg-red-500/10 text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 rounded-lg transition-colors font-semibold text-xs flex justify-center items-center gap-1" onclick="deleteGift('${gift.id}')">
                             <i class="fa-solid fa-trash-can"></i> Xóa
                          </button>`
-                    }
+            }
                 </div>
             </div>
         `;
@@ -407,7 +408,7 @@ function renderGifts() {
 
 function initSortable() {
     if (sortableInstance) sortableInstance.destroy();
-    
+
     if (isReordering) {
         sortableInstance = new Sortable(giftListEl, {
             animation: 150,
@@ -419,7 +420,7 @@ function initSortable() {
 
 // Delete
 window.deleteGift = async (id) => {
-    if(confirm('Bạn có chắc chắn muốn xóa món quà này?')) {
+    if (confirm('Bạn có chắc chắn muốn xóa món quà này?')) {
         try {
             await db.collection('gifts').doc(id).delete();
             showToast("Đã xóa quà tặng");
@@ -431,7 +432,7 @@ window.deleteGift = async (id) => {
 
 // Bind new gift button in empty state
 const emptyStateBtn = document.querySelector('.btn-add-new-trigger');
-if(emptyStateBtn) {
+if (emptyStateBtn) {
     emptyStateBtn.addEventListener('click', () => {
         btnAddNew.click();
     });
@@ -444,14 +445,14 @@ function editGift(id) {
 
     document.getElementById('modal-title').innerHTML = '<i class="fa-solid fa-pen text-primary"></i> Sửa Thông Tin Quà';
     document.getElementById('gift-id').value = gift.id;
-    
+
     document.getElementById('f-imageUrl').value = gift.imageUrl || '';
     document.getElementById('f-imageUrl').dispatchEvent(new Event('input'));
-    
+
     document.getElementById('f-nameVi').value = gift.name?.vi || '';
     document.getElementById('f-nameEn').value = gift.name?.en || '';
     document.getElementById('f-price').value = gift.priceRange || '';
-    
+
     document.getElementById('f-badge').value = gift.badge || '';
     document.getElementById('f-platform').value = gift.platform || 'Khác';
     document.getElementById('f-affiliateUrl').value = gift.affiliateUrl || '';
@@ -462,7 +463,7 @@ function editGift(id) {
         cb.checked = false;
         cb.parentElement.classList.remove('border-primary', 'bg-primary/5');
     });
-    
+
     // Set checkboxes
     const categories = gift.categoryIds || [];
     categoryCheckboxes.forEach(cb => {
@@ -497,11 +498,11 @@ btnAddNew.addEventListener('click', () => {
     document.getElementById('f-imageUrl').dispatchEvent(new Event('input')); // reset image preview
     document.getElementById('modal-title').textContent = "Thêm Quà Tặng Mới";
     document.getElementById('gift-id').value = '';
-    
+
     // Reset checkboxes visual
     categoryCheckboxes.forEach(cb => cb.parentElement.classList.remove('border-primary', 'bg-primary/5'));
     document.querySelectorAll('.occasion-cb').forEach(cb => cb.parentElement.classList.remove('border-primary', 'bg-primary/5'));
-    
+
     giftModal.classList.remove('hidden');
     setTimeout(() => giftModal.querySelector('.modal-content').classList.replace('scale-95', 'scale-100'), 10);
     setTimeout(() => giftModal.querySelector('.modal-content').classList.replace('opacity-0', 'opacity-100'), 10);
@@ -530,7 +531,7 @@ btnSaveGift.addEventListener('click', async () => {
     }
 
     const id = document.getElementById('gift-id').value;
-    
+
     // Get selected categories
     const selectedCats = [];
     categoryCheckboxes.forEach(cb => {
@@ -583,6 +584,36 @@ btnSaveGift.addEventListener('click', async () => {
 });
 
 // ==========================================
+// 4.5. DEPLOY VERSION LOGIC
+// ==========================================
+if (btnDeployVersion) {
+    btnDeployVersion.addEventListener('click', async () => {
+        if (!confirm("Bạn có chắc chắn muốn phát hành dữ liệu mới tới tất cả người dùng không?")) {
+            return;
+        }
+
+        const icon = btnDeployVersion.querySelector('i');
+        const oldClass = icon.className;
+        icon.className = "fa-solid fa-spinner fa-spin";
+        btnDeployVersion.disabled = true;
+
+        try {
+            await db.collection('settings').doc('data_version').set({
+                version: firebase.firestore.FieldValue.increment(1)
+            }, { merge: true });
+
+            showToast("Đã phát hành bản cập nhật thành công!");
+        } catch (e) {
+            showToast("Lỗi khi phát hành cập nhật!", true);
+            console.error(e);
+        }
+
+        icon.className = oldClass;
+        btnDeployVersion.disabled = false;
+    });
+}
+
+// ==========================================
 // 5. REORDER LOGIC
 // ==========================================
 btnReorder.addEventListener('click', () => {
@@ -610,7 +641,7 @@ btnSaveReorder.addEventListener('click', async () => {
     try {
         const batch = db.batch();
         const cards = giftListEl.querySelectorAll('.gift-card');
-        
+
         cards.forEach((card, index) => {
             const id = card.dataset.id;
             const ref = db.collection('gifts').doc(id);
@@ -619,7 +650,7 @@ btnSaveReorder.addEventListener('click', async () => {
 
         await batch.commit();
         showToast("Đã lưu thứ tự hiển thị!");
-        
+
         isReordering = false;
         btnReorder.classList.remove('hidden');
         btnAddNew.classList.remove('hidden');
@@ -627,7 +658,7 @@ btnSaveReorder.addEventListener('click', async () => {
         btnCancelReorder.classList.add('hidden');
         btnSaveReorder.innerHTML = '<i class="fa-solid fa-check"></i> Lưu thứ tự';
         btnSaveReorder.disabled = false;
-        
+
         loadGifts(); // reload to get new orders
     } catch (error) {
         showToast("Lỗi khi lưu thứ tự", true);
@@ -640,10 +671,10 @@ btnSaveReorder.addEventListener('click', async () => {
 // 6. UTILS
 // ==========================================
 function showToast(msg, isError = false) {
-    toastEl.innerHTML = isError 
+    toastEl.innerHTML = isError
         ? `<i class="fa-solid fa-circle-exclamation"></i> ${msg}`
         : `<i class="fa-solid fa-circle-check"></i> ${msg}`;
-    
+
     if (isError) {
         toastEl.classList.add('bg-red-500', 'text-white');
         toastEl.classList.remove('bg-gray-900', 'dark:bg-white', 'text-white', 'dark:text-gray-900');
@@ -651,10 +682,10 @@ function showToast(msg, isError = false) {
         toastEl.classList.remove('bg-red-500');
         toastEl.classList.add('bg-gray-900', 'dark:bg-white', 'text-white', 'dark:text-gray-900');
     }
-    
+
     toastEl.classList.replace('translate-y-8', '-translate-y-4');
     toastEl.classList.replace('opacity-0', 'opacity-100');
-    
+
     setTimeout(() => {
         toastEl.classList.replace('-translate-y-4', 'translate-y-8');
         toastEl.classList.replace('opacity-100', 'opacity-0');
@@ -669,7 +700,7 @@ function renderEmojiOptions(selectedEmoji = '') {
     const container = document.getElementById('occ-emoji-options');
     const input = document.getElementById('occ-emoji');
     container.innerHTML = '';
-    
+
     if (!selectedEmoji || !availableEmojis.includes(selectedEmoji)) {
         selectedEmoji = availableEmojis[0];
     }
@@ -678,7 +709,7 @@ function renderEmojiOptions(selectedEmoji = '') {
     availableEmojis.forEach(emoji => {
         const btn = document.createElement('div');
         btn.className = `w-10 h-10 rounded-xl cursor-pointer transition-all flex items-center justify-center text-xl select-none`;
-        
+
         if (emoji === selectedEmoji) {
             btn.classList.add('bg-primary', 'text-white', 'shadow-md', 'scale-110');
             btn.innerHTML = `<span style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2))">${emoji}</span>`;
@@ -686,12 +717,12 @@ function renderEmojiOptions(selectedEmoji = '') {
             btn.classList.add('bg-gray-100', 'dark:bg-white/5', 'hover:bg-gray-200', 'dark:hover:bg-white/10');
             btn.innerText = emoji;
         }
-        
+
         btn.addEventListener('click', () => {
             input.value = emoji;
             renderEmojiOptions(emoji);
         });
-        
+
         container.appendChild(btn);
     });
 }
@@ -723,7 +754,7 @@ function renderGradientOptions(selectedGradient = '') {
     const container = document.getElementById('occ-gradient-options');
     const input = document.getElementById('occ-gradient');
     container.innerHTML = '';
-    
+
     // Đảm bảo selectedGradient hợp lệ
     if (!selectedGradient || !availableGradients.includes(selectedGradient)) {
         selectedGradient = availableGradients[0];
@@ -734,19 +765,19 @@ function renderGradientOptions(selectedGradient = '') {
         const btn = document.createElement('div');
         btn.className = `w-12 h-12 rounded-full cursor-pointer transition-all flex items-center justify-center border-2 shadow-sm hover:scale-110`;
         btn.style.background = grad;
-        
+
         if (grad === selectedGradient) {
             btn.classList.add('border-white', 'shadow-md', 'scale-110');
             btn.innerHTML = '<i class="fa-solid fa-check text-white"></i>';
         } else {
             btn.classList.add('border-transparent');
         }
-        
+
         btn.addEventListener('click', () => {
             input.value = grad;
             renderGradientOptions(grad); // re-render to update UI
         });
-        
+
         container.appendChild(btn);
     });
 }
@@ -771,14 +802,14 @@ let isOccasionView = false;
 if (tabGifts && tabOccasions) {
     tabGifts.addEventListener('click', () => {
         isOccasionView = false;
-        
+
         // Update Title
         if (pageTitle) pageTitle.textContent = "Quản Lý Quà Tặng";
-        
+
         // Update Sidebar active state
         tabGifts.classList.add('bg-primary/10', 'text-primary');
         tabGifts.classList.remove('text-gray-500', 'hover:bg-gray-100', 'dark:text-gray-400', 'dark:hover:bg-white/5');
-        
+
         if (tabOccasions) {
             tabOccasions.classList.remove('bg-primary/10', 'text-primary');
             tabOccasions.classList.add('text-gray-500', 'hover:bg-gray-100', 'dark:text-gray-400', 'dark:hover:bg-white/5');
@@ -787,30 +818,30 @@ if (tabGifts && tabOccasions) {
             tabStartupBanner.classList.remove('bg-primary/10', 'text-primary');
             tabStartupBanner.classList.add('text-gray-500', 'hover:bg-gray-100', 'dark:text-gray-400', 'dark:hover:bg-white/5');
         }
-        
+
         viewGifts.classList.remove('hidden');
         if (viewOccasions) viewOccasions.classList.add('hidden');
         if (viewStartupBanner) viewStartupBanner.classList.add('hidden');
-        
+
         // Show/hide correct buttons
         if (btnAddNew) btnAddNew.style.display = 'flex';
         if (btnAddNewOccasion) btnAddNewOccasion.style.display = 'none';
         if (btnReorder) btnReorder.style.display = 'flex'; // Changed to flex for alignment
-        
+
         // Close sidebar on mobile
         if (typeof closeSidebar === 'function') closeSidebar();
     });
-    
+
     tabOccasions.addEventListener('click', () => {
         isOccasionView = true;
-        
+
         // Update Title
         if (pageTitle) pageTitle.textContent = "Quản Lý Sự Kiện";
-        
+
         // Update Sidebar active state
         tabOccasions.classList.add('bg-primary/10', 'text-primary');
         tabOccasions.classList.remove('text-gray-500', 'hover:bg-gray-100', 'dark:text-gray-400', 'dark:hover:bg-white/5');
-        
+
         if (tabGifts) {
             tabGifts.classList.remove('bg-primary/10', 'text-primary');
             tabGifts.classList.add('text-gray-500', 'hover:bg-gray-100', 'dark:text-gray-400', 'dark:hover:bg-white/5');
@@ -819,26 +850,26 @@ if (tabGifts && tabOccasions) {
             tabStartupBanner.classList.remove('bg-primary/10', 'text-primary');
             tabStartupBanner.classList.add('text-gray-500', 'hover:bg-gray-100', 'dark:text-gray-400', 'dark:hover:bg-white/5');
         }
-        
+
         if (viewGifts) viewGifts.classList.add('hidden');
         viewOccasions.classList.remove('hidden');
         if (viewStartupBanner) viewStartupBanner.classList.add('hidden');
-        
+
         // Hide gift-specific buttons and show occasion button
         if (btnAddNew) btnAddNew.style.display = 'none';
         if (btnReorder) btnReorder.style.display = 'none';
         if (btnAddNewOccasion) btnAddNewOccasion.style.display = 'flex';
-        
+
         // Close sidebar on mobile
         if (typeof closeSidebar === 'function') closeSidebar();
-        
+
         renderOccasions();
     });
 }
 
 function renderOccasions() {
     occasionListContainer.innerHTML = '';
-    
+
     if (specialOccasions.length === 0) {
         occasionEmptyState.classList.remove('hidden');
         return;
@@ -892,7 +923,7 @@ if (btnAddNewOccasion) {
 window.editOccasion = (id) => {
     const occ = specialOccasions.find(o => o.id === id);
     if (!occ) return;
-    
+
     document.getElementById('modal-title-occasion').innerHTML = '<i class="fa-solid fa-pen text-secondary"></i> <span>Sửa Sự Kiện</span>';
     document.getElementById('occ-id').value = occ.id;
     document.getElementById('occ-nameVi').value = occ.nameVi || '';
@@ -903,13 +934,13 @@ window.editOccasion = (id) => {
     document.getElementById('occ-day').value = occ.day || 1;
     renderGradientOptions(occ.gradient || '');
     document.getElementById('occ-categoryId').value = occ.categoryId || 'birthday';
-    
+
     openOccasionModal();
 };
 
 // Delete Occasion
 window.deleteOccasion = async (id) => {
-    if(confirm('Bạn có chắc chắn muốn xóa sự kiện này?')) {
+    if (confirm('Bạn có chắc chắn muốn xóa sự kiện này?')) {
         try {
             await db.collection('special_occasions').doc(id).delete();
             showToast("Đã xóa sự kiện");
@@ -950,7 +981,7 @@ function generateOccasionId(nameVi, day, month) {
     str = str.replace(/đ/g, "d");
     str = str.replace(/[^a-z0-9\s]/g, ""); // remove special chars
     str = str.trim().replace(/\s+/g, "_"); // replace spaces with _
-    
+
     const randomStr = Math.random().toString(36).substring(2, 6);
     return `${str}_${day}${month}_${randomStr}`;
 }
@@ -975,7 +1006,7 @@ if (btnSaveOccasion) {
             gradient: document.getElementById('occ-gradient').value,
             categoryId: document.getElementById('occ-categoryId').value
         };
-        
+
         if (!id) {
             id = generateOccasionId(occData.nameVi, occData.day, occData.month);
         }
@@ -993,11 +1024,11 @@ if (btnSaveOccasion) {
                 await db.collection('special_occasions').doc(id).set(occData);
                 showToast("Đã thêm sự kiện mới!");
             }
-            
+
             occasionModal.classList.add('hidden');
             await loadOccasions();
             renderOccasions();
-            
+
         } catch (e) {
             showToast("Có lỗi xảy ra khi lưu", true);
             console.error(e);
@@ -1045,11 +1076,11 @@ window.openAssignProductsModal = (id) => {
                 </div>
                 <img src="${gift.imageUrl}" class="w-10 h-10 rounded-lg object-cover bg-gray-100" onerror="this.src='https://via.placeholder.com/40'">
             `;
-            
+
             // Add click listener to toggle styling
             const checkbox = item.querySelector('input[type="checkbox"]');
             checkbox.addEventListener('change', () => {
-                if(checkbox.checked) {
+                if (checkbox.checked) {
                     item.classList.replace('border-gray-200', 'border-primary');
                     item.classList.replace('dark:border-white/10', 'border-primary');
                     item.classList.replace('bg-white', 'bg-primary/5');
@@ -1147,6 +1178,7 @@ const sbForm = document.getElementById('sb-form');
 const sbItemId = document.getElementById('sb-item-id');
 const sbItemIsActive = document.getElementById('sb-item-isActive');
 const sbItemTitle = document.getElementById('sb-item-title');
+
 const sbItemImageUrl = document.getElementById('sb-item-imageUrl');
 const sbItemImgPreview = document.getElementById('sb-item-img-preview');
 const sbItemImgPlaceholder = document.getElementById('sb-item-img-placeholder');
@@ -1179,7 +1211,7 @@ async function loadSbOccasions() {
         });
         sbItemOccasionId.innerHTML = html;
         sbOccasionsLoaded = true;
-    } catch(e) {
+    } catch (e) {
         console.error('Error loading occasions for banner:', e);
     }
 }
@@ -1208,10 +1240,10 @@ if (tabStartupBanner) {
     tabStartupBanner.addEventListener('click', () => {
         isOccasionView = false;
         if (pageTitle) pageTitle.textContent = "Banner Khởi Động";
-        
+
         tabStartupBanner.classList.add('bg-primary/10', 'text-primary');
         tabStartupBanner.classList.remove('text-gray-500', 'hover:bg-gray-100', 'dark:text-gray-400', 'dark:hover:bg-white/5');
-        
+
         if (tabGifts) {
             tabGifts.classList.remove('bg-primary/10', 'text-primary');
             tabGifts.classList.add('text-gray-500', 'hover:bg-gray-100', 'dark:text-gray-400', 'dark:hover:bg-white/5');
@@ -1220,18 +1252,18 @@ if (tabStartupBanner) {
             tabOccasions.classList.remove('bg-primary/10', 'text-primary');
             tabOccasions.classList.add('text-gray-500', 'hover:bg-gray-100', 'dark:text-gray-400', 'dark:hover:bg-white/5');
         }
-        
+
         if (viewGifts) viewGifts.classList.add('hidden');
         if (viewOccasions) viewOccasions.classList.add('hidden');
         viewStartupBanner.classList.remove('hidden');
-        
+
         if (btnAddNew) btnAddNew.style.display = 'none';
         if (btnReorder) btnReorder.style.display = 'none';
         if (btnAddNewOccasion) btnAddNewOccasion.style.display = 'none';
         if (btnAddNewSb) btnAddNewSb.style.display = 'flex';
-        
+
         if (typeof closeSidebar === 'function') closeSidebar();
-        
+
         loadStartupBanner();
     });
 }
@@ -1244,7 +1276,7 @@ function loadStartupBanner() {
         } else {
             startupBannerData = { isActive: false, items: [] };
         }
-        
+
         if (sbGlobalIsActive) sbGlobalIsActive.checked = startupBannerData.isActive;
         renderStartupBanners();
     }).catch(err => {
@@ -1254,7 +1286,7 @@ function loadStartupBanner() {
 
 function renderStartupBanners() {
     sbListContainer.innerHTML = '';
-    
+
     if (startupBannerData.items.length === 0) {
         sbEmptyState.classList.remove('hidden');
         return;
@@ -1264,11 +1296,11 @@ function renderStartupBanners() {
     startupBannerData.items.forEach((item, index) => {
         const card = document.createElement('div');
         card.className = 'bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl overflow-hidden relative shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group';
-        
+
         // Is Active badge
         const badgeColor = item.isActive ? 'bg-green-500' : 'bg-gray-500';
         const badgeText = item.isActive ? 'Đang bật' : 'Đang tắt';
-        
+
         card.innerHTML = `
             <div class="h-32 w-full relative">
                 <img src="${item.imageUrl}" class="w-full h-full object-cover" onerror="this.src=''; this.onerror=null; this.parentElement.innerHTML='<div class=\\'w-full h-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center\\'><i class=\\'fa-regular fa-image text-3xl text-gray-400\\'></i></div>'">
@@ -1276,13 +1308,12 @@ function renderStartupBanners() {
             </div>
             <div class="p-4 flex flex-col flex-1">
                 <h3 class="text-lg font-bold text-gray-900 dark:text-white line-clamp-1 mb-1">${item.title || '(Không tiêu đề)'}</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mb-4"><i class="fa-solid fa-link mr-1"></i> ${
-                    item.actionType === 'gift'
-                        ? (item.occasionId ? '🎉 Sự kiện đặc biệt' : '🎁 Trang Quà Tặng' + (item.giftCategoryId ? ` (${item.giftCategoryId})` : ''))
-                        : item.actionType === 'url'
-                            ? '🌐 Mở link: ' + (item.actionUrl ? item.actionUrl.substring(0, 30) + '...' : '(chưa nhập)')
-                            : '❌ Chỉ thông báo'
-                }</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-4"><i class="fa-solid fa-link mr-1"></i> ${item.actionType === 'gift'
+                ? (item.occasionId ? '🎉 Sự kiện đặc biệt' : '🎁 Trang Quà Tặng' + (item.giftCategoryId ? ` (${item.giftCategoryId})` : ''))
+                : item.actionType === 'url'
+                    ? '🌐 Mở link: ' + (item.actionUrl ? item.actionUrl.substring(0, 30) + '...' : '(chưa nhập)')
+                    : '❌ Chỉ thông báo'
+            }</p>
                 <div class="mt-auto flex gap-2 pt-3 border-t border-gray-100 dark:border-white/10">
                     <button class="flex-1 py-1.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/20 rounded-lg transition-colors font-semibold text-xs flex justify-center items-center gap-1" onclick="editSbItem('${item.id || index}')">
                         <i class="fa-solid fa-pen-to-square"></i> Sửa
@@ -1302,18 +1333,18 @@ function openSbModal(isEdit = false, itemData = null) {
         document.getElementById('modal-title-sb').innerHTML = '<i class="fa-solid fa-pen text-primary"></i> <span>Sửa Banner</span>';
         sbItemId.value = itemData.id || '';
         sbItemIsActive.checked = itemData.isActive !== undefined ? itemData.isActive : true;
-        sbItemTitle.value = itemData.title || '';
+        if (sbItemTitle) sbItemTitle.value = itemData.title || '';
         sbItemImageUrl.value = itemData.imageUrl || '';
         const actionRadio = document.querySelector(`input[name="sb-item-actionType"][value="${itemData.actionType || 'none'}"]`);
         if (actionRadio) actionRadio.checked = true;
-        
+
         // Restore sub-options
         if (sbItemActionUrl) sbItemActionUrl.value = itemData.actionUrl || '';
-        
+
         const giftDest = itemData.occasionId ? 'occasion' : 'category';
         const radioToCheck = document.getElementById(`sb-gift-dest-${giftDest}`);
         if (radioToCheck) radioToCheck.checked = true;
-        
+
         // Wait for occasions to load, then set value
         if (itemData.actionType === 'gift') {
             loadSbOccasions().then(() => {
@@ -1329,7 +1360,7 @@ function openSbModal(isEdit = false, itemData = null) {
 
         updateSbActionSubOptions(itemData.actionType || 'none');
         updateSbGiftDestOptions(giftDest);
-        
+
         sbItemImageUrl.dispatchEvent(new Event('input'));
     } else {
         document.getElementById('modal-title-sb').innerHTML = '<i class="fa-solid fa-bullhorn text-primary"></i> <span>Thêm Banner Mới</span>';
@@ -1345,7 +1376,7 @@ function openSbModal(isEdit = false, itemData = null) {
         if (radioCategory) radioCategory.checked = true;
         updateSbGiftDestOptions('category');
     }
-    
+
     sbModal.classList.remove('hidden');
     setTimeout(() => {
         sbModal.querySelector('.modal-content').classList.remove('scale-95', 'opacity-0');
@@ -1367,12 +1398,12 @@ if (sbModal) {
     });
 }
 
-window.editSbItem = function(id) {
+window.editSbItem = function (id) {
     const item = startupBannerData.items.find((x, idx) => (x.id === id) || (idx.toString() === id.toString()));
     if (item) openSbModal(true, { ...item, id });
 }
 
-window.deleteSbItem = function(id) {
+window.deleteSbItem = function (id) {
     if (confirm('Bạn có chắc chắn muốn xóa banner này?')) {
         startupBannerData.items = startupBannerData.items.filter((x, idx) => (x.id !== id) && (idx.toString() !== id.toString()));
         saveStartupBannerData();
@@ -1408,20 +1439,20 @@ if (btnSaveSbItem) {
         if (sbForm && !sbForm.reportValidity()) {
             return;
         }
-        
+
         const id = sbItemId.value;
         const selectedAction = document.querySelector('input[name="sb-item-actionType"]:checked');
         const actionType = selectedAction ? selectedAction.value : 'none';
-        
+
         // Build extra action data based on type
         const selectedGiftDest = document.querySelector('input[name="sb-gift-dest"]:checked');
         const giftDest = selectedGiftDest ? selectedGiftDest.value : 'category';
-        
+
         const selectedCat = document.querySelector('input[name="sb-item-giftCategoryId"]:checked');
         const catVal = selectedCat ? selectedCat.value : '';
         const selectedOcc = document.querySelector('input[name="sb-item-occasionId"]:checked');
         const occVal = selectedOcc ? selectedOcc.value : '';
-        
+
         const data = {
             id: id || Date.now().toString(),
             isActive: sbItemIsActive ? sbItemIsActive.checked : true,
@@ -1433,17 +1464,17 @@ if (btnSaveSbItem) {
             giftCategoryId: (actionType === 'gift' && giftDest === 'category') ? catVal : null,
             occasionId: (actionType === 'gift' && giftDest === 'occasion') ? occVal : null,
         };
-        
+
         if (id) {
             const index = startupBannerData.items.findIndex((x, idx) => (x.id === id) || (idx.toString() === id.toString()));
             if (index !== -1) startupBannerData.items[index] = data;
         } else {
             startupBannerData.items.push(data);
         }
-        
+
         btnSaveSbItem.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
         btnSaveSbItem.disabled = true;
-        
+
         saveStartupBannerData(true).finally(() => {
             btnSaveSbItem.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> <span>Lưu Lại</span>';
             btnSaveSbItem.disabled = false;

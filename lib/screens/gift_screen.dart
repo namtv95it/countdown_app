@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/event_category.dart';
 import '../models/gift_product.dart';
 import '../models/special_occasion.dart';
+import '../services/sync_service.dart';
 import '../services/wish_service.dart';
 import '../widgets/gift_product_card.dart';
 import 'special_occasion_screen.dart';
@@ -45,7 +45,7 @@ class _GiftScreenState extends State<GiftScreen> with SingleTickerProviderStateM
   late AnimationController _blinkController;
   late Animation<double> _blinkAnimation;
   
-  late Stream<QuerySnapshot> _giftsStream;
+  late Stream<List<GiftProduct>> _giftsStream;
 
   @override
   void initState() {
@@ -58,35 +58,30 @@ class _GiftScreenState extends State<GiftScreen> with SingleTickerProviderStateM
     _blinkAnimation = Tween<double>(begin: 0.3, end: 1.0).animate(_blinkController);
     _blinkController.repeat(reverse: true);
     
-    _giftsStream = FirebaseFirestore.instance.collection('gifts').orderBy('order').snapshots();
+    // Sử dụng SyncService với chiến lược 3 lớp Cache
+    _giftsStream = SyncService().giftsStream();
     
     _loadUpcomingEvents();
   }
 
+  StreamSubscription? _occasionsSubscription;
+
   Future<void> _loadUpcomingEvents() async {
-    try {
-      final snap = await FirebaseFirestore.instance.collection('special_occasions').get();
-      if (snap.docs.isNotEmpty) {
-        final occasions = snap.docs.map((d) => SpecialOccasion.fromFirestore(d.id, d.data())).toList();
-        final upcoming = SpecialOccasion.getUpcomingOccasions(occasions, limit: 5);
-        
-        if (mounted) {
-          setState(() {
-            _upcomingEvents = upcoming;
-            _isLoadingEvent = false;
-          });
-          if (upcoming.length > 1) {
-            _startCarouselTimer();
-          }
-        }
-      } else {
-        if (mounted) {
-          setState(() => _isLoadingEvent = false);
+    // Dùng SyncService để lấy occasions (3 lớp cache) và lắng nghe cập nhật
+    _occasionsSubscription = SyncService().occasionsStream().listen((occasions) {
+      final upcoming = SpecialOccasion.getUpcomingOccasions(occasions, limit: 5);
+      if (mounted) {
+        setState(() {
+          _upcomingEvents = upcoming;
+          _isLoadingEvent = false;
+        });
+        if (upcoming.length > 1) {
+          _startCarouselTimer();
         }
       }
-    } catch (e) {
+    }, onError: (_) {
       if (mounted) setState(() => _isLoadingEvent = false);
-    }
+    });
   }
 
   void _startCarouselTimer() {
@@ -108,6 +103,7 @@ class _GiftScreenState extends State<GiftScreen> with SingleTickerProviderStateM
 
   @override
   void dispose() {
+    _occasionsSubscription?.cancel();
     _blinkController.dispose();
     _carouselTimer?.cancel();
     _pageController.dispose();
@@ -562,28 +558,32 @@ class _GiftScreenState extends State<GiftScreen> with SingleTickerProviderStateM
         // 2. Filter Bar
         _buildCategoryFilterBar(),
 
-        // 3. Grid Sản phẩm (StreamBuilder)
+        // 3. Grid Sản phẩm (StreamBuilder với Cache 2 lớp)
         Expanded(
-          child: StreamBuilder<QuerySnapshot>(
+          child: StreamBuilder<List<GiftProduct>>(
             stream: _giftsStream,
             builder: (context, snapshot) {
-              if (snapshot.hasError) {
+              if (snapshot.hasError && snapshot.error == 'no_internet') {
                 return Center(
-                  child: Text('Đã có lỗi xảy ra', style: GoogleFonts.quicksand(color: Colors.white)),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.wifi_off, color: Colors.white54, size: 48),
+                      const SizedBox(height: 16),
+                      Text('Vui lòng kết nối mạng để tải dữ liệu', style: GoogleFonts.quicksand(color: Colors.white70, fontSize: 16)),
+                    ],
+                  ),
                 );
               }
 
-              if (snapshot.connectionState == ConnectionState.waiting) {
+              if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
                 return const Center(child: CircularProgressIndicator(color: Color(0xFFEC4899)));
               }
 
-              final docs = snapshot.data?.docs ?? [];
+              final allGifts = snapshot.data ?? [];
               
-              // Lọc thủ công client-side (vì array-contains không support kết hợp orderBy order tốt)
-              final gifts = docs.map((d) {
-                final data = d.data() as Map<String, dynamic>;
-                return GiftProduct.fromFirestore(d.id, data);
-              }).where((g) {
+              // Lọc theo danh mục đã chọn
+              final gifts = allGifts.where((g) {
                 if (_giftCategoryFilter == 'all') return true;
                 return g.categoryIds.contains(_giftCategoryFilter);
               }).toList();
@@ -608,8 +608,6 @@ class _GiftScreenState extends State<GiftScreen> with SingleTickerProviderStateM
                   final gift = gifts[index];
                   final catId = gift.categoryIds.isNotEmpty ? gift.categoryIds.first : null;
                   final catColor = EventCategory.findById(catId).colorValue;
-                  // Nếu màu quá tối (như màu dark purple của một số danh mục), có thể mix thêm màu trắng hoặc dùng một màu sáng hơn. 
-                  // Tạm thời mình cứ dùng màu của category, nếu category "all" thì dùng màu có sẵn.
                   return GiftProductCard(
                     gift: gift,
                     themeColor: Color(catColor),

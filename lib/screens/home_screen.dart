@@ -35,8 +35,7 @@ import 'detail_screen.dart';
 import 'gift_screen.dart';
 import 'settings_screen.dart';
 import 'special_occasion_screen.dart';
-import '../models/special_occasion.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import '../services/sync_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -221,9 +220,14 @@ class _HomeScreenState extends State<HomeScreen>
     if (_hasShownStartupBanner || !mounted) return;
     _hasShownStartupBanner = true;
 
-    final banner = await AppFirebaseService().getStartupBanner();
-    if (banner != null && banner.isActive && mounted) {
-      _showStartupBannerDialog(banner);
+    // Dùng SyncService (2 lớp cache) để tải banner
+    try {
+      final banner = await SyncService().bannerStream().first;
+      if (banner != null && banner.isActive && mounted) {
+        _showStartupBannerDialog(banner);
+      }
+    } catch (e) {
+      debugPrint('No banner due to network/cache error: $e');
     }
   }
 
@@ -244,56 +248,47 @@ class _HomeScreenState extends State<HomeScreen>
       builder: (context) {
         return Dialog(
           backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          elevation: 0,
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.center,
             children: [
-              if (item.title.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-                  width: double.infinity,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF1A1A2E),
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+              // Just the image
+              GestureDetector(
+                onTap: () {
+                  Navigator.pop(context);
+                  _handleBannerAction(item);
+                },
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.7,
+                    maxWidth: MediaQuery.of(context).size.width * 0.9,
                   ),
-                  child: Text(
-                    item.title,
-                    style: GoogleFonts.quicksand(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ClipRRect(
-                borderRadius: item.title.isNotEmpty
-                    ? const BorderRadius.vertical(bottom: Radius.circular(16))
-                    : BorderRadius.circular(16),
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.pop(context);
-                    _handleBannerAction(item);
-                  },
                   child: Image.network(
                     item.imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      height: 200,
-                      width: double.infinity,
-                      color: Colors.grey[800],
-                      alignment: Alignment.center,
-                      child: const Icon(Icons.broken_image, color: Colors.white54, size: 50),
-                    ),
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-              FloatingActionButton.small(
-                onPressed: () => Navigator.pop(context),
-                backgroundColor: Colors.white24,
-                elevation: 0,
-                child: const Icon(Icons.close, color: Colors.white),
+              // Close button at top right
+              Positioned(
+                top: -15,
+                right: -15,
+                child: GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 1.5),
+                    ),
+                    child: const Icon(Icons.close, color: Colors.white, size: 18),
+                  ),
+                ),
               ),
             ],
           ),
@@ -346,12 +341,10 @@ class _HomeScreenState extends State<HomeScreen>
 
   Future<void> _navigateToOccasion(String occasionId) async {
     try {
-      final doc = await FirebaseFirestore.instance
-          .collection('special_occasions')
-          .doc(occasionId)
-          .get();
-      if (doc.exists && mounted) {
-        final occasion = SpecialOccasion.fromFirestore(doc.id, doc.data()!);
+      // Dùng SyncService để lấy occasion từ cache, không gọi Firestore trực tiếp
+      final occasions = await SyncService().occasionsStream().first;
+      final occasion = occasions.where((o) => o.id == occasionId).firstOrNull;
+      if (occasion != null && mounted) {
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -2160,15 +2153,17 @@ class _CarouselBannerDialogState extends State<_CarouselBannerDialog> {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.all(20),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      elevation: 0,
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.center,
         children: [
-          Container(
-            height: 350,
-            decoration: BoxDecoration(
-              color: const Color(0xFF1A1A2E),
-              borderRadius: BorderRadius.circular(16),
+          // Banner Image Carousel
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.7,
+              maxWidth: MediaQuery.of(context).size.width * 0.9,
             ),
             child: Stack(
               children: [
@@ -2182,65 +2177,39 @@ class _CarouselBannerDialogState extends State<_CarouselBannerDialog> {
                   itemCount: widget.items.length,
                   itemBuilder: (context, index) {
                     final item = widget.items[index];
-                    return Column(
-                      children: [
-                        if (item.title.isNotEmpty)
-                          Container(
-                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-                            width: double.infinity,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF1A1A2E),
-                              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-                            ),
-                            child: Text(
-                              item.title,
-                              style: GoogleFonts.quicksand(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        Expanded(
-                          child: ClipRRect(
-                            borderRadius: item.title.isNotEmpty
-                                ? const BorderRadius.vertical(bottom: Radius.circular(16))
-                                : BorderRadius.circular(16),
-                            child: GestureDetector(
-                              onTap: () => widget.onAction(item),
-                              child: Image.network(
-                                item.imageUrl,
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                                errorBuilder: (context, error, stackTrace) => Container(
-                                  color: Colors.grey[800],
-                                  alignment: Alignment.center,
-                                  child: const Icon(Icons.broken_image, color: Colors.white54, size: 50),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.pop(context);
+                        widget.onAction(item);
+                      },
+                      child: Image.network(
+                        item.imageUrl,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                      ),
                     );
                   },
                 ),
+                // Pagination dots
                 Positioned(
-                  bottom: 12,
+                  bottom: -20, // Put dots below the image
                   left: 0,
                   right: 0,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(
                       widget.items.length,
-                      (index) => Container(
+                      (index) => AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
                         margin: const EdgeInsets.symmetric(horizontal: 4),
-                        width: _currentIndex == index ? 24 : 8,
+                        width: _currentIndex == index ? 20 : 8,
                         height: 8,
                         decoration: BoxDecoration(
-                          color: _currentIndex == index ? const Color(0xFFEC4899) : Colors.white38,
+                          color: _currentIndex == index ? const Color(0xFFEC4899) : Colors.white54,
                           borderRadius: BorderRadius.circular(4),
+                          boxShadow: _currentIndex == index
+                              ? [const BoxShadow(color: Color(0xFFEC4899), blurRadius: 4, spreadRadius: -2)]
+                              : null,
                         ),
                       ),
                     ),
@@ -2249,12 +2218,23 @@ class _CarouselBannerDialogState extends State<_CarouselBannerDialog> {
               ],
             ),
           ),
-          const SizedBox(height: 16),
-          FloatingActionButton.small(
-            onPressed: () => Navigator.pop(context),
-            backgroundColor: Colors.white24,
-            elevation: 0,
-            child: const Icon(Icons.close, color: Colors.white),
+          // Close button at top right
+          Positioned(
+            top: -15,
+            right: -15,
+            child: GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.5),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 1.5),
+                ),
+                child: const Icon(Icons.close, color: Colors.white, size: 18),
+              ),
+            ),
           ),
         ],
       ),

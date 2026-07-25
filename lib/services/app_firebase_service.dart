@@ -35,6 +35,18 @@ class StartupBannerItem {
       occasionId: data['occasionId'],
     );
   }
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'isActive': isActive,
+      'imageUrl': imageUrl,
+      'title': title,
+      'actionType': actionType,
+      'actionUrl': actionUrl,
+      'giftCategoryId': giftCategoryId,
+      'occasionId': occasionId,
+    };
+  }
 }
 
 class StartupBanner {
@@ -64,6 +76,13 @@ class StartupBanner {
       isActive: data['isActive'] ?? false,
       items: parsedItems,
     );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'isActive': isActive,
+      'items': items.map((e) => e.toMap()).toList(),
+    };
   }
 }
 
