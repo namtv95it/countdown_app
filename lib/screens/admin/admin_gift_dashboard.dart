@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/gift_product.dart';
 import '../../services/gift_service.dart';
 import 'admin_edit_gift_screen.dart';
+
 
 class AdminGiftDashboard extends StatefulWidget {
   const AdminGiftDashboard({super.key});
@@ -16,6 +18,13 @@ class _AdminGiftDashboardState extends State<AdminGiftDashboard> {
   final GiftService _giftService = GiftService();
   bool _isReordering = false;
   List<GiftProduct> _reorderList = [];
+
+  Future<void> _toggleActive(GiftProduct gift) async {
+    await FirebaseFirestore.instance.collection('gifts').doc(gift.id).update({
+      'isActive': !gift.isActive,
+    });
+
+  }
 
   Future<void> _confirmDelete(GiftProduct gift) async {
     final confirm = await showDialog<bool>(
@@ -39,6 +48,7 @@ class _AdminGiftDashboardState extends State<AdminGiftDashboard> {
 
     if (confirm == true) {
       await _giftService.deleteGift(gift.id);
+  
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Đã xóa thành công!'), backgroundColor: Colors.green),
@@ -55,8 +65,10 @@ class _AdminGiftDashboardState extends State<AdminGiftDashboard> {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Padding(
         padding: const EdgeInsets.all(12),
-        child: Row(
+        child: Column(
           children: [
+            Row(
+              children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: CachedNetworkImage(
@@ -73,9 +85,26 @@ class _AdminGiftDashboardState extends State<AdminGiftDashboard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    gift.getName('vi'),
-                    style: GoogleFonts.quicksand(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          gift.getName('vi'),
+                          style: GoogleFonts.quicksand(
+                            color: gift.isActive ? Colors.white : Colors.white54,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            decoration: gift.isActive ? null : TextDecoration.lineThrough,
+                          ),
+                        ),
+                      ),
+                      if (!isReordering)
+                        Switch(
+                          value: gift.isActive,
+                          onChanged: (v) => _toggleActive(gift),
+                          activeColor: const Color(0xFFEC4899),
+                        ),
+                    ],
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -91,21 +120,47 @@ class _AdminGiftDashboardState extends State<AdminGiftDashboard> {
               ),
             ),
             if (isReordering)
-              const Icon(Icons.drag_handle, color: Colors.white54)
-            else ...[
-              IconButton(
-                icon: const Icon(Icons.edit, color: Colors.blueAccent),
-                onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => AdminEditGiftScreen(gift: gift)));
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.delete, color: Colors.redAccent),
-                onPressed: () => _confirmDelete(gift),
-              ),
-            ],
+              const Icon(Icons.drag_handle, color: Colors.white54),
           ],
         ),
+        if (!isReordering) ...[
+          const SizedBox(height: 12),
+          const Divider(color: Colors.white10, height: 1),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: TextButton.icon(
+                  onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => AdminEditGiftScreen(gift: gift)));
+                  },
+                  icon: const Icon(Icons.edit, color: Colors.blueAccent, size: 18),
+                  label: Text('Sửa', style: GoogleFonts.quicksand(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.blueAccent.withValues(alpha: 0.1),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextButton.icon(
+                  onPressed: () => _confirmDelete(gift),
+                  icon: const Icon(Icons.delete, color: Colors.redAccent, size: 18),
+                  label: Text('Xóa', style: GoogleFonts.quicksand(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.redAccent.withValues(alpha: 0.1),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ]
+      ],
+    ),
       ),
     );
   }
@@ -133,6 +188,7 @@ class _AdminGiftDashboardState extends State<AdminGiftDashboard> {
             TextButton(
               onPressed: () async {
                 await _giftService.updateGiftsOrder(_reorderList);
+            
                 setState(() => _isReordering = false);
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/event_category.dart';
-import '../../services/sync_service.dart';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'admin_edit_category_screen.dart';
 
@@ -39,6 +39,7 @@ class _AdminCategoriesDashboardState extends State<AdminCategoriesDashboard> {
 
     if (confirm == true) {
       await FirebaseFirestore.instance.collection('gift_categories').doc(cat.id).delete();
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Đã xóa danh mục!'), backgroundColor: Colors.green),
@@ -51,6 +52,7 @@ class _AdminCategoriesDashboardState extends State<AdminCategoriesDashboard> {
     await FirebaseFirestore.instance.collection('gift_categories').doc(cat.id).update({
       'isActive': !cat.isActive,
     });
+
   }
 
   Future<void> _saveCategoriesOrder() async {
@@ -64,6 +66,7 @@ class _AdminCategoriesDashboardState extends State<AdminCategoriesDashboard> {
         batch.update(ref, {'order': i * 10});
       }
       await batch.commit();
+
       if (mounted) {
         setState(() => _isReordering = false);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -89,7 +92,9 @@ class _AdminCategoriesDashboardState extends State<AdminCategoriesDashboard> {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Padding(
         padding: const EdgeInsets.all(12),
-        child: Row(
+        child: Column(
+          children: [
+            Row(
           children: [
             Container(
               width: 50,
@@ -147,21 +152,47 @@ class _AdminCategoriesDashboardState extends State<AdminCategoriesDashboard> {
               const Padding(
                 padding: EdgeInsets.only(left: 8),
                 child: Icon(Icons.drag_handle, color: Colors.white54),
-              )
-            else ...[
-              IconButton(
-                icon: const Icon(Icons.edit, color: Colors.blueAccent),
-                onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => AdminEditCategoryScreen(category: cat)));
-                },
               ),
-              IconButton(
-                icon: const Icon(Icons.delete, color: Colors.redAccent),
-                onPressed: () => _confirmDelete(cat),
-              ),
-            ],
           ],
         ),
+        if (!isReordering) ...[
+          const SizedBox(height: 12),
+          const Divider(color: Colors.white10, height: 1),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: TextButton.icon(
+                  onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => AdminEditCategoryScreen(category: cat)));
+                  },
+                  icon: const Icon(Icons.edit, color: Colors.blueAccent, size: 18),
+                  label: Text('Sửa', style: GoogleFonts.quicksand(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.blueAccent.withValues(alpha: 0.1),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextButton.icon(
+                  onPressed: () => _confirmDelete(cat),
+                  icon: const Icon(Icons.delete, color: Colors.redAccent, size: 18),
+                  label: Text('Xóa', style: GoogleFonts.quicksand(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.redAccent.withValues(alpha: 0.1),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ]
+      ],
+    ),
       ),
     );
   }
@@ -205,13 +236,15 @@ class _AdminCategoriesDashboardState extends State<AdminCategoriesDashboard> {
             ),
         ],
       ),
-      body: StreamBuilder<List<EventCategory>>(
-        stream: SyncService().categoriesStream(),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance.collection('gift_categories').orderBy('order').snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) return Center(child: Text('Lỗi tải dữ liệu', style: GoogleFonts.quicksand(color: Colors.redAccent)));
           if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
 
-          final categories = snapshot.data!;
+          final categories = snapshot.data!.docs
+              .map((d) => EventCategory.fromJson({'id': d.id, ...(d.data() as Map<String, dynamic>)}))
+              .toList();
           if (_isReordering && _reorderList.isEmpty) {
             _reorderList = List.from(categories);
           }

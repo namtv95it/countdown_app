@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../models/event_category.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
+
 class AdminEditCategoryScreen extends StatefulWidget {
   final EventCategory? category;
   const AdminEditCategoryScreen({super.key, this.category});
@@ -84,6 +85,7 @@ class _AdminEditCategoryScreenState extends State<AdminEditCategoryScreen> {
       };
 
       await FirebaseFirestore.instance.collection('gift_categories').doc(docId).set(data, SetOptions(merge: true));
+
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

@@ -27,7 +27,28 @@ class SyncService {
   static const _bannerVersionKey = 'cache_banner_version';
   static const _categoriesVersionKey = 'cache_categories_version';
 
-  Future<int> _fetchRemoteDataVersion() async {
+  int? _cachedRemoteVersion;
+  Future<int>? _remoteVersionFuture;
+
+  /// Lấy phiên bản data từ Firebase. Chỉ gọi mạng ĐÚNG 1 LẦN duy nhất 
+  /// cho mỗi phiên làm việc (session) để tiết kiệm tối đa read operations.
+  Future<int> _fetchRemoteDataVersion() {
+    if (_cachedRemoteVersion != null) {
+      return Future.value(_cachedRemoteVersion!);
+    }
+    if (_remoteVersionFuture != null) {
+      return _remoteVersionFuture!;
+    }
+    
+    _remoteVersionFuture = _doFetchRemoteDataVersion().then((version) {
+      _cachedRemoteVersion = version;
+      return version;
+    });
+    
+    return _remoteVersionFuture!;
+  }
+
+  Future<int> _doFetchRemoteDataVersion() async {
     try {
       final doc = await FirebaseFirestore.instance
           .collection('settings')
@@ -41,6 +62,7 @@ class SyncService {
     }
     return 1;
   }
+
 
   // ─────────────────────────────────────────────────────────────────
   // GIFTS
@@ -344,6 +366,8 @@ class SyncService {
       
       // Xóa cache local luôn để máy admin cũng fetch lại
       await clearAllCaches();
+      _cachedRemoteVersion = newVersion;
+      _remoteVersionFuture = null;
       
       debugPrint('[SyncService] Data version upgraded to $newVersion.');
       return 'success:$newVersion';

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/special_occasion.dart';
 import '../../services/special_occasion_service.dart';
 import 'admin_edit_special_occasion_screen.dart';
 import 'admin_assign_products_screen.dart';
+
 
 class AdminSpecialOccasionsDashboard extends StatefulWidget {
   const AdminSpecialOccasionsDashboard({super.key});
@@ -14,6 +16,13 @@ class AdminSpecialOccasionsDashboard extends StatefulWidget {
 
 class _AdminSpecialOccasionsDashboardState extends State<AdminSpecialOccasionsDashboard> {
   final SpecialOccasionService _occasionService = SpecialOccasionService();
+
+  Future<void> _toggleActive(SpecialOccasion occ) async {
+    await FirebaseFirestore.instance.collection('special_occasions').doc(occ.id).update({
+      'isActive': !occ.isActive,
+    });
+
+  }
 
   Future<void> _confirmDelete(SpecialOccasion occ) async {
     final confirm = await showDialog<bool>(
@@ -37,6 +46,7 @@ class _AdminSpecialOccasionsDashboardState extends State<AdminSpecialOccasionsDa
 
     if (confirm == true) {
       await _occasionService.deleteOccasion(occ.id);
+  
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Đã xóa sự kiện thành công!'), backgroundColor: Colors.green),
@@ -73,11 +83,26 @@ class _AdminSpecialOccasionsDashboardState extends State<AdminSpecialOccasionsDa
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        occ.getName('vi'),
-                        style: GoogleFonts.quicksand(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              occ.getName('vi'),
+                              style: GoogleFonts.quicksand(
+                                color: occ.isActive ? Colors.white : Colors.white54,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                decoration: occ.isActive ? null : TextDecoration.lineThrough,
+                              ),
+                            ),
+                          ),
+                          Switch(
+                            value: occ.isActive,
+                            onChanged: (v) => _toggleActive(occ),
+                            activeColor: const Color(0xFF7C3AED),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 4),
                       Text(
                         'Ngày: ${occ.getDateLabel('vi')}',
                         style: GoogleFonts.quicksand(color: Colors.white70, fontSize: 13),

@@ -5,6 +5,7 @@ import '../../models/special_occasion.dart';
 import '../../models/event_category.dart';
 import '../../services/special_occasion_service.dart';
 
+
 class AdminEditSpecialOccasionScreen extends StatefulWidget {
   final SpecialOccasion? occasion;
   const AdminEditSpecialOccasionScreen({super.key, this.occasion});
@@ -139,6 +140,7 @@ class _AdminEditSpecialOccasionScreenState extends State<AdminEditSpecialOccasio
       } else {
         await _occasionService.updateOccasion(occ);
       }
+
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

@@ -9,6 +9,7 @@ class SpecialOccasion {
   final int day;
   final String gradient;
   final String categoryId;
+  final bool isActive;
 
   SpecialOccasion({
     required this.id,
@@ -19,6 +20,7 @@ class SpecialOccasion {
     required this.day,
     required this.gradient,
     required this.categoryId,
+    this.isActive = true,
   });
 
   factory SpecialOccasion.fromFirestore(String id, Map<String, dynamic> data) {
@@ -31,6 +33,7 @@ class SpecialOccasion {
       day: data['day'] ?? 1,
       gradient: data['gradient'] ?? '',
       categoryId: data['categoryId'] ?? '',
+      isActive: data['isActive'] ?? true,
     );
   }
 
@@ -43,6 +46,7 @@ class SpecialOccasion {
       'day': day,
       'gradient': gradient,
       'categoryId': categoryId,
+      'isActive': isActive,
     };
   }
 

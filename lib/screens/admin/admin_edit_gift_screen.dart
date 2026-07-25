@@ -7,6 +7,7 @@ import '../../models/special_occasion.dart';
 import '../../services/gift_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+
 class AdminEditGiftScreen extends StatefulWidget {
   final GiftProduct? gift;
 
@@ -125,6 +126,7 @@ class _AdminEditGiftScreenState extends State<AdminEditGiftScreen> {
       } else {
         await _giftService.updateGift(widget.gift!.id, gift);
       }
+
 
       if (mounted) {
         Navigator.pop(context);

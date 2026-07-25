@@ -72,7 +72,8 @@ class _GiftScreenState extends State<GiftScreen> with SingleTickerProviderStateM
   Future<void> _loadUpcomingEvents() async {
     // Dùng SyncService để lấy occasions (3 lớp cache) và lắng nghe cập nhật
     _occasionsSubscription = SyncService().occasionsStream().listen((occasions) {
-      final upcoming = SpecialOccasion.getUpcomingOccasions(occasions, limit: 5);
+      final activeOccasions = occasions.where((o) => o.isActive).toList();
+      final upcoming = SpecialOccasion.getUpcomingOccasions(activeOccasions, limit: 5);
       if (mounted) {
         setState(() {
           _upcomingEvents = upcoming;
@@ -598,6 +599,7 @@ class _GiftScreenState extends State<GiftScreen> with SingleTickerProviderStateM
               
               // Lọc theo danh mục đã chọn
               final gifts = allGifts.where((g) {
+                if (!g.isActive) return false;
                 if (_giftCategoryFilter == 'all') return true;
                 return g.categoryIds.contains(_giftCategoryFilter);
               }).toList();

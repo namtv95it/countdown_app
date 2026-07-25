@@ -11,6 +11,7 @@ class GiftProduct {
   final String platform;
   final int order;
   final List<String> occasionIds;
+  final bool isActive;
 
   const GiftProduct({
     required this.id,
@@ -25,6 +26,7 @@ class GiftProduct {
     required this.platform,
     required this.order,
     this.occasionIds = const [],
+    this.isActive = true,
   });
 
   String getName(String langCode) {
@@ -49,6 +51,7 @@ class GiftProduct {
       platform: data['platform'] ?? 'Khác',
       order: data['order'] ?? 99999,
       occasionIds: List<String>.from(data['occasionIds'] ?? []),
+      isActive: data['isActive'] ?? true,
     );
   }
 
@@ -65,6 +68,7 @@ class GiftProduct {
       'platform': platform,
       'order': order,
       'occasionIds': occasionIds,
+      'isActive': isActive,
     };
   }
 }

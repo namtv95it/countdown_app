@@ -4,6 +4,7 @@ import '../../models/special_occasion.dart';
 import '../../models/gift_product.dart';
 import '../../services/gift_service.dart';
 
+
 class AdminAssignProductsScreen extends StatefulWidget {
   final SpecialOccasion occasion;
   
@@ -64,6 +65,7 @@ class _AdminAssignProductsScreenState extends State<AdminAssignProductsScreen> {
           productsToRemove,
         );
       }
+
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
