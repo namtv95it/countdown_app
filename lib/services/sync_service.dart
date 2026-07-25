@@ -364,11 +364,6 @@ class SyncService {
         }
       });
       
-      // Xóa cache local luôn để máy admin cũng fetch lại
-      await clearAllCaches();
-      _cachedRemoteVersion = newVersion;
-      _remoteVersionFuture = null;
-      
       debugPrint('[SyncService] Data version upgraded to $newVersion.');
       return 'success:$newVersion';
     } catch (e) {
