@@ -42,71 +42,7 @@ class PromoResult {
 }
 
 class PromoService {
-  /// Danh sách các mã kích hoạt Premium & Gift Code
-  static final List<PromoCode> validCodes = [
-    // Mã Premium
-    PromoCode(
-      code: 'PREMIUM2026',
-      expirationDate: DateTime.utc(2026, 12, 31, 23, 59, 59),
-      description: 'VIP Premium 2026',
-    ),
-    PromoCode(
-      code: 'VIP',
-      expirationDate: DateTime.utc(2027, 6, 30, 23, 59, 59),
-      description: 'VIP 2027',
-    ),
-    PromoCode(
-      code: 'CAPTAIN999',
-      expirationDate: DateTime.utc(2026, 12, 31, 23, 59, 59),
-      description: 'Captain VIP',
-    ),
-    PromoCode(
-      code: 'PROMO2026',
-      expirationDate: DateTime.utc(2026, 9, 30, 23, 59, 59),
-      description: 'Khuyến Mãi 2026',
-    ),
-    PromoCode(
-      code: 'HETHAN',
-      expirationDate: DateTime.utc(2025, 1, 1, 0, 0, 0),
-      description: 'Mã Hết Hạn',
-    ),
-    PromoCode(
-      code: 'NAMTVTEST',
-      expirationDate: DateTime.utc(2030, 12, 31, 23, 59, 59),
-      description: 'Chế độ Cài Đặt Ẩn',
-      type: PromoType.testMode,
-    ),
-    
-    // Gift Code mở hiệu ứng đặc biệt (Phát triển sẵn)
-    PromoCode(
-      code: 'GIFTSNOW',
-      expirationDate: DateTime.utc(2027, 12, 31, 23, 59, 59),
-      description: 'Hiệu ứng Tuyết Rơi',
-      type: PromoType.giftEffect,
-      unlockedEffectId: 'snow',
-    ),
-    PromoCode(
-      code: 'GIFTHEART',
-      expirationDate: DateTime.utc(2027, 12, 31, 23, 59, 59),
-      description: 'Hiệu ứng Trái Tim',
-      type: PromoType.giftEffect,
-      unlockedEffectId: 'hearts',
-    ),
-    PromoCode(
-      code: 'GIFTSTAR',
-      expirationDate: DateTime.utc(2027, 12, 31, 23, 59, 59),
-      description: 'Hiệu ứng Ngôi Sao',
-      type: PromoType.giftEffect,
-      unlockedEffectId: 'stars',
-    ),
-    PromoCode(
-      code: 'GIFTFIREWORKS',
-      expirationDate: DateTime.utc(2027, 12, 31, 23, 59, 59),
-      description: 'Hiệu ứng Pháo Hoa',
-      type: PromoType.giftEffect,
-      unlockedEffectId: 'fireworks',
-    ),
-  ];
+
 
   /// Lấy thời gian chuẩn từ máy chủ Internet (chống đổi ngày giờ trên điện thoại)
   static Future<DateTime> getNetworkTime() async {
@@ -147,13 +83,6 @@ class PromoService {
       return const PromoResult(success: false, message: 'Mã không hợp lệ (quá ngắn)!');
     }
 
-    if (cleanCode == 'MYNKYO') {
-      return const PromoResult(
-        success: true, 
-        message: 'Welcome Admin!',
-        isAdmin: true,
-      );
-    }
 
     // --- ANTI SPAM CHECK ---
     final storage = StorageService();
@@ -177,8 +106,10 @@ class PromoService {
       if (firestoreData != null) {
         final docId = firestoreData['_docId'] as String;
 
-        // 1.1 Kiểm tra đã nhập ở máy này chưa
-        if (await StorageService().isPromoCodeUsed(cleanCode)) {
+        // 1.1 Kiểm tra đã nhập ở máy này chưa (chỉ áp dụng cho mã thông thường)
+        final String typeEarly = firestoreData['type'] ?? '';
+        final bool isHiddenFeatureCode = typeEarly == 'testMode' || typeEarly == 'admin';
+        if (!isHiddenFeatureCode && await StorageService().isPromoCodeUsed(cleanCode)) {
           return const PromoResult(success: false, message: 'Bạn đã sử dụng mã này rồi!');
         }
 
@@ -212,77 +143,50 @@ class PromoService {
         } else if (type == 'giftEffect' && effectId != null) {
           await StorageService().unlockFeature('${effectId}_effect_unlocked');
           await StorageService().setSelectedEffect(effectId);
+        } else if (type == 'testMode') {
+          await StorageService().setTestModeUnlocked(true);
+        } else if (type == 'admin') {
+          await StorageService().setIsAdminUnlocked(true);
+          await StorageService().setTestModeUnlocked(true);
         }
 
         // 1.5 Cập nhật Database và Local
-        await AppFirebaseService().incrementPromoUsage(docId);
-        await StorageService().markPromoCodeAsUsed(cleanCode);
+        // Mã kích hoạt tính năng ẩn (testMode, admin) không lưu lịch sử để có thể dùng lại
+        if (!isHiddenFeatureCode) {
+          await AppFirebaseService().incrementPromoUsage(docId);
+          await StorageService().markPromoCodeAsUsed(cleanCode);
+        }
         await storage.setFailedPromoAttempts(0); // Thành công thì reset
 
         return PromoResult(
           success: true,
           message: '🎉 Kích hoạt thành công $description!',
+          isAdmin: type == 'admin',
           matchedCode: PromoCode(
             code: cleanCode,
             expirationDate: firestoreData['expirationDate']?.toDate() ?? _epoch,
             description: description,
-            type: type == 'premium' ? PromoType.premium : PromoType.giftEffect,
+            type: type == 'premium' 
+                ? PromoType.premium 
+                : (type == 'testMode' ? PromoType.testMode : (type == 'admin' ? PromoType.admin : PromoType.giftEffect)),
             unlockedEffectId: effectId,
           ),
         );
       }
     } catch (e) {
-      debugPrint('Firestore check failed, falling back to local codes: $e');
+      debugPrint('Firestore check failed: $e');
+      return const PromoResult(success: false, message: 'Lỗi hệ thống. Vui lòng thử lại sau!');
     }
 
-    // 2. Dự phòng: Kiểm tra mã cục bộ (như cũ)
-    final matched = validCodes.firstWhere(
-      (c) => c.code.toUpperCase() == cleanCode,
-      orElse: () => PromoCode(code: '', expirationDate: _epoch, description: ''),
-    );
-
-    if (matched.code.isEmpty) {
-      int attempts = await storage.getFailedPromoAttempts() + 1;
-      await storage.setFailedPromoAttempts(attempts);
-      if (attempts >= 3) {
-        await storage.setPromoLockUntil(DateTime.now().add(const Duration(minutes: 10)));
-        return const PromoResult(
-            success: false, message: 'Bạn nhập sai quá 3 lần. Tính năng bị khóa 10 phút!');
-      }
-      return const PromoResult(success: false, message: 'Mã kích hoạt hoặc Gift Code không hợp lệ!');
+    // Xử lý khi mã không tồn tại trên Firebase
+    int attempts = await storage.getFailedPromoAttempts() + 1;
+    await storage.setFailedPromoAttempts(attempts);
+    if (attempts >= 3) {
+      await storage.setPromoLockUntil(DateTime.now().add(const Duration(minutes: 10)));
+      return const PromoResult(
+          success: false, message: 'Bạn nhập sai quá 3 lần. Tính năng bị khóa 10 phút!');
     }
-
-    // Lấy thời gian từ máy chủ Internet
-    final networkTime = await getNetworkTime();
-
-    if (matched.isExpired(networkTime)) {
-      final expDay = matched.expirationDate.day.toString().padLeft(2, '0');
-      final expMonth = matched.expirationDate.month.toString().padLeft(2, '0');
-      final expYear = matched.expirationDate.year;
-      return PromoResult(
-        success: false,
-        message: 'Mã "$cleanCode" đã hết hạn vào ngày $expDay/$expMonth/$expYear!',
-      );
-    }
-
-    // Áp dụng quyền lợi dựa theo loại mã
-    if (matched.type == PromoType.premium) {
-      await StorageService().setPremium(true);
-      AdService.isPremium = true;
-    } else if (matched.type == PromoType.giftEffect && matched.unlockedEffectId != null) {
-      await StorageService().unlockFeature('${matched.unlockedEffectId}_effect_unlocked');
-      await StorageService().setSelectedEffect(matched.unlockedEffectId!);
-    } else if (matched.type == PromoType.testMode) {
-      await StorageService().setTestModeUnlocked(true);
-    }
-    
-    await storage.setFailedPromoAttempts(0); // Thành công thì reset
-
-    return PromoResult(
-      success: true,
-      message: '🎉 Kích hoạt thành công ${matched.description}!',
-      matchedCode: matched,
-    );
+    return const PromoResult(success: false, message: 'Mã kích hoạt hoặc Gift Code không hợp lệ!');
   }
 
   static final DateTime _epoch = DateTime.utc(1970);

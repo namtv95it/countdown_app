@@ -88,8 +88,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final unlockResults = await Future.wait(
       effectIds.map((id) => storage.isFeatureUnlocked('${id}_effect_unlocked')),
     );
-    final testModeUnlocked = await storage.getIsTestModeUnlocked();
-    final adminUnlocked = await storage.getIsAdminUnlocked();
+    final testModeUnlocked = storage.getIsTestModeUnlocked();
+    final adminUnlocked = storage.getIsAdminUnlocked();
     
     if (mounted) {
       setState(() {
@@ -460,9 +460,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       if (result.success) {
                         Navigator.pop(context);
                         if (result.isAdmin) {
-                          // Lưu trạng thái đã kích hoạt
-                          await StorageService().setIsAdminUnlocked(true);
-                          setState(() => _isAdminUnlocked = true);
+                          // Trạng thái lưu vào RAM đã được xử lý trong promo_service
+                          setState(() {
+                            _isAdminUnlocked = true;
+                            _isTestModeUnlocked = true;
+                          });
                           if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
@@ -474,6 +476,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         }
                         if (result.matchedCode?.type == PromoType.premium) {
                           _togglePremium(true);
+                        } else if (result.matchedCode?.type == PromoType.testMode) {
+                          setState(() => _isTestModeUnlocked = true);
                         } else {
                           await _loadSettings();
                           final unlockedEffect = result.matchedCode?.unlockedEffectId;
