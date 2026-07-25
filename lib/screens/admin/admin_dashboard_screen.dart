@@ -75,15 +75,39 @@ class AdminDashboardScreen extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () async {
-                  final result = await SyncService().seedDefaultCategories();
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(result == 'already_seeded' ? 'Dữ liệu đã được khởi tạo từ trước.' : (result == 'success' ? 'Khởi tạo danh mục thành công!' : 'Lỗi: $result'))),
-                    );
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      backgroundColor: const Color(0xFF1A1A2E),
+                      title: Text('Nâng Cấp Phiên Bản Data', style: GoogleFonts.quicksand(color: Colors.white, fontWeight: FontWeight.bold)),
+                      content: Text(
+                        'Thao tác này sẽ tăng số phiên bản data (version) lên 1 trong Firestore.\n\nTất cả thiết bị người dùng sẽ tự động phát hiện phiên bản mới và tải lại dữ liệu mới nhất (danh mục, quà tặng, v.v...) ở lần mở app kế tiếp.\n\nBạn có muốn tiếp tục?',
+                        style: GoogleFonts.quicksand(color: Colors.white70),
+                      ),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Hủy', style: GoogleFonts.quicksand(color: Colors.white54))),
+                        TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text('Tiếp tục', style: GoogleFonts.quicksand(color: Colors.greenAccent, fontWeight: FontWeight.bold))),
+                      ],
+                    ),
+                  );
+                  if (confirm == true && context.mounted) {
+                    final result = await SyncService().upgradeDataVersion();
+                    if (context.mounted) {
+                      final isSuccess = result.startsWith('success');
+                      final count = isSuccess ? result.split(':').last : '';
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(isSuccess
+                              ? '✅ Nâng cấp thành công $count danh mục! Cache đã được xóa.'
+                              : '❌ Lỗi: $result'),
+                          backgroundColor: isSuccess ? Colors.green : Colors.red,
+                        ),
+                      );
+                    }
                   }
                 },
-                icon: const Icon(Icons.cloud_upload_rounded),
-                label: Text('Khởi Tạo Danh Mục Mặc Định', style: GoogleFonts.quicksand(fontWeight: FontWeight.bold)),
+                icon: const Icon(Icons.system_update_alt_rounded),
+                label: Text('Nâng Cấp Phiên Bản Data', style: GoogleFonts.quicksand(fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1A1A2E),
                   foregroundColor: Colors.white,

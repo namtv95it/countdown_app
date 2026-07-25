@@ -324,6 +324,35 @@ class SyncService {
     }
   }
 
+  /// Nâng cấp phiên bản data: tăng trường `version` trong `settings/data_version` lên 1.
+  /// Bắt buộc toàn bộ app (tất cả user) phải fetch lại dữ liệu từ Firebase ở lần mở tới.
+  Future<String> upgradeDataVersion() async {
+    try {
+      final docRef = FirebaseFirestore.instance.collection('settings').doc('data_version');
+      int newVersion = 1;
+      
+      await FirebaseFirestore.instance.runTransaction((transaction) async {
+        final snapshot = await transaction.get(docRef);
+        if (snapshot.exists && snapshot.data() != null) {
+          final currentVersion = snapshot.data()!['version'] as int? ?? 1;
+          newVersion = currentVersion + 1;
+          transaction.update(docRef, {'version': newVersion});
+        } else {
+          transaction.set(docRef, {'version': newVersion});
+        }
+      });
+      
+      // Xóa cache local luôn để máy admin cũng fetch lại
+      await clearAllCaches();
+      
+      debugPrint('[SyncService] Data version upgraded to $newVersion.');
+      return 'success:$newVersion';
+    } catch (e) {
+      debugPrint('[SyncService] Upgrade version error: $e');
+      return 'error: $e';
+    }
+  }
+
   List<EventCategory> _loadCategoriesFromPrefs(SharedPreferences prefs) {
     try {
       final raw = prefs.getString(_categoriesKey);

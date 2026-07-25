@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../models/event_category.dart';
 import '../../models/gift_product.dart';
 import '../../models/special_occasion.dart';
 import '../../services/gift_service.dart';
@@ -31,23 +32,8 @@ class _AdminEditGiftScreenState extends State<AdminEditGiftScreen> {
   String _selectedPlatform = 'Shopee';
   String _selectedBadge = '';
   
-  // Example categories, should match data.js structure
-  final List<String> _availableCategories = [
-    'birthday', 'love', 'anniversary', 'holiday', 'mid_autumn', 'children_day', 'womens_day'
-  ];
-  
-  final Map<String, String> _categoryNames = {
-    'birthday': 'Sinh nhật',
-    'love': 'Tình yêu',
-    'anniversary': 'Kỷ niệm',
-    'holiday': 'Ngày lễ',
-    'mid_autumn': 'Trung thu',
-    'children_day': 'Quốc tế Thiếu nhi',
-    'womens_day': 'Ngày Phụ nữ',
-  };
-
   final List<String> _selectedCategories = [];
-  
+  List<EventCategory> _availableCategories = [];
   List<SpecialOccasion> _availableOccasions = [];
   final List<String> _selectedOccasions = [];
 
@@ -68,6 +54,7 @@ class _AdminEditGiftScreenState extends State<AdminEditGiftScreen> {
       _selectedOccasions.addAll(g.occasionIds);
     }
     _loadOccasions();
+    _loadCategories();
   }
 
   Future<void> _loadOccasions() async {
@@ -79,6 +66,30 @@ class _AdminEditGiftScreenState extends State<AdminEditGiftScreen> {
         });
       }
     } catch (_) {}
+  }
+
+  Future<void> _loadCategories() async {
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('gift_categories')
+          .orderBy('order')
+          .get();
+      if (mounted) {
+        setState(() {
+          _availableCategories = snap.docs
+              .map((d) => EventCategory.fromJson({...d.data(), 'id': d.id}))
+              .where((c) => c.isActive)
+              .toList();
+        });
+      }
+    } catch (_) {
+      // Fallback to defaults if Firebase fails
+      if (mounted) {
+        setState(() {
+          _availableCategories = EventCategory.defaultCategories;
+        });
+      }
+    }
   }
 
   Future<void> _save() async {
@@ -281,21 +292,24 @@ class _AdminEditGiftScreenState extends State<AdminEditGiftScreen> {
                     const SizedBox(height: 24),
                     Text('Danh mục', style: GoogleFonts.quicksand(color: Colors.white70, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
-                    Wrap(
+                    _availableCategories.isEmpty
+                      ? const Text('Đang tải danh mục...', style: TextStyle(color: Colors.white54))
+                      : Wrap(
                       spacing: 8,
+                      runSpacing: 4,
                       children: _availableCategories.map((cat) {
-                        final isSelected = _selectedCategories.contains(cat);
+                        final isSelected = _selectedCategories.contains(cat.id);
                         return FilterChip(
-                          label: Text(_categoryNames[cat] ?? cat, style: TextStyle(color: isSelected ? Colors.white : Colors.white54)),
+                          label: Text('${cat.emoji} ${cat.name}', style: TextStyle(color: isSelected ? Colors.white : Colors.white54)),
                           selected: isSelected,
                           selectedColor: const Color(0xFF7C3AED),
                           backgroundColor: Colors.white.withValues(alpha: 0.1),
                           onSelected: (selected) {
                             setState(() {
                               if (selected) {
-                                _selectedCategories.add(cat);
+                                _selectedCategories.add(cat.id);
                               } else {
-                                _selectedCategories.remove(cat);
+                                _selectedCategories.remove(cat.id);
                               }
                             });
                           },
