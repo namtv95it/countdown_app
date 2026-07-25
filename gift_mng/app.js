@@ -1493,3 +1493,236 @@ function saveStartupBannerData(showToastMsg = true) {
     });
 }
 
+
+
+// ==========================================
+// CATEGORY MANAGEMENT
+// ==========================================
+let categories = [];
+let isEditingCat = false;
+
+
+
+// Load Categories
+async function loadCategories() {
+    loadingEl.style.display = 'block';
+    try {
+        const snap = await db.collection('gift_categories').orderBy('order').get();
+        categories = [];
+        let html = '';
+
+        if (snap.empty) {
+            document.getElementById('category-empty-state').classList.remove('hidden');
+            document.getElementById('category-list-container').innerHTML = '';
+        } else {
+            document.getElementById('category-empty-state').classList.add('hidden');
+            
+            snap.forEach(doc => {
+                const data = doc.data();
+                data.id = doc.id;
+                categories.push(data);
+                
+                const bgStyle = `background-color: ${intToHex(data.colorValue)}22;`;
+                const textStyle = `color: ${intToHex(data.colorValue)};`;
+                
+                html += `
+                <div class="bg-white dark:bg-darkcard rounded-2xl p-5 shadow-sm border border-gray-200 dark:border-darkborder hover:shadow-md transition-all group relative">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0" style="${bgStyle}">
+                            ${data.emoji || '📅'}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="text-base font-bold text-gray-900 dark:text-white truncate" style="${!data.isActive ? 'text-decoration: line-through;' : ''}">${data.name}</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 truncate mb-1">ID: ${data.id}</p>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-white/10 dark:text-gray-300">
+                                Thứ tự: ${data.order || 99}
+                            </span>
+                            ${data.canSuggestProducts ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 ml-1">Gợi ý</span>' : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onclick="editCategory('${data.id}')" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 flex items-center justify-center transition-colors">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button onclick="deleteCategory('${data.id}')" class="w-8 h-8 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 flex items-center justify-center transition-colors">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                `;
+            });
+            document.getElementById('category-list-container').innerHTML = html;
+        }
+    } catch (e) {
+        console.error("Error loading categories:", e);
+        showToast("Lỗi tải danh mục!", "error");
+    }
+    loadingEl.style.display = 'none';
+}
+
+function intToHex(intValue) {
+    if(!intValue) return '#10B981';
+    let hex = intValue.toString(16);
+    while (hex.length < 6) hex = "0" + hex;
+    return "#" + hex;
+}
+
+// Add/Edit Modal
+const btnAddCat1 = document.getElementById('btn-add-new-cat-trigger');
+const btnAddCat2 = document.getElementById('btn-add-new-cat-trigger-2');
+const modalCat = document.getElementById('modal-category');
+const formCat = document.getElementById('form-category');
+const btnSaveCat = document.getElementById('btn-save-cat');
+
+modalCat?.querySelectorAll('.close-modal').forEach(btn => {
+    btn.addEventListener('click', () => {
+        modalCat.querySelector('.modal-content')?.classList.replace('scale-100', 'scale-95');
+        modalCat.querySelector('.modal-content')?.classList.replace('opacity-100', 'opacity-0');
+        setTimeout(() => {
+            modalCat.classList.add('hidden');
+        }, 300);
+    });
+});
+
+[btnAddCat1, btnAddCat2].forEach(btn => {
+    btn?.addEventListener('click', () => {
+        isEditingCat = false;
+        formCat.reset();
+        document.getElementById('cat-id').readOnly = false;
+        document.getElementById('modal-cat-title').textContent = "Thêm Danh Mục Mới";
+        modalCat.classList.remove('hidden');
+        setTimeout(() => {
+            modalCat.querySelector('.modal-content')?.classList.replace('scale-95', 'scale-100');
+            modalCat.querySelector('.modal-content')?.classList.replace('opacity-0', 'opacity-100');
+        }, 10);
+    });
+});
+
+window.editCategory = (id) => {
+    const cat = categories.find(c => c.id === id);
+    if (!cat) return;
+    isEditingCat = true;
+    document.getElementById('modal-cat-title').textContent = "Sửa Danh Mục";
+    
+    document.getElementById('cat-id').value = cat.id;
+    document.getElementById('cat-id').readOnly = true;
+    document.getElementById('cat-name').value = cat.name || '';
+    document.getElementById('cat-nameEn').value = cat.nameEn || '';
+    document.getElementById('cat-emoji').value = cat.emoji || '📅';
+    document.getElementById('cat-order').value = cat.order || 99;
+    document.getElementById('cat-colorValue').value = cat.colorValue || 1092163;
+    document.getElementById('cat-canSuggest').checked = cat.canSuggestProducts || false;
+    document.getElementById('cat-isActive').checked = cat.isActive !== false;
+    
+    modalCat.classList.remove('hidden');
+    setTimeout(() => {
+        modalCat.querySelector('.modal-content')?.classList.replace('scale-95', 'scale-100');
+        modalCat.querySelector('.modal-content')?.classList.replace('opacity-0', 'opacity-100');
+    }, 10);
+};
+
+btnSaveCat?.addEventListener('click', async () => {
+    if (!formCat.checkValidity()) {
+        formCat.reportValidity();
+        return;
+    }
+    
+    const id = document.getElementById('cat-id').value.trim();
+    const data = {
+        name: document.getElementById('cat-name').value.trim(),
+        nameEn: document.getElementById('cat-nameEn').value.trim(),
+        emoji: document.getElementById('cat-emoji').value.trim(),
+        order: parseInt(document.getElementById('cat-order').value) || 99,
+        colorValue: parseInt(document.getElementById('cat-colorValue').value) || 1092163,
+        canSuggestProducts: document.getElementById('cat-canSuggest').checked,
+        isActive: document.getElementById('cat-isActive').checked,
+    };
+    
+    const originalBtnHTML = btnSaveCat.innerHTML;
+    btnSaveCat.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
+    btnSaveCat.disabled = true;
+    
+    try {
+        await db.collection('gift_categories').doc(id).set(data, { merge: true });
+        modalCat.querySelector('.modal-content')?.classList.replace('scale-100', 'scale-95');
+        modalCat.querySelector('.modal-content')?.classList.replace('opacity-100', 'opacity-0');
+        setTimeout(() => modalCat.classList.add('hidden'), 300);
+        showToast("Lưu danh mục thành công!");
+        loadCategories();
+    } catch(e) {
+        console.error("Save error:", e);
+        showToast("Lỗi khi lưu danh mục!", "error");
+    } finally {
+        btnSaveCat.innerHTML = originalBtnHTML;
+        btnSaveCat.disabled = false;
+    }
+});
+
+window.deleteCategory = async (id) => {
+    if(confirm("Bạn có chắc chắn muốn XÓA danh mục này? Hãy cân nhắc ẨN (Inactive) thay vì xoá.")) {
+        try {
+            await db.collection('gift_categories').doc(id).delete();
+            showToast("Đã xóa danh mục!");
+            loadCategories();
+        } catch(e) {
+            console.error(e);
+            showToast("Lỗi khi xóa!", "error");
+        }
+    }
+};
+
+
+// ==========================================
+// CATEGORY TAB NAVIGATION FIX
+// ==========================================
+document.addEventListener('click', (e) => {
+    const tabCategories = document.getElementById('tab-categories');
+    const viewCategories = document.getElementById('view-categories');
+    if (!tabCategories || !viewCategories) return;
+
+    const isTabCategories = e.target.closest('#tab-categories');
+    const isTabGifts = e.target.closest('#tab-gifts');
+    const isTabOccasions = e.target.closest('#tab-occasions');
+    const isTabBanner = e.target.closest('#tab-startup-banner');
+
+    if (isTabGifts || isTabOccasions || isTabBanner) {
+        // One of the other tabs was clicked, so we must hide categories
+        viewCategories.classList.add('hidden');
+        tabCategories.className = "w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 transition-colors";
+        const btnCat = document.getElementById('btn-add-new-cat-trigger');
+        if(btnCat) btnCat.classList.add('hidden');
+    } else if (isTabCategories) {
+        // Our tab was clicked
+        document.getElementById('view-gifts')?.classList.add('hidden');
+        document.getElementById('view-occasions')?.classList.add('hidden');
+        document.getElementById('view-startup-banner')?.classList.add('hidden');
+        
+        const inactive = "w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 transition-colors";
+        document.getElementById('tab-gifts').className = inactive;
+        document.getElementById('tab-occasions').className = inactive;
+        document.getElementById('tab-startup-banner').className = inactive;
+
+        tabCategories.className = "w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl bg-primary/10 text-primary transition-colors";
+        
+        viewCategories.classList.remove('hidden');
+        document.getElementById('page-title').textContent = "Danh Mục Quà Tặng";
+        
+        document.getElementById('btn-add-new')?.classList.add('hidden');
+        document.getElementById('btn-reorder')?.classList.add('hidden');
+        document.getElementById('btn-add-new-occasion-trigger')?.classList.add('hidden');
+        document.getElementById('btn-add-new-sb-trigger')?.classList.add('hidden');
+        const btnCat = document.getElementById('btn-add-new-cat-trigger');
+        if(btnCat) btnCat.classList.remove('hidden');
+        
+        // Hide sidebar on mobile
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        if(window.innerWidth < 1024 && sidebar) {
+            sidebar.classList.add('-translate-x-full');
+            if(sidebarOverlay) sidebarOverlay.classList.add('hidden');
+        }
+        
+        loadCategories();
+    }
+}, true);

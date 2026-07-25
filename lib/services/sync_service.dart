@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../models/event_category.dart';
 import '../models/gift_product.dart';
 import '../models/special_occasion.dart';
 import '../services/app_firebase_service.dart';
@@ -20,9 +21,11 @@ class SyncService {
   static const _giftsKey = 'cache_gifts_v1';
   static const _occasionsKey = 'cache_occasions_v1';
   static const _bannerKey = 'cache_banner_v1';
+  static const _categoriesKey = 'cache_categories_v1';
   static const _giftsVersionKey = 'cache_gifts_version';
   static const _occasionsVersionKey = 'cache_occasions_version';
   static const _bannerVersionKey = 'cache_banner_version';
+  static const _categoriesVersionKey = 'cache_categories_version';
 
   Future<int> _fetchRemoteDataVersion() async {
     try {
@@ -246,6 +249,102 @@ class SyncService {
   }
 
   // ─────────────────────────────────────────────────────────────────
+  // CATEGORIES
+  // ─────────────────────────────────────────────────────────────────
+
+  /// Stream cho Danh mục Quà tặng (gift_categories collection)
+  Stream<List<EventCategory>> categoriesStream() async* {
+    final prefs = await SharedPreferences.getInstance();
+
+    // Lớp 1: Cache local
+    final cached = _loadCategoriesFromPrefs(prefs);
+    if (cached.isNotEmpty) {
+      yield cached;
+    } else {
+      // Fallback ngay lập tức với danh sách mặc định
+      yield EventCategory.defaultCategories;
+    }
+
+    // Lớp 2: Kiểm tra phiên bản
+    final localVersion = prefs.getInt(_categoriesVersionKey) ?? 0;
+    int remoteVersion;
+    try {
+      remoteVersion = await _fetchRemoteDataVersion();
+    } catch (_) {
+      return; // offline, dùng cache/default
+    }
+
+    if (cached.isNotEmpty && localVersion >= remoteVersion) {
+      debugPrint('[SyncService] Categories cache up to date (v$localVersion).');
+      return;
+    }
+
+    // Lớp 3: Gọi Firebase
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('gift_categories')
+          .orderBy('order')
+          .get(const GetOptions(source: Source.server));
+
+      final fresh = snap.docs
+          .map((d) => EventCategory.fromJson({'id': d.id, ...d.data()}))
+          .toList();
+
+      if (fresh.isNotEmpty) {
+        await _saveCategoriesToPrefs(prefs, fresh, remoteVersion);
+        yield fresh;
+        debugPrint('[SyncService] Categories updated from Firebase (${fresh.length} items, v$remoteVersion).');
+      }
+    } catch (e) {
+      debugPrint('[SyncService] Categories fetch error (offline?): $e');
+      // giữ cache/default hiện tại, không throw
+    }
+  }
+
+  /// Seed dữ liệu mặc định lên Firebase (chỉ chạy một lần khi chưa có dữ liệu)
+  Future<String> seedDefaultCategories() async {
+    try {
+      final col = FirebaseFirestore.instance.collection('gift_categories');
+      final existing = await col.limit(1).get();
+      if (existing.docs.isNotEmpty) {
+        return 'already_seeded';
+      }
+      final batch = FirebaseFirestore.instance.batch();
+      for (final cat in EventCategory.defaultCategories) {
+        if (cat.id == 'other') continue; // bỏ 'other' khỏi seed
+        final ref = col.doc(cat.id);
+        batch.set(ref, cat.toJson());
+      }
+      await batch.commit();
+      debugPrint('[SyncService] Seeded ${EventCategory.defaultCategories.length - 1} categories to Firebase.');
+      return 'success';
+    } catch (e) {
+      debugPrint('[SyncService] Seed error: $e');
+      return 'error: $e';
+    }
+  }
+
+  List<EventCategory> _loadCategoriesFromPrefs(SharedPreferences prefs) {
+    try {
+      final raw = prefs.getString(_categoriesKey);
+      if (raw == null) return [];
+      final list = jsonDecode(raw) as List<dynamic>;
+      return list
+          .map((e) => EventCategory.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> _saveCategoriesToPrefs(
+      SharedPreferences prefs, List<EventCategory> categories, int version) async {
+    final list = categories.map((c) => c.toJson()).toList();
+    await prefs.setString(_categoriesKey, jsonEncode(list));
+    await prefs.setInt(_categoriesVersionKey, version);
+  }
+
+  // ─────────────────────────────────────────────────────────────────
   // UTILITIES
   // ─────────────────────────────────────────────────────────────────
 
@@ -255,9 +354,11 @@ class SyncService {
     await prefs.remove(_giftsKey);
     await prefs.remove(_occasionsKey);
     await prefs.remove(_bannerKey);
+    await prefs.remove(_categoriesKey);
     await prefs.remove(_giftsVersionKey);
     await prefs.remove(_occasionsVersionKey);
     await prefs.remove(_bannerVersionKey);
+    await prefs.remove(_categoriesVersionKey);
     debugPrint('[SyncService] All caches cleared.');
   }
 }

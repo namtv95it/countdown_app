@@ -96,6 +96,11 @@
                     <i class="fa-solid fa-calendar-days w-5 text-center"></i>
                     Sự Kiện
                 </button>
+                <button id="tab-categories"
+                    class="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 transition-colors">
+                    <i class="fa-solid fa-list w-5 text-center"></i>
+                    Danh Mục
+                </button>
                 <button id="tab-startup-banner"
                     class="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 transition-colors">
                     <i class="fa-solid fa-bullhorn w-5 text-center"></i>
@@ -185,6 +190,11 @@
                         <i class="fa-solid fa-calendar-plus"></i> <span class="hidden sm:inline">Thêm Sự Kiện</span>
                     </button>
 
+                    <!-- Add Category -->
+                    <button id="btn-add-new-cat-trigger"
+                        class="hidden px-4 py-2 rounded-xl bg-green-500 text-white hover:opacity-90 transition-colors text-sm font-medium flex items-center gap-2 shadow-lg shadow-green-500/30">
+                        <i class="fa-solid fa-folder-plus"></i> <span class="hidden sm:inline">Thêm Danh Mục</span>
+                    </button>
                     <!-- Add Startup Banner -->
                     <button id="btn-add-new-sb-trigger"
                         class="hidden px-4 py-2 rounded-xl bg-pink-500 text-white hover:opacity-90 transition-colors text-sm font-medium flex items-center gap-2 shadow-lg shadow-pink-500/30">
@@ -243,6 +253,29 @@
                     <div id="occasion-list-container"
                         class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         <!-- Occasions items will be injected here by JS -->
+                    </div>
+                </div>
+
+                <!-- Tab Content: Categories -->
+                <div id="view-categories" class="hidden">
+                    <div id="category-empty-state"
+                        class="hidden text-center py-16 bg-white dark:bg-darkcard rounded-2xl border border-gray-200 dark:border-darkborder shadow-sm">
+                        <div
+                            class="w-24 h-24 mx-auto bg-gray-100 dark:bg-white/5 rounded-full flex items-center justify-center mb-4">
+                            <i class="fa-solid fa-list text-4xl text-gray-400"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Chưa có danh mục nào</h3>
+                        <p class="text-gray-500 dark:text-gray-400 mb-6">Hãy thêm danh mục (Tình yêu, Sinh nhật...).
+                        </p>
+                        <button id="btn-add-new-cat-trigger-2"
+                            class="px-6 py-2.5 rounded-xl bg-green-500 text-white hover:bg-opacity-90 font-medium">
+                            Thêm Danh Mục Ngay
+                        </button>
+                    </div>
+
+                    <div id="category-list-container"
+                        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        <!-- Category items will be injected here by JS -->
                     </div>
                 </div>
 
@@ -501,7 +534,85 @@
             </div>
         </div>
 
-        <!-- Modal Form (Add/Edit Occasion) -->
+            <!-- Modal Form (Add/Edit Category) -->
+    <div id="modal-category"
+        class="modal-overlay hidden fixed inset-0 bg-gray-900/60 dark:bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="modal-content bg-white dark:bg-darkcard w-full max-w-2xl rounded-2xl shadow-2xl border border-gray-200 dark:border-darkborder max-h-[90vh] flex flex-col transform scale-95 opacity-0 transition-all duration-300">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-darkborder flex justify-between items-center sticky top-0 bg-white/90 dark:bg-darkcard/90 backdrop-blur-md z-10">
+                <h3 id="modal-cat-title" class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <i class="fa-solid fa-list text-green-500"></i> <span>Thêm Danh Mục Mới</span>
+                </h3>
+                <button
+                    class="close-modal w-8 h-8 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 flex items-center justify-center text-gray-500 dark:text-gray-400 transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
+                <form id="form-category" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">ID (Ví dụ: birthday)</label>
+                            <input type="text" id="cat-id" required
+                                class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Thứ tự hiển thị</label>
+                            <input type="number" id="cat-order" required value="99"
+                                class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 transition-all">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Tên (Tiếng Việt)</label>
+                            <input type="text" id="cat-name" required
+                                class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Tên (Tiếng Anh)</label>
+                            <input type="text" id="cat-nameEn" required
+                                class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 transition-all">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Emoji (Ví dụ: 🎂)</label>
+                            <input type="text" id="cat-emoji" required
+                                class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Mã Màu (Hệ số 10)</label>
+                            <input type="number" id="cat-colorValue" required value="1092163"
+                                class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 transition-all">
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-6 mt-4">
+                        <label class="flex items-center cursor-pointer group">
+                            <input type="checkbox" id="cat-canSuggest" class="mr-3 w-5 h-5 rounded border-gray-300 text-green-500 focus:ring-green-500">
+                            <span class="text-sm font-semibold text-gray-700 dark:text-gray-300 group-hover:text-green-500 transition-colors">Gợi ý quà tặng</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer group">
+                            <input type="checkbox" id="cat-isActive" checked class="mr-3 w-5 h-5 rounded border-gray-300 text-green-500 focus:ring-green-500">
+                            <span class="text-sm font-semibold text-gray-700 dark:text-gray-300 group-hover:text-green-500 transition-colors">Kích hoạt hiển thị</span>
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div
+                class="px-6 py-4 border-t border-gray-200 dark:border-darkborder bg-gray-50 dark:bg-white/5 rounded-b-2xl flex justify-end gap-3 sticky bottom-0">
+                <button
+                    class="close-modal px-5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors font-medium">Hủy</button>
+                <button id="btn-save-cat"
+                    class="px-6 py-2.5 rounded-xl bg-green-500 text-white hover:bg-green-600 transition-colors font-medium flex items-center gap-2">
+                    <i class="fa-solid fa-save"></i> Lưu Danh Mục
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Form (Add/Edit Occasion) -->
         <div id="occasion-modal"
             class="modal-overlay hidden fixed inset-0 bg-gray-900/60 dark:bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div

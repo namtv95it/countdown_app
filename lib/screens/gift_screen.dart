@@ -46,6 +46,7 @@ class _GiftScreenState extends State<GiftScreen> with SingleTickerProviderStateM
   late Animation<double> _blinkAnimation;
   
   late Stream<List<GiftProduct>> _giftsStream;
+  late Stream<List<EventCategory>> _categoriesStream;
 
   @override
   void initState() {
@@ -60,6 +61,7 @@ class _GiftScreenState extends State<GiftScreen> with SingleTickerProviderStateM
     
     // Sử dụng SyncService với chiến lược 3 lớp Cache
     _giftsStream = SyncService().giftsStream();
+    _categoriesStream = SyncService().categoriesStream();
     
     _loadUpcomingEvents();
   }
@@ -330,11 +332,20 @@ class _GiftScreenState extends State<GiftScreen> with SingleTickerProviderStateM
     final hintStyle = GoogleFonts.quicksand(
         fontSize: 15, color: Colors.white38, fontWeight: FontWeight.w400);
 
-    // Categories that support wishes
-    final wishCategories = EventCategory.all
-        .where((c) =>
-            c.id != 'national' && c.id != 'awareness' && c.id != 'profession')
-        .toList();
+    return StreamBuilder<List<EventCategory>>(
+      stream: _categoriesStream,
+      builder: (context, snapshot) {
+        final allCategories = snapshot.data ?? EventCategory.defaultCategories;
+        final categories = allCategories.where((c) => c.isActive).toList();
+        final wishCategories = categories
+            .where((c) =>
+                c.id != 'national' && c.id != 'awareness' && c.id != 'profession')
+            .toList();
+
+        // Ensure selected category is in the list
+        if (wishCategories.isNotEmpty && !wishCategories.any((c) => c.id == _selectedCategoryId)) {
+          _selectedCategoryId = wishCategories.first.id;
+        }
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -790,19 +801,27 @@ class _GiftScreenState extends State<GiftScreen> with SingleTickerProviderStateM
 
   Widget _buildCategoryFilterBar() {
     final lang = LocalizationService.languageNotifier.value;
-    final categories = EventCategory.all.where((c) => c.canSuggestProducts).toList();
+    
+    return StreamBuilder<List<EventCategory>>(
+      stream: _categoriesStream,
+      builder: (context, snapshot) {
+        final allCategories = snapshot.data ?? EventCategory.defaultCategories;
+        final categories = allCategories.where((c) => c.isActive).toList();
+        final suggestedCategories = categories.where((c) => c.canSuggestProducts).toList();
 
-    return Container(
-      height: 46,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        children: [
-          _buildFilterChip('all', LocalizationService.translate('cat_all'), null, const Color(0xFF8B5CF6)),
-          ...categories.map((c) => _buildFilterChip(c.id, c.getName(lang), c.emoji, Color(c.colorValue))),
-        ],
-      ),
+        return Container(
+          height: 46,
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            children: [
+              _buildFilterChip('all', LocalizationService.translate('cat_all'), null, const Color(0xFF8B5CF6)),
+              ...suggestedCategories.map((c) => _buildFilterChip(c.id, c.getName(lang), c.emoji, Color(c.colorValue))),
+            ],
+          ),
+        );
+      }
     );
   }
 

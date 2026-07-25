@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'admin_gift_dashboard.dart';
 import 'admin_special_occasions_dashboard.dart';
+import 'admin_categories_dashboard.dart';
+import '../../services/sync_service.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
@@ -53,6 +55,42 @@ class AdminDashboardScreen extends StatelessWidget {
                   MaterialPageRoute(builder: (_) => const AdminSpecialOccasionsDashboard()),
                 );
               },
+            ),
+            const SizedBox(height: 16),
+            _buildAdminCard(
+              context,
+              title: 'Danh Mục Quà Tặng',
+              subtitle: 'Quản lý thể loại (Tình yêu, Sinh nhật...)',
+              icon: Icons.category_rounded,
+              color: const Color(0xFF10B981),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AdminCategoriesDashboard()),
+                );
+              },
+            ),
+            const Spacer(),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  final result = await SyncService().seedDefaultCategories();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(result == 'already_seeded' ? 'Dữ liệu đã được khởi tạo từ trước.' : (result == 'success' ? 'Khởi tạo danh mục thành công!' : 'Lỗi: $result'))),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.cloud_upload_rounded),
+                label: Text('Khởi Tạo Danh Mục Mặc Định', style: GoogleFonts.quicksand(fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1A1A2E),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+              ),
             ),
           ],
         ),
