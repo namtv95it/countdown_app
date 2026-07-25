@@ -38,6 +38,7 @@ class _GiftScreenState extends State<GiftScreen> with SingleTickerProviderStateM
   String _giftCategoryFilter = 'all';
   List<SpecialOccasion> _upcomingEvents = [];
   final ScrollController _giftScrollController = ScrollController();
+  final PageController _pageController = PageController(viewportFraction: 0.93);
   bool _isLoadingEvent = true;
   Timer? _carouselTimer;
   int _currentCarouselIndex = 0;
@@ -471,6 +472,8 @@ class _GiftScreenState extends State<GiftScreen> with SingleTickerProviderStateM
         ],
       ),
     );
+      },
+    );
   }
 
   Widget _buildWishCard(String wish) {
@@ -632,7 +635,6 @@ class _GiftScreenState extends State<GiftScreen> with SingleTickerProviderStateM
     );
   }
 
-  final PageController _pageController = PageController(viewportFraction: 0.93);
 
   Widget _buildEventCarousel() {
     return Column(

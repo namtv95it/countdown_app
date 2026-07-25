@@ -68,14 +68,6 @@ if (btnMobileMenu && sidebar && sidebarOverlay) {
     sidebarOverlay.addEventListener('click', closeSidebar);
 }
 
-// Checkbox custom styles
-const categoryCheckboxes = document.querySelectorAll('#f-categories input[type="checkbox"]');
-categoryCheckboxes.forEach(cb => {
-    cb.addEventListener('change', (e) => {
-        if (e.target.checked) e.target.parentElement.classList.add('checked');
-        else e.target.parentElement.classList.remove('checked');
-    });
-});
 
 // Image preview
 document.getElementById('f-imageUrl').addEventListener('input', (e) => {
@@ -128,8 +120,10 @@ btnLogin.addEventListener('click', async () => {
         const doc = await db.collection('config').doc('admin').get();
 
         if (doc.exists && doc.data().passwordHash === hash) {
-            // Success
-            sessionStorage.setItem('isAdmin', 'true');
+            // Success: store token expiring at midnight tonight
+            const now = new Date();
+            const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+            localStorage.setItem('adminToken', midnight.getTime().toString());
             errorEl.classList.add('hidden');
             errorEl.style.display = 'none';
             showDashboard();
@@ -152,7 +146,7 @@ btnLogin.addEventListener('click', async () => {
 menuLogout.addEventListener('click', (e) => {
     e.preventDefault();
     dropdownMenu.classList.add('hidden');
-    sessionStorage.removeItem('isAdmin');
+    localStorage.removeItem('adminToken');
     dashboardScreen.classList.add('hidden');
     dashboardScreen.classList.remove('flex');
     lockScreen.classList.remove('hidden');
@@ -242,10 +236,19 @@ btnThemeToggle.addEventListener('click', () => {
     }
 });
 
-// Check auth on load
-if (sessionStorage.getItem('isAdmin') === 'true') {
-    showDashboard();
-}
+// Check auth on load (token expires at midnight)
+(function checkAuth() {
+    const token = localStorage.getItem('adminToken');
+    if (token) {
+        const expiry = parseInt(token, 10);
+        if (Date.now() < expiry) {
+            showDashboard();
+            return;
+        } else {
+            localStorage.removeItem('adminToken'); // expired, require re-login
+        }
+    }
+})();
 
 function showDashboard() {
     lockScreen.classList.add('hidden');
@@ -254,6 +257,7 @@ function showDashboard() {
     dashboardScreen.classList.add('flex');
     loadOccasions();
     loadGifts();
+    loadCategories();
 }
 
 async function loadOccasions() {
@@ -459,14 +463,14 @@ function editGift(id) {
     document.getElementById('f-gender').value = gift.gender || 'unisex';
 
     // Reset checkboxes
-    categoryCheckboxes.forEach(cb => {
+    document.querySelectorAll('#f-categories input[type="checkbox"]').forEach(cb => {
         cb.checked = false;
         cb.parentElement.classList.remove('border-primary', 'bg-primary/5');
     });
 
     // Set checkboxes
     const categories = gift.categoryIds || [];
-    categoryCheckboxes.forEach(cb => {
+    document.querySelectorAll('#f-categories input[type="checkbox"]').forEach(cb => {
         if (categories.includes(cb.value)) {
             cb.checked = true;
             cb.parentElement.classList.add('border-primary', 'bg-primary/5');
@@ -500,7 +504,7 @@ btnAddNew.addEventListener('click', () => {
     document.getElementById('gift-id').value = '';
 
     // Reset checkboxes visual
-    categoryCheckboxes.forEach(cb => cb.parentElement.classList.remove('border-primary', 'bg-primary/5'));
+    document.querySelectorAll('#f-categories input[type="checkbox"]').forEach(cb => cb.parentElement.classList.remove('border-primary', 'bg-primary/5'));
     document.querySelectorAll('.occasion-cb').forEach(cb => cb.parentElement.classList.remove('border-primary', 'bg-primary/5'));
 
     giftModal.classList.remove('hidden');
@@ -534,7 +538,7 @@ btnSaveGift.addEventListener('click', async () => {
 
     // Get selected categories
     const selectedCats = [];
-    categoryCheckboxes.forEach(cb => {
+    document.querySelectorAll('#f-categories input[type="checkbox"]').forEach(cb => {
         if (cb.checked) selectedCats.push(cb.value);
     });
 
@@ -619,19 +623,37 @@ if (btnDeployVersion) {
 btnReorder.addEventListener('click', () => {
     isReordering = true;
     btnReorder.classList.add('hidden');
-    btnAddNew.classList.add('hidden');
     btnSaveReorder.classList.remove('hidden');
     btnCancelReorder.classList.remove('hidden');
-    renderGifts();
+    
+    const viewCat = document.getElementById('view-categories');
+    const isCat = viewCat && !viewCat.classList.contains('hidden');
+    
+    if (isCat) {
+        document.getElementById('btn-add-new-cat-trigger')?.classList.add('hidden');
+        renderCategories();
+    } else {
+        btnAddNew.classList.add('hidden');
+        renderGifts();
+    }
 });
 
 btnCancelReorder.addEventListener('click', () => {
     isReordering = false;
     btnReorder.classList.remove('hidden');
-    btnAddNew.classList.remove('hidden');
     btnSaveReorder.classList.add('hidden');
     btnCancelReorder.classList.add('hidden');
-    loadGifts(); // reset order
+    
+    const viewCat = document.getElementById('view-categories');
+    const isCat = viewCat && !viewCat.classList.contains('hidden');
+    
+    if (isCat) {
+        document.getElementById('btn-add-new-cat-trigger')?.classList.remove('hidden');
+        loadCategories();
+    } else {
+        btnAddNew.classList.remove('hidden');
+        loadGifts(); // reset order
+    }
 });
 
 btnSaveReorder.addEventListener('click', async () => {
@@ -640,26 +662,42 @@ btnSaveReorder.addEventListener('click', async () => {
 
     try {
         const batch = db.batch();
-        const cards = giftListEl.querySelectorAll('.gift-card');
-
-        cards.forEach((card, index) => {
-            const id = card.dataset.id;
-            const ref = db.collection('gifts').doc(id);
-            batch.update(ref, { order: index * 10 });
-        });
+        const viewCat = document.getElementById('view-categories');
+        const isCat = viewCat && !viewCat.classList.contains('hidden');
+        
+        if (isCat) {
+            const cards = document.querySelectorAll('.category-card');
+            cards.forEach((card, index) => {
+                const id = card.dataset.id;
+                const ref = db.collection('gift_categories').doc(id);
+                batch.update(ref, { order: index * 10 });
+            });
+        } else {
+            const cards = giftListEl.querySelectorAll('.gift-card');
+            cards.forEach((card, index) => {
+                const id = card.dataset.id;
+                const ref = db.collection('gifts').doc(id);
+                batch.update(ref, { order: index * 10 });
+            });
+        }
 
         await batch.commit();
         showToast("Đã lưu thứ tự hiển thị!");
 
         isReordering = false;
         btnReorder.classList.remove('hidden');
-        btnAddNew.classList.remove('hidden');
         btnSaveReorder.classList.add('hidden');
         btnCancelReorder.classList.add('hidden');
         btnSaveReorder.innerHTML = '<i class="fa-solid fa-check"></i> Lưu thứ tự';
         btnSaveReorder.disabled = false;
 
-        loadGifts(); // reload to get new orders
+        if (isCat) {
+            document.getElementById('btn-add-new-cat-trigger')?.classList.remove('hidden');
+            loadCategories();
+        } else {
+            btnAddNew.classList.remove('hidden');
+            loadGifts(); // reload to get new orders
+        }
     } catch (error) {
         showToast("Lỗi khi lưu thứ tự", true);
         btnSaveReorder.innerHTML = '<i class="fa-solid fa-check"></i> Lưu thứ tự';
@@ -827,6 +865,8 @@ if (tabGifts && tabOccasions) {
         if (btnAddNew) btnAddNew.style.display = 'flex';
         if (btnAddNewOccasion) btnAddNewOccasion.style.display = 'none';
         if (btnReorder) btnReorder.style.display = 'flex'; // Changed to flex for alignment
+        const btnAddNewSb = document.getElementById('btn-add-new-sb-trigger');
+        if (btnAddNewSb) btnAddNewSb.style.display = 'none';
 
         // Close sidebar on mobile
         if (typeof closeSidebar === 'function') closeSidebar();
@@ -859,6 +899,8 @@ if (tabGifts && tabOccasions) {
         if (btnAddNew) btnAddNew.style.display = 'none';
         if (btnReorder) btnReorder.style.display = 'none';
         if (btnAddNewOccasion) btnAddNewOccasion.style.display = 'flex';
+        const btnAddNewSb = document.getElementById('btn-add-new-sb-trigger');
+        if (btnAddNewSb) btnAddNewSb.style.display = 'none';
 
         // Close sidebar on mobile
         if (typeof closeSidebar === 'function') closeSidebar();
@@ -1553,12 +1595,98 @@ async function loadCategories() {
                 `;
             });
             document.getElementById('category-list-container').innerHTML = html;
+            
+            // Render dynamic categories in the gift modal form
+            const fCats = document.getElementById('f-categories');
+            if (fCats) {
+                let htmlCats = '';
+                categories.forEach(cat => {
+                    if (cat.isActive === false) return; // Only show active categories
+                    htmlCats += `
+                    <label class="category-cb-wrapper flex items-center gap-2 p-3 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 cursor-pointer transition-colors hover:border-primary/50 group">
+                        <input type="checkbox" value="${cat.id}" class="hidden peer">
+                        <div class="w-5 h-5 rounded flex-shrink-0 border-2 border-gray-300 dark:border-gray-500 peer-checked:bg-primary peer-checked:border-primary flex items-center justify-center transition-colors">
+                            <i class="fa-solid fa-check text-white text-xs opacity-0 peer-checked:opacity-100"></i>
+                        </div>
+                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">${cat.name} ${cat.emoji || '📅'}</span>
+                    </label>`;
+                });
+                fCats.innerHTML = htmlCats;
+                
+                // Attach listeners
+                fCats.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                    cb.addEventListener('change', (e) => {
+                        if (e.target.checked) e.target.parentElement.classList.add('border-primary', 'bg-primary/5');
+                        else e.target.parentElement.classList.remove('border-primary', 'bg-primary/5');
+                    });
+                });
+            }
         }
     } catch (e) {
         console.error("Error loading categories:", e);
         showToast("Lỗi tải danh mục!", "error");
     }
     loadingEl.style.display = 'none';
+}
+
+let sortableCatInstance = null;
+
+function renderCategories() {
+    const container = document.getElementById('category-list-container');
+    let html = '';
+    
+    if (categories.length === 0) {
+        document.getElementById('category-empty-state').classList.remove('hidden');
+        container.innerHTML = '';
+        return;
+    }
+    document.getElementById('category-empty-state').classList.add('hidden');
+    
+    categories.forEach(data => {
+        const bgStyle = `background-color: ${intToHex(data.colorValue)}22;`;
+        const textStyle = `color: ${intToHex(data.colorValue)};`;
+        const dragHandle = isReordering ? `<div class="drag-handle w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-white/10 cursor-grab active:cursor-grabbing mr-3 transition-colors shrink-0"><i class="fa-solid fa-grip-vertical"></i></div>` : '';
+        
+        html += `
+        <div class="category-card bg-white dark:bg-darkcard rounded-2xl p-5 shadow-sm border border-gray-200 
+dark:border-darkborder hover:shadow-md transition-all group relative" data-id="${data.id}">
+            <div class="flex items-start gap-4">
+                ${dragHandle}
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0" 
+style="${bgStyle}">
+                    ${data.emoji || '📅'}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-base font-bold text-gray-900 dark:text-white truncate" 
+style="${!data.isActive ? 'text-decoration: line-through;' : ''}">${data.name}</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 truncate mb-1">ID: ${data.id}</p>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium 
+bg-gray-100 text-gray-800 dark:bg-white/10 dark:text-gray-300">
+                        Thứ tự: ${data.order || 99}
+                    </span>
+                    ${data.canSuggestProducts ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 ml-1">Gợi Ý</span>' : ''}
+                </div>
+            </div>
+            
+            ${!isReordering ? `
+            <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button onclick="editCategory('${data.id}')" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 flex items-center justify-center transition-colors"><i class="fa-solid fa-pen"></i></button>
+                <button onclick="deleteCategory('${data.id}')" class="w-8 h-8 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 flex items-center justify-center transition-colors"><i class="fa-solid fa-trash"></i></button>
+            </div>` : ''}
+        </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+    
+    if (sortableCatInstance) sortableCatInstance.destroy();
+    if (isReordering) {
+        sortableCatInstance = new Sortable(container, {
+            animation: 150,
+            handle: '.drag-handle',
+            ghostClass: 'sortable-ghost'
+        });
+    }
 }
 
 function intToHex(intValue) {
@@ -1709,7 +1837,8 @@ document.addEventListener('click', (e) => {
         document.getElementById('page-title').textContent = "Danh Mục Quà Tặng";
         
         document.getElementById('btn-add-new')?.classList.add('hidden');
-        document.getElementById('btn-reorder')?.classList.add('hidden');
+        document.getElementById('btn-reorder')?.classList.remove('hidden');
+        document.getElementById('btn-reorder').style.display = 'flex';
         document.getElementById('btn-add-new-occasion-trigger')?.classList.add('hidden');
         document.getElementById('btn-add-new-sb-trigger')?.classList.add('hidden');
         const btnCat = document.getElementById('btn-add-new-cat-trigger');
