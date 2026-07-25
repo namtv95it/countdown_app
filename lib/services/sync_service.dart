@@ -24,19 +24,14 @@ class SyncService {
   static const _occasionsVersionKey = 'cache_occasions_version';
   static const _bannerVersionKey = 'cache_banner_version';
 
-  // Lưu tạm version trên mây vào RAM để chỉ cần gọi Firebase 1 lần mỗi phiên mở app
-  int? _remoteDataVersion;
-
   Future<int> _fetchRemoteDataVersion() async {
-    if (_remoteDataVersion != null) return _remoteDataVersion!;
     try {
       final doc = await FirebaseFirestore.instance
           .collection('settings')
           .doc('data_version')
           .get(const GetOptions(source: Source.server));
       if (doc.exists && doc.data() != null) {
-        _remoteDataVersion = doc.data()!['version'] as int? ?? 1;
-        return _remoteDataVersion!;
+        return doc.data()!['version'] as int? ?? 1;
       }
     } catch (e) {
       debugPrint('[SyncService] Failed to fetch data_version: $e');
@@ -72,7 +67,7 @@ class SyncService {
       final snap = await FirebaseFirestore.instance
           .collection('gifts')
           .orderBy('order')
-          .get(const GetOptions(source: Source.serverAndCache));
+          .get(const GetOptions(source: Source.server));
 
       final fresh = snap.docs
           .map((d) => GiftProduct.fromFirestore(d.id, d.data()))
@@ -140,7 +135,7 @@ class SyncService {
     try {
       final snap = await FirebaseFirestore.instance
           .collection('special_occasions')
-          .get(const GetOptions(source: Source.serverAndCache));
+          .get(const GetOptions(source: Source.server));
 
       final fresh = snap.docs
           .map((d) => SpecialOccasion.fromFirestore(d.id, d.data()))
@@ -213,9 +208,9 @@ class SyncService {
     // Lớp 2: Firebase
     try {
       final snap = await FirebaseFirestore.instance
-          .collection('config')
+          .collection('settings')
           .doc('startup_banner')
-          .get(const GetOptions(source: Source.serverAndCache));
+          .get(const GetOptions(source: Source.server));
 
       if (snap.exists && snap.data() != null) {
         final fresh = StartupBanner.fromMap(snap.data()!);
@@ -263,7 +258,6 @@ class SyncService {
     await prefs.remove(_giftsVersionKey);
     await prefs.remove(_occasionsVersionKey);
     await prefs.remove(_bannerVersionKey);
-    _remoteDataVersion = null;
     debugPrint('[SyncService] All caches cleared.');
   }
 }

@@ -221,8 +221,11 @@ class _HomeScreenState extends State<HomeScreen>
     _hasShownStartupBanner = true;
 
     // Dùng SyncService (2 lớp cache) để tải banner
+    // Dùng .last để đợi stream chạy xong: nhận dữ liệu cache trước, sau đó
+    // nếu version cũ, fetch Firebase và emit lần 2. .first sẽ cancel stream
+    // ngay sau cache nên dữ liệu mới không bao giờ được cập nhật.
     try {
-      final banner = await SyncService().bannerStream().first;
+      final banner = await SyncService().bannerStream().last;
       if (banner != null && banner.isActive && mounted) {
         _showStartupBannerDialog(banner);
       }
@@ -272,21 +275,20 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                 ),
               ),
-              // Close button at top right
+              // Close button at bottom center
               Positioned(
-                top: -15,
-                right: -15,
+                bottom: -20,
                 child: GestureDetector(
                   onTap: () => Navigator.pop(context),
                   child: Container(
-                    width: 32,
-                    height: 32,
+                    width: 40,
+                    height: 40,
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.5),
+                      color: Colors.black.withValues(alpha: 0.6),
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 1.5),
                     ),
-                    child: const Icon(Icons.close, color: Colors.white, size: 18),
+                    child: const Icon(Icons.close, color: Colors.white, size: 20),
                   ),
                 ),
               ),
@@ -341,8 +343,8 @@ class _HomeScreenState extends State<HomeScreen>
 
   Future<void> _navigateToOccasion(String occasionId) async {
     try {
-      // Dùng SyncService để lấy occasion từ cache, không gọi Firestore trực tiếp
-      final occasions = await SyncService().occasionsStream().first;
+      // Dùng .last để đảm bảo lấy dữ liệu mới nhất (sau khi sync version xong)
+      final occasions = await SyncService().occasionsStream().last;
       final occasion = occasions.where((o) => o.id == occasionId).firstOrNull;
       if (occasion != null && mounted) {
         Navigator.push(
@@ -2165,74 +2167,73 @@ class _CarouselBannerDialogState extends State<_CarouselBannerDialog> {
               maxHeight: MediaQuery.of(context).size.height * 0.7,
               maxWidth: MediaQuery.of(context).size.width * 0.9,
             ),
-            child: Stack(
-              children: [
-                PageView.builder(
-                  controller: _pageController,
-                  onPageChanged: (index) {
-                    setState(() {
-                      _currentIndex = index;
-                    });
+            child: PageView.builder(
+              controller: _pageController,
+              onPageChanged: (index) {
+                setState(() {
+                  _currentIndex = index;
+                });
+              },
+              itemCount: widget.items.length,
+              itemBuilder: (context, index) {
+                final item = widget.items[index];
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.pop(context);
+                    widget.onAction(item);
                   },
-                  itemCount: widget.items.length,
-                  itemBuilder: (context, index) {
-                    final item = widget.items[index];
-                    return GestureDetector(
-                      onTap: () {
-                        Navigator.pop(context);
-                        widget.onAction(item);
-                      },
-                      child: Image.network(
-                        item.imageUrl,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
-                      ),
-                    );
-                  },
-                ),
-                // Pagination dots
-                Positioned(
-                  bottom: -20, // Put dots below the image
-                  left: 0,
-                  right: 0,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      widget.items.length,
-                      (index) => AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        width: _currentIndex == index ? 20 : 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: _currentIndex == index ? const Color(0xFFEC4899) : Colors.white54,
-                          borderRadius: BorderRadius.circular(4),
-                          boxShadow: _currentIndex == index
-                              ? [const BoxShadow(color: Color(0xFFEC4899), blurRadius: 4, spreadRadius: -2)]
-                              : null,
-                        ),
-                      ),
-                    ),
+                  child: Image.network(
+                    item.imageUrl,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
                   ),
-                ),
-              ],
+                );
+              },
             ),
           ),
-          // Close button at top right
+          // Pagination dots — ở outer Stack để không bị clip
           Positioned(
-            top: -15,
-            right: -15,
-            child: GestureDetector(
-              onTap: () => Navigator.pop(context),
-              child: Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.5),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 1.5),
+            bottom: -24,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                widget.items.length,
+                (index) => AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  width: _currentIndex == index ? 20 : 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: _currentIndex == index ? const Color(0xFFEC4899) : Colors.white54,
+                    borderRadius: BorderRadius.circular(4),
+                    boxShadow: _currentIndex == index
+                        ? [const BoxShadow(color: Color(0xFFEC4899), blurRadius: 4, spreadRadius: -2)]
+                        : null,
+                  ),
                 ),
-                child: const Icon(Icons.close, color: Colors.white, size: 18),
+              ),
+            ),
+          ),
+          // Close button at bottom center (below dots)
+          Positioned(
+            bottom: -72,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 1.5),
+                  ),
+                  child: const Icon(Icons.close, color: Colors.white, size: 20),
+                ),
               ),
             ),
           ),
