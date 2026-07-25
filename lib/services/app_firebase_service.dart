@@ -137,12 +137,30 @@ class AppFirebaseService {
   Future<void> syncPremiumStatusOnStartup() async {
     if (_currentUser == null) return;
     try {
-      final features = await getUnlockedFeatures();
+      final featuresMap = await getUnlockedFeatures();
       final prefs = await SharedPreferences.getInstance();
       
-      // 1. Đồng bộ Premium
-      final hasPremium = features.contains('premium');
-      await prefs.setBool('is_premium_account', hasPremium);
+      final features = featuresMap.keys.toList();
+      bool hasPremium = false;
+      DateTime? premiumExpiry = featuresMap['premium'];
+
+      if (features.contains('premium')) {
+        if (premiumExpiry != null && DateTime.now().isAfter(premiumExpiry)) {
+          // Đã hết hạn
+          await removeUnlockedFeature('premium');
+        } else {
+          hasPremium = true;
+          await prefs.setBool('is_premium_account', true);
+          if (premiumExpiry != null) {
+            await prefs.setString('is_premium_account_expiry', premiumExpiry.toIso8601String());
+          }
+        }
+      }
+
+      if (!hasPremium) {
+        await prefs.remove('is_premium_account');
+        await prefs.remove('is_premium_account_expiry');
+      }
       AdService.isPremium = hasPremium;
       
       // 2. Đồng bộ Effects
@@ -151,17 +169,26 @@ class AppFirebaseService {
       for (String key in allKeys) {
         if (key.endsWith('_effect_unlocked')) {
           await prefs.remove(key);
+          await prefs.remove('${key}_expiry');
         }
       }
       
       // Lưu các effect mới từ Firebase
       for (String feature in features) {
         if (feature.endsWith('_effect_unlocked')) {
-          await prefs.setBool(feature, true);
+          final expiry = featuresMap[feature];
+          if (expiry != null && DateTime.now().isAfter(expiry)) {
+             await removeUnlockedFeature(feature);
+          } else {
+            await prefs.setBool(feature, true);
+            if (expiry != null) {
+              await prefs.setString('${feature}_expiry', expiry.toIso8601String());
+            }
+          }
         }
       }
 
-      debugPrint('Firebase Auth: Synced status from cloud. Premium: $hasPremium, Features: $features');
+      debugPrint('Firebase Auth: Synced status from cloud. Premium: $hasPremium, Features: $featuresMap');
     } catch (e) {
       debugPrint('Error syncing premium on startup (keeping local): $e');
     }
@@ -269,32 +296,68 @@ class AppFirebaseService {
   }
 
   /// Đồng bộ tính năng đã mở khóa lên Cloud cho User hiện tại
-  Future<void> syncUnlockedFeature(String featureId) async {
+  Future<void> syncUnlockedFeature(String featureId, [DateTime? expiryDate]) async {
     if (_currentUser == null) return;
     
     try {
-      await _firestore.collection('users').doc(_currentUser!.uid).set({
+      Map<String, dynamic> dataToUpdate = {
         'unlocked_features': FieldValue.arrayUnion([featureId]),
         'last_active': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      };
+      
+      if (expiryDate != null) {
+        dataToUpdate['expirations.$featureId'] = Timestamp.fromDate(expiryDate);
+      }
+      
+      await _firestore.collection('users').doc(_currentUser!.uid).set(
+        dataToUpdate,
+        SetOptions(merge: true)
+      );
     } catch (e) {
       debugPrint('Error syncing unlocked feature: $e');
     }
   }
 
-  /// Lấy danh sách các tính năng đã mở khóa của User từ Cloud (luôn lấy từ server)
-  Future<List<String>> getUnlockedFeatures() async {
-    if (_currentUser == null) return [];
+  /// Gỡ bỏ tính năng khi đã hết hạn
+  Future<void> removeUnlockedFeature(String featureId) async {
+    if (_currentUser == null) return;
+    
+    try {
+      await _firestore.collection('users').doc(_currentUser!.uid).update({
+        'unlocked_features': FieldValue.arrayRemove([featureId]),
+        'expirations.$featureId': FieldValue.delete(),
+      });
+    } catch (e) {
+      debugPrint('Error removing unlocked feature: $e');
+    }
+  }
+
+  /// Lấy danh sách các tính năng đã mở khóa kèm thời hạn của User từ Cloud (luôn lấy từ server)
+  Future<Map<String, DateTime?>> getUnlockedFeatures() async {
+    if (_currentUser == null) return {};
     
     // Cố gắng lấy trực tiếp từ server. Nếu rớt mạng sẽ throw Exception
     final doc = await _firestore.collection('users').doc(_currentUser!.uid).get(const GetOptions(source: Source.server));
     
-    if (doc.exists && doc.data() != null && doc.data()!.containsKey('unlocked_features')) {
-      List<dynamic> features = doc.data()!['unlocked_features'];
-      return features.map((e) => e.toString()).toList();
+    Map<String, DateTime?> result = {};
+    if (doc.exists && doc.data() != null) {
+      final data = doc.data()!;
+      if (data.containsKey('unlocked_features')) {
+        List<dynamic> features = data['unlocked_features'];
+        Map<String, dynamic> expirations = data['expirations'] ?? {};
+        
+        for (var feature in features) {
+          final fStr = feature.toString();
+          DateTime? expiryDate;
+          if (expirations.containsKey(fStr) && expirations[fStr] is Timestamp) {
+            expiryDate = (expirations[fStr] as Timestamp).toDate();
+          }
+          result[fStr] = expiryDate;
+        }
+      }
     }
     
-    return [];
+    return result;
   }
 
   /// Lấy cấu hình Startup Banner từ Cloud

@@ -69,18 +69,39 @@ class StorageService {
 
   Future<bool> getIsPremium() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_premiumKey) ?? false;
+    final isPremium = prefs.getBool(_premiumKey) ?? false;
+    if (isPremium) {
+      final expiryStr = prefs.getString('${_premiumKey}_expiry');
+      if (expiryStr != null) {
+        final expiry = DateTime.tryParse(expiryStr);
+        if (expiry != null && DateTime.now().isAfter(expiry)) {
+          // Hết hạn -> hủy
+          await prefs.remove(_premiumKey);
+          await prefs.remove('${_premiumKey}_expiry');
+          try {
+            await AppFirebaseService().removeUnlockedFeature('premium');
+          } catch (_) {}
+          return false;
+        }
+      }
+    }
+    return isPremium;
   }
 
-  Future<void> setPremium(bool value) async {
+  Future<void> setPremium(bool value, [DateTime? expiry]) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_premiumKey, value);
+    if (expiry != null) {
+      await prefs.setString('${_premiumKey}_expiry', expiry.toIso8601String());
+    } else {
+      await prefs.remove('${_premiumKey}_expiry');
+    }
 
     if (value) {
       // Đồng bộ lên Firebase
       try {
         if (AppFirebaseService().currentUser != null) {
-          await AppFirebaseService().syncUnlockedFeature('premium');
+          await AppFirebaseService().syncUnlockedFeature('premium', expiry);
         }
       } catch (e) {
         // Bỏ qua lỗi
@@ -158,17 +179,38 @@ class StorageService {
 
   Future<bool> isFeatureUnlocked(String featureKey) async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(featureKey) ?? false;
+    final isUnlocked = prefs.getBool(featureKey) ?? false;
+    if (isUnlocked) {
+      final expiryStr = prefs.getString('${featureKey}_expiry');
+      if (expiryStr != null) {
+        final expiry = DateTime.tryParse(expiryStr);
+        if (expiry != null && DateTime.now().isAfter(expiry)) {
+          // Hết hạn -> hủy
+          await prefs.remove(featureKey);
+          await prefs.remove('${featureKey}_expiry');
+          try {
+            await AppFirebaseService().removeUnlockedFeature(featureKey);
+          } catch (_) {}
+          return false;
+        }
+      }
+    }
+    return isUnlocked;
   }
 
-  Future<void> unlockFeature(String featureKey) async {
+  Future<void> unlockFeature(String featureKey, [DateTime? expiry]) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(featureKey, true);
+    if (expiry != null) {
+      await prefs.setString('${featureKey}_expiry', expiry.toIso8601String());
+    } else {
+      await prefs.remove('${featureKey}_expiry');
+    }
 
     // Đồng bộ lên Firebase (nếu đã init)
     try {
       if (AppFirebaseService().currentUser != null) {
-        await AppFirebaseService().syncUnlockedFeature(featureKey);
+        await AppFirebaseService().syncUnlockedFeature(featureKey, expiry);
       }
     } catch (e) {
       // Bỏ qua lỗi nếu chưa setup Firebase

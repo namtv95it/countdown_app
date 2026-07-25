@@ -136,12 +136,19 @@ class PromoService {
         final String type = firestoreData['type'] ?? '';
         final String description = firestoreData['description'] ?? 'Quà tặng từ server';
         final String? effectId = firestoreData['unlockedEffectId'];
+        
+        // Tính toán thời hạn (nếu có)
+        final num? durationDays = firestoreData['durationDays'] as num?;
+        DateTime? expiryDate;
+        if (durationDays != null && durationDays > 0) {
+          expiryDate = DateTime.now().add(Duration(milliseconds: (durationDays * 86400000).toInt()));
+        }
 
         if (type == 'premium') {
-          await StorageService().setPremium(true);
+          await StorageService().setPremium(true, expiryDate);
           AdService.isPremium = true;
         } else if (type == 'giftEffect' && effectId != null) {
-          await StorageService().unlockFeature('${effectId}_effect_unlocked');
+          await StorageService().unlockFeature('${effectId}_effect_unlocked', expiryDate);
           await StorageService().setSelectedEffect(effectId);
         } else if (type == 'testMode') {
           await StorageService().setTestModeUnlocked(true);
