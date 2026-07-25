@@ -532,134 +532,60 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final displayName = auth.userDisplayName ?? t('account');
     final photoUrl = auth.userPhotoUrl;
 
+    if (!isAnonymous) {
+      // Logged in: show as a simple _buildListTile-style box
+      return _buildListTile(
+        title: email ?? displayName,
+        subtitle: t('google_account'),
+        trailing: const Icon(Icons.check_circle_rounded, color: Color(0xFF00C853), size: 22),
+        leading: photoUrl != null
+            ? CircleAvatar(
+                radius: 20,
+                backgroundImage: NetworkImage(photoUrl),
+              )
+            : Container(
+                width: 40,
+                height: 40,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white,
+                ),
+                padding: const EdgeInsets.all(8),
+                child: Image.network(
+                  'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/120px-Google_%22G%22_logo.svg.png',
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const Icon(Icons.g_mobiledata, color: Color(0xFF4285F4), size: 24),
+                ),
+              ),
+      );
+    }
+
+    // Anonymous: show sign in button
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader('👤 ${t('account')}'),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: Colors.white12),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    backgroundColor: Colors.white24,
-                    backgroundImage: photoUrl != null ? NetworkImage(photoUrl) : null,
-                    child: photoUrl == null
-                        ? const Icon(Icons.person, color: Colors.white, size: 24)
-                        : null,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          isAnonymous ? t('anonymous_user') : displayName,
-                          style: GoogleFonts.quicksand(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        if (email != null) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            email,
-                            style: GoogleFonts.quicksand(
-                              color: Colors.white70,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              if (isAnonymous) ...[
-                Text(
-                  t('anonymous_user_desc'),
-                  style: GoogleFonts.quicksand(
-                    color: Colors.white70,
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: GoogleSignInButton(
-                    isLoading: _isSigningIn,
-                    text: t('sign_in_google'),
-                    onPressed: () async {
-                      setState(() => _isSigningIn = true);
-                      final result = await auth.signInWithGoogle();
-                      setState(() => _isSigningIn = false);
-                      
-                      if (result == GoogleSignInResult.success) {
-                        _showMessage(t('sign_in_success'));
-                      } else if (result == GoogleSignInResult.error) {
-                        _showMessage(t('sign_in_error'));
-                      }
-                    },
-                  ),
-                ),
-              ] else ...[
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.redAccent.withValues(alpha: 0.2),
-                      foregroundColor: Colors.redAccent,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                    ),
-                    onPressed: () async {
-                      final confirm = await showDialog<bool>(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          backgroundColor: const Color(0xFF1A1A2E),
-                          title: Text(t('sign_out'), style: GoogleFonts.quicksand(color: Colors.white, fontWeight: FontWeight.bold)),
-                          content: Text(t('sign_out_confirm'), style: GoogleFonts.quicksand(color: Colors.white70)),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: Text(t('cancel'), style: GoogleFonts.quicksand(color: Colors.white54)),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              child: Text(t('sign_out'), style: GoogleFonts.quicksand(color: Colors.redAccent, fontWeight: FontWeight.bold)),
-                            ),
-                          ],
-                        ),
-                      );
+        _buildListTile(
+          title: t('anonymous_user'),
+          subtitle: t('anonymous_user_desc'),
+          trailing: const Icon(Icons.person_outline_rounded, color: Colors.white54, size: 22),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          width: double.infinity,
+          child: GoogleSignInButton(
+            isLoading: _isSigningIn,
+            text: t('sign_in_google'),
+            onPressed: () async {
+              setState(() => _isSigningIn = true);
+              final result = await auth.signInWithGoogle();
+              setState(() => _isSigningIn = false);
 
-                      if (confirm == true) {
-                        setState(() => _isSigningIn = true);
-                        await auth.signOut();
-                        setState(() => _isSigningIn = false);
-                      }
-                    },
-                    child: Text(
-                      t('sign_out'),
-                      style: GoogleFonts.quicksand(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ],
+              if (result == GoogleSignInResult.success) {
+                _showMessage(t('sign_in_success'));
+              } else if (result == GoogleSignInResult.error) {
+                _showMessage(t('sign_in_error'));
+              }
+            },
           ),
         ),
       ],
@@ -688,12 +614,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            
-            _buildAccountSection(),
-            const SizedBox(height: 24),
-
-            _buildSectionHeader('💎 ${t('premium_account')}'),
+            _buildSectionHeader('👤 ${t('account')}'),
             const SizedBox(height: 8),
+
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(18),
@@ -791,7 +714,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
+            _buildAccountSection(),
             _buildListTile(
               title: t('enter_gift_code'),
               subtitle: t('enter_gift_code_desc'),
@@ -902,6 +826,55 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ],
 
+            if (!AppFirebaseService().isAnonymous) ...[
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _isSigningIn ? null : () async {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        backgroundColor: const Color(0xFF1A1A2E),
+                        title: Text(t('sign_out'), style: GoogleFonts.quicksand(color: Colors.white, fontWeight: FontWeight.bold)),
+                        content: Text(t('sign_out_confirm'), style: GoogleFonts.quicksand(color: Colors.white70)),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: Text(t('cancel'), style: GoogleFonts.quicksand(color: Colors.white54)),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            child: Text(t('sign_out'), style: GoogleFonts.quicksand(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (confirm == true) {
+                      setState(() => _isSigningIn = true);
+                      await AppFirebaseService().signOut();
+                      setState(() => _isSigningIn = false);
+                    }
+                  },
+                  icon: _isSigningIn
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : const Icon(Icons.logout_rounded, size: 20),
+                  label: Text(
+                    t('sign_out'),
+                    style: GoogleFonts.quicksand(fontWeight: FontWeight.bold, fontSize: 15),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent.withValues(alpha: 0.85),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                ),
+              ),
+            ],
+
             const SizedBox(height: 180), // Khoảng trống cho BottomNav và Ad
           ],
         ),
@@ -927,6 +900,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required String title,
     required String subtitle,
     required Widget trailing,
+    Widget? leading,
     VoidCallback? onTap,
   }) {
     return Container(
@@ -951,6 +925,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             borderRadius: BorderRadius.circular(16),
             child: ListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              leading: leading,
               title: Text(
                 title,
                 style: GoogleFonts.quicksand(

@@ -133,20 +133,37 @@ class AppFirebaseService {
     }
   }
 
-  /// Đồng bộ trạng thái Premium từ Firebase về Local Cache
+  /// Đồng bộ trạng thái Premium và Effects từ Firebase về Local Cache
   Future<void> syncPremiumStatusOnStartup() async {
     if (_currentUser == null) return;
     try {
       final features = await getUnlockedFeatures();
-      final hasPremium = features.contains('premium');
-      
       final prefs = await SharedPreferences.getInstance();
+      
+      // 1. Đồng bộ Premium
+      final hasPremium = features.contains('premium');
       await prefs.setBool('is_premium_account', hasPremium);
       AdService.isPremium = hasPremium;
       
-      debugPrint('Firebase Auth: Synced premium status from cloud: $hasPremium');
+      // 2. Đồng bộ Effects
+      // Xóa các effect cũ ở local (đề phòng đổi account)
+      final allKeys = prefs.getKeys();
+      for (String key in allKeys) {
+        if (key.endsWith('_effect_unlocked')) {
+          await prefs.remove(key);
+        }
+      }
+      
+      // Lưu các effect mới từ Firebase
+      for (String feature in features) {
+        if (feature.endsWith('_effect_unlocked')) {
+          await prefs.setBool(feature, true);
+        }
+      }
+
+      debugPrint('Firebase Auth: Synced status from cloud. Premium: $hasPremium, Features: $features');
     } catch (e) {
-      debugPrint('Error syncing premium on startup: $e');
+      debugPrint('Error syncing premium on startup (keeping local): $e');
     }
   }
 
