@@ -155,9 +155,7 @@ class SuccessPromoDialog extends StatelessWidget {
                   _buildDetailRow(
                     icon: Icons.card_giftcard_rounded,
                     label: t('activation_package'),
-                    value: promoCode.type == PromoType.premium
-                        ? t('premium_lifetime_package')
-                        : promoCode.description,
+                    value: promoCode.description,
                     valueColor: const Color(0xFF10B981),
                   ),
                   const Divider(color: Colors.white12, height: 16),
@@ -169,9 +167,9 @@ class SuccessPromoDialog extends StatelessWidget {
                   ),
                   const Divider(color: Colors.white12, height: 16),
                   _buildDetailRow(
-                    icon: Icons.all_inclusive_rounded,
+                    icon: _getExpiryIcon(promoCode.durationDays),
                     label: t('expiration_date'),
-                    value: t('lifetime'),
+                    value: _formatDuration(promoCode.durationDays),
                     valueColor: const Color(0xFFFFD700),
                   ),
                 ],
@@ -234,6 +232,39 @@ class SuccessPromoDialog extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  IconData _getExpiryIcon(num? durationDays) {
+    if (durationDays == null || durationDays <= 0) {
+      return Icons.all_inclusive_rounded;
+    }
+    return Icons.timer_outlined;
+  }
+
+  String _formatDuration(num? durationDays) {
+    if (durationDays == null || durationDays <= 0) {
+      return t('lifetime');
+    }
+
+    final totalMinutes = (durationDays * 24 * 60).round();
+    if (totalMinutes < 60) {
+      return '$totalMinutes phút';
+    }
+
+    final totalHours = (durationDays * 24).round();
+    if (totalHours < 24) {
+      return '$totalHours giờ';
+    }
+
+    final days = durationDays.round();
+    if (days == 1) return '1 ngày';
+    if (days < 30) return '$days ngày';
+    if (days < 365) {
+      final months = (days / 30).round();
+      return '$months tháng';
+    }
+    final years = (days / 365).round();
+    return '$years năm';
   }
 
   Widget _buildDetailRow({

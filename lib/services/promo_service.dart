@@ -9,10 +9,12 @@ enum PromoType { premium, giftEffect, testMode, admin }
 
 class PromoCode {
   final String code;
-  final DateTime expirationDate; // UTC time
+  final DateTime expirationDate; // ngày mã hết hạn để nhập (UTC)
   final String description;
   final PromoType type;
   final String? unlockedEffectId;
+  final DateTime? activationExpiryDate; // ngày người dùng hết quyền (nếu có thời hạn)
+  final num? durationDays; // số ngày hiệu lực
 
   const PromoCode({
     required this.code,
@@ -20,6 +22,8 @@ class PromoCode {
     required this.description,
     this.type = PromoType.premium,
     this.unlockedEffectId,
+    this.activationExpiryDate,
+    this.durationDays,
   });
 
   bool isExpired(DateTime currentNetworkTime) {
@@ -177,6 +181,8 @@ class PromoService {
                 ? PromoType.premium 
                 : (type == 'testMode' ? PromoType.testMode : (type == 'admin' ? PromoType.admin : PromoType.giftEffect)),
             unlockedEffectId: effectId,
+            activationExpiryDate: expiryDate,
+            durationDays: durationDays,
           ),
         );
       }

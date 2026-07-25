@@ -217,13 +217,25 @@ class StorageService {
     }
   }
 
+  /// Kiểm tra mã đã dùng chưa: ưu tiên kiểm tra trên Firebase, fallback về local nếu offline
   Future<bool> isPromoCodeUsed(String code) async {
+    // 1. Kiểm tra trên Firebase (chuẩn)
+    try {
+      return await AppFirebaseService().isPromoCodeUsed(code);
+    } catch (_) {}
+    // 2. Fallback: kiểm tra local (khi offline)
     final prefs = await SharedPreferences.getInstance();
     final usedCodes = prefs.getStringList('used_promo_codes') ?? [];
     return usedCodes.contains(code.toUpperCase());
   }
 
+  /// Đánh dấu mã đã dùng: lưu lên Firebase + cache local dự phòng offline
   Future<void> markPromoCodeAsUsed(String code) async {
+    // 1. Lưu lên Firebase
+    try {
+      await AppFirebaseService().markPromoCodeAsUsed(code);
+    } catch (_) {}
+    // 2. Cache local (dự phòng khi offline)
     final prefs = await SharedPreferences.getInstance();
     final usedCodes = prefs.getStringList('used_promo_codes') ?? [];
     if (!usedCodes.contains(code.toUpperCase())) {

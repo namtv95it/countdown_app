@@ -295,6 +295,37 @@ class AppFirebaseService {
     }
   }
 
+  /// Kiểm tra xem user đã sử dụng mã này chưa (dựa vào Firebase)
+  Future<bool> isPromoCodeUsed(String code) async {
+    if (_currentUser == null) return false;
+    try {
+      final doc = await _firestore
+          .collection('users')
+          .doc(_currentUser!.uid)
+          .get(const GetOptions(source: Source.server));
+      if (doc.exists && doc.data() != null) {
+        final usedCodes = List<String>.from(doc.data()!['used_promo_codes'] ?? []);
+        return usedCodes.contains(code.toUpperCase());
+      }
+    } catch (e) {
+      debugPrint('Error checking used promo code on Firebase: $e');
+    }
+    return false;
+  }
+
+  /// Đánh dấu mã đã được sử dụng bởi user này trên Firebase
+  Future<void> markPromoCodeAsUsed(String code) async {
+    if (_currentUser == null) return;
+    try {
+      await _firestore.collection('users').doc(_currentUser!.uid).set({
+        'used_promo_codes': FieldValue.arrayUnion([code.toUpperCase()]),
+        'last_active': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('Error marking promo code as used on Firebase: $e');
+    }
+  }
+
   /// Đồng bộ tính năng đã mở khóa lên Cloud cho User hiện tại
   Future<void> syncUnlockedFeature(String featureId, [DateTime? expiryDate]) async {
     if (_currentUser == null) return;
@@ -306,7 +337,9 @@ class AppFirebaseService {
       };
       
       if (expiryDate != null) {
-        dataToUpdate['expirations.$featureId'] = Timestamp.fromDate(expiryDate);
+        dataToUpdate['expirations'] = {
+          featureId: Timestamp.fromDate(expiryDate)
+        };
       }
       
       await _firestore.collection('users').doc(_currentUser!.uid).set(
@@ -344,7 +377,10 @@ class AppFirebaseService {
       final data = doc.data()!;
       if (data.containsKey('unlocked_features')) {
         List<dynamic> features = data['unlocked_features'];
-        Map<String, dynamic> expirations = data['expirations'] ?? {};
+        Map<String, dynamic> expirations = {};
+        if (data['expirations'] is Map) {
+          expirations = Map<String, dynamic>.from(data['expirations']);
+        }
         
         for (var feature in features) {
           final fStr = feature.toString();

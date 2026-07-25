@@ -396,6 +396,61 @@ class _SettingsScreenState extends State<SettingsScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Banner mời đăng nhập cho người dùng ẩn danh
+              if (AppFirebaseService().isAnonymous) ...[
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.info_outline_rounded, color: Colors.amber, size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          t('sign_in_to_save_benefits'),
+                          style: GoogleFonts.quicksand(
+                            color: Colors.amber,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      GestureDetector(
+                        onTap: () async {
+                          final result = await AppFirebaseService().signInWithGoogle();
+                          if (!context.mounted) return;
+                          setDialogState(() {});
+                          if (result == GoogleSignInResult.success) {
+                            _showMessage(t('sign_in_success'));
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.amber,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            t('sign_in'),
+                            style: GoogleFonts.quicksand(
+                              color: Colors.black,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               Text(
                 t('gift_code_instruction'),
                 style: GoogleFonts.quicksand(color: Colors.white70, fontSize: 13),
@@ -565,21 +620,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
 
     // Anonymous: show sign in button
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildListTile(
-          title: t('anonymous_user'),
-          subtitle: t('anonymous_user_desc'),
-          trailing: const Icon(Icons.person_outline_rounded, color: Colors.white54, size: 22),
-        ),
-        const SizedBox(height: 10),
-        SizedBox(
-          width: double.infinity,
-          child: GoogleSignInButton(
-            isLoading: _isSigningIn,
-            text: t('sign_in_google'),
-            onPressed: () async {
+    return _buildListTile(
+      title: t('anonymous_user'),
+      subtitle: t('anonymous_user_desc'),
+      trailing: _isSigningIn
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white70),
+            )
+          : Container(
+              width: 32,
+              height: 32,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+              ),
+              padding: const EdgeInsets.all(6),
+              child: Image.network(
+                'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/120px-Google_%22G%22_logo.svg.png',
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => const Icon(Icons.g_mobiledata, color: Color(0xFF4285F4), size: 20),
+              ),
+            ),
+      onTap: _isSigningIn
+          ? null
+          : () async {
               setState(() => _isSigningIn = true);
               final result = await auth.signInWithGoogle();
               setState(() => _isSigningIn = false);
@@ -590,9 +656,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _showMessage(t('sign_in_error'));
               }
             },
-          ),
-        ),
-      ],
     );
   }
 
