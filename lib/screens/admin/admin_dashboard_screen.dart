@@ -98,7 +98,7 @@ class AdminDashboardScreen extends StatelessWidget {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(isSuccess
-                              ? '✅ Nâng cấp thành công $count danh mục! Cache đã được xóa.'
+                              ? '✅ Nâng cấp thành công!.'
                               : '❌ Lỗi: $result'),
                           backgroundColor: isSuccess ? Colors.green : Colors.red,
                         ),
