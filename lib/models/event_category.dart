@@ -4,6 +4,7 @@
 class EventCategory {
   final String id;
   final String name;
+  final String nameEn;
   final String emoji;
   final int colorValue;
   final bool canSuggestProducts;
@@ -12,11 +13,15 @@ class EventCategory {
   const EventCategory({
     required this.id,
     required this.name,
+    required this.nameEn,
     required this.emoji,
     required this.colorValue,
     this.canSuggestProducts = false,
     this.suggestedProductTypes = const [],
   });
+
+  /// Trả về tên theo ngôn ngữ
+  String getName(String lang) => lang == 'en' ? nameEn : name;
 
   /// Tìm category theo [id]. Trả về [other] nếu không tìm thấy.
   static EventCategory findById(String? id) {
@@ -68,6 +73,7 @@ class EventCategory {
   static const love = EventCategory(
     id: 'love',
     name: 'Tình yêu',
+    nameEn: 'Love',
     emoji: '💝',
     colorValue: 0xFFEC4899,
     canSuggestProducts: true,
@@ -77,6 +83,7 @@ class EventCategory {
   static const wedding = EventCategory(
     id: 'wedding',
     name: 'Cưới xin',
+    nameEn: 'Wedding',
     emoji: '💍',
     colorValue: 0xFFF472B6,
     canSuggestProducts: true,
@@ -86,6 +93,7 @@ class EventCategory {
   static const birthday = EventCategory(
     id: 'birthday',
     name: 'Sinh nhật',
+    nameEn: 'Birthday',
     emoji: '🎂',
     colorValue: 0xFF8B5CF6,
     canSuggestProducts: true,
@@ -95,6 +103,7 @@ class EventCategory {
   static const family = EventCategory(
     id: 'family',
     name: 'Gia đình',
+    nameEn: 'Family',
     emoji: '👨‍👩‍👧',
     colorValue: 0xFF14B8A6,
     canSuggestProducts: true,
@@ -104,6 +113,7 @@ class EventCategory {
   static const festival = EventCategory(
     id: 'festival',
     name: 'Lễ hội',
+    nameEn: 'Festival',
     emoji: '🎄',
     colorValue: 0xFF10B981,
     canSuggestProducts: true,
@@ -113,6 +123,7 @@ class EventCategory {
   static const education = EventCategory(
     id: 'education',
     name: 'Học tập',
+    nameEn: 'Education',
     emoji: '🎓',
     colorValue: 0xFF3B82F6,
     canSuggestProducts: true,
@@ -122,6 +133,7 @@ class EventCategory {
   static const gratitude = EventCategory(
     id: 'gratitude',
     name: 'Tri ân',
+    nameEn: 'Gratitude',
     emoji: '💐',
     colorValue: 0xFFF59E0B,
     canSuggestProducts: true,
@@ -131,6 +143,7 @@ class EventCategory {
   static const achievement = EventCategory(
     id: 'achievement',
     name: 'Thành tựu',
+    nameEn: 'Achievement',
     emoji: '🏆',
     colorValue: 0xFFEAB308,
     canSuggestProducts: true,
@@ -140,6 +153,7 @@ class EventCategory {
   static const national = EventCategory(
     id: 'national',
     name: 'Quốc gia',
+    nameEn: 'National',
     emoji: '🇻🇳',
     colorValue: 0xFFEF4444,
     canSuggestProducts: false,
@@ -148,6 +162,7 @@ class EventCategory {
   static const profession = EventCategory(
     id: 'profession',
     name: 'Nghề nghiệp',
+    nameEn: 'Profession',
     emoji: '🩺',
     colorValue: 0xFF059669,
     canSuggestProducts: false,
@@ -156,6 +171,7 @@ class EventCategory {
   static const holiday = EventCategory(
     id: 'holiday',
     name: 'Kỳ nghỉ',
+    nameEn: 'Holiday',
     emoji: '🏖️',
     colorValue: 0xFFEF4444,
     canSuggestProducts: true,
@@ -165,6 +181,7 @@ class EventCategory {
   static const midAutumn = EventCategory(
     id: 'mid_autumn',
     name: 'Trung thu',
+    nameEn: 'Mid-Autumn',
     emoji: '🥮',
     colorValue: 0xFFF59E0B,
     canSuggestProducts: true,
@@ -174,6 +191,7 @@ class EventCategory {
   static const awareness = EventCategory(
     id: 'awareness',
     name: 'Nhận thức',
+    nameEn: 'Awareness',
     emoji: '🌍',
     colorValue: 0xFF06B6D4,
     canSuggestProducts: false,
@@ -182,6 +200,7 @@ class EventCategory {
   static const other = EventCategory(
     id: 'other',
     name: 'Khác',
+    nameEn: 'Other',
     emoji: '📅',
     colorValue: 0xFF64748B,
     canSuggestProducts: false,

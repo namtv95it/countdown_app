@@ -106,7 +106,14 @@ class LocalizationService {
       'gifts': 'Quà tặng',
       'settings': 'Cài đặt',
       'passed': 'Đã qua',
-      
+
+      // Gift Screen
+      'cat_all': 'Tất cả',
+      'explore_now': 'Khám phá ngay >>',
+      'no_gifts': 'Không có món quà nào phù hợp.',
+      'no_internet_gifts': 'Vui lòng kết nối mạng để tải dữ liệu',
+      'banner_con': 'CÒN',
+
       // Settings Screen
       'language': 'Ngôn ngữ',
       'vietnamese': 'Tiếng Việt',
@@ -483,7 +490,14 @@ class LocalizationService {
       'gifts': 'Gifts',
       'settings': 'Settings',
       'passed': 'Passed',
-      
+
+      // Gift Screen
+      'cat_all': 'All',
+      'explore_now': 'Explore now >>',
+      'no_gifts': 'No matching gifts found.',
+      'no_internet_gifts': 'Please connect to the internet to load data',
+      'banner_con': 'LEFT',
+
       // Settings Screen
       'language': 'Language',
       'vietnamese': 'Tiếng Việt',

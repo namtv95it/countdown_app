@@ -570,7 +570,7 @@ class _GiftScreenState extends State<GiftScreen> with SingleTickerProviderStateM
                     children: [
                       const Icon(Icons.wifi_off, color: Colors.white54, size: 48),
                       const SizedBox(height: 16),
-                      Text('Vui lòng kết nối mạng để tải dữ liệu', style: GoogleFonts.quicksand(color: Colors.white70, fontSize: 16)),
+                      Text(LocalizationService.translate('no_internet_gifts'), style: GoogleFonts.quicksand(color: Colors.white70, fontSize: 16)),
                     ],
                   ),
                 );
@@ -590,7 +590,7 @@ class _GiftScreenState extends State<GiftScreen> with SingleTickerProviderStateM
 
               if (gifts.isEmpty) {
                 return Center(
-                  child: Text('Không có món quà nào phù hợp.', style: GoogleFonts.quicksand(color: Colors.white54)),
+                  child: Text(LocalizationService.translate('no_gifts'), style: GoogleFonts.quicksand(color: Colors.white54)),
                 );
               }
 
@@ -701,7 +701,7 @@ class _GiftScreenState extends State<GiftScreen> with SingleTickerProviderStateM
                         FadeTransition(
                           opacity: _blinkAnimation,
                           child: Text(
-                            'Khám phá ngay >>',
+                            LocalizationService.translate('explore_now'),
                             style: GoogleFonts.quicksand(
                               color: Colors.yellowAccent,
                               fontWeight: FontWeight.w800,
@@ -723,7 +723,7 @@ class _GiftScreenState extends State<GiftScreen> with SingleTickerProviderStateM
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          'CÒN',
+                          LocalizationService.translate('banner_con'),
                           style: GoogleFonts.quicksand(
                             color: Colors.white70,
                             fontWeight: FontWeight.w700,
@@ -744,7 +744,7 @@ class _GiftScreenState extends State<GiftScreen> with SingleTickerProviderStateM
                             ),
                             const SizedBox(width: 2),
                             Text(
-                              'NGÀY',
+                              LocalizationService.translate('days').toUpperCase(),
                               style: GoogleFonts.quicksand(
                                 color: Colors.white70,
                                 fontWeight: FontWeight.w600,
@@ -789,8 +789,9 @@ class _GiftScreenState extends State<GiftScreen> with SingleTickerProviderStateM
   }
 
   Widget _buildCategoryFilterBar() {
+    final lang = LocalizationService.languageNotifier.value;
     final categories = EventCategory.all.where((c) => c.canSuggestProducts).toList();
-    
+
     return Container(
       height: 46,
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -798,8 +799,8 @@ class _GiftScreenState extends State<GiftScreen> with SingleTickerProviderStateM
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
-          _buildFilterChip('all', 'Tất cả', null, const Color(0xFF8B5CF6)),
-          ...categories.map((c) => _buildFilterChip(c.id, c.name, c.emoji, Color(c.colorValue))),
+          _buildFilterChip('all', LocalizationService.translate('cat_all'), null, const Color(0xFF8B5CF6)),
+          ...categories.map((c) => _buildFilterChip(c.id, c.getName(lang), c.emoji, Color(c.colorValue))),
         ],
       ),
     );
