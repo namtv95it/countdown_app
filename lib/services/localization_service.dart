@@ -154,7 +154,19 @@ class LocalizationService {
       'gift_code_title': 'Nhập Gift Code',
       'gift_code_instruction': 'Nhập mã quà tặng VIP để mở khóa Premium hoặc Gift Code để mở hiệu ứng đặc biệt:',
       'activate': 'Kích hoạt',
-      
+
+      // Account / Google Sign-In
+      'account': 'Tài khoản',
+      'anonymous_user': 'Người dùng ẩn danh',
+      'anonymous_user_desc': 'Đăng nhập Google để lưu & khôi phục dữ liệu khi đổi máy',
+      'sign_in_google': 'Đăng nhập với Google',
+      'sign_out': 'Đăng xuất',
+      'sign_out_confirm': 'Bạn có chắc muốn đăng xuất không? Dữ liệu tài khoản vẫn được giữ nguyên.',
+      'signing_in': 'Đang đăng nhập...',
+      'sign_in_success': 'Đăng nhập thành công!',
+      'sign_in_error': 'Đăng nhập thất bại. Vui lòng thử lại.',
+      'signed_in_as': 'Đã đăng nhập với',
+
       // Detail Screen
       'event_detail': 'Chi tiết Kỷ niệm',
       'edit': 'Sửa',
@@ -538,7 +550,19 @@ class LocalizationService {
       'gift_code_title': 'Enter Gift Code',
       'gift_code_instruction': 'Enter a VIP code to unlock Premium or a Gift Code to unlock special effects:',
       'activate': 'Activate',
-      
+
+      // Account / Google Sign-In
+      'account': 'Account',
+      'anonymous_user': 'Anonymous User',
+      'anonymous_user_desc': 'Sign in with Google to save & restore data when switching devices',
+      'sign_in_google': 'Sign in with Google',
+      'sign_out': 'Sign out',
+      'sign_out_confirm': 'Are you sure you want to sign out? Your account data will be preserved.',
+      'signing_in': 'Signing in...',
+      'sign_in_success': 'Signed in successfully!',
+      'sign_in_error': 'Sign-in failed. Please try again.',
+      'signed_in_as': 'Signed in as',
+
       // Detail Screen
       'event_detail': 'Event Details',
       'edit': 'Edit',

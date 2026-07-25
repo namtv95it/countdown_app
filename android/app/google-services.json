@@ -12,7 +12,20 @@
           "package_name": "com.example.countdown_app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "730119079486-tg4qb8gs3f72sf12hug2ls43au9v443c.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.countdown_app",
+            "certificate_hash": "2695aa5798a6e8de5e91ef9866071c2e274b8edf"
+          }
+        },
+        {
+          "client_id": "730119079486-c72nisf179q35ff3mgamop42jmmeq6dk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyC9NBlTH_UStt0Y_Ex9ftwzIOYBj9dJI-I"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "730119079486-c72nisf179q35ff3mgamop42jmmeq6dk.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

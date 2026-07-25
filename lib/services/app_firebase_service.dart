@@ -1,6 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+
+enum GoogleSignInResult { success, cancelled, error }
 
 class StartupBannerItem {
   final String id;
@@ -93,22 +96,100 @@ class AppFirebaseService {
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   User? _currentUser;
   bool _isInitialized = false;
 
   User? get currentUser => _currentUser;
+  bool get isAnonymous => _currentUser?.isAnonymous ?? true;
+  bool get isSignedInWithGoogle => !isAnonymous && _currentUser != null;
+  String? get userEmail => _currentUser?.email;
+  String? get userDisplayName => _currentUser?.displayName;
+  String? get userPhotoUrl => _currentUser?.photoURL;
 
   Future<void> init() async {
     if (_isInitialized) return;
     try {
-      // Đăng nhập ẩn danh tự động nếu chưa có tài khoản
+      // Nếu đã có session (Google hoặc anonymous), dùng lại
+      final existing = _auth.currentUser;
+      if (existing != null) {
+        _currentUser = existing;
+        _isInitialized = true;
+        debugPrint('Firebase Auth: Reusing existing session uid=${existing.uid} anonymous=${existing.isAnonymous}');
+        return;
+      }
+      // Chưa có session → đăng nhập ẩn danh
       UserCredential userCredential = await _auth.signInAnonymously();
       _currentUser = userCredential.user;
       _isInitialized = true;
       debugPrint('Firebase Auth: Signed in anonymously as ${_currentUser?.uid}');
     } catch (e) {
       debugPrint('Firebase Auth Error: $e');
+    }
+  }
+
+  /// Đăng nhập Google.
+  /// - Nếu đang ẩn danh → thử link credential vào UID hiện tại (giữ dữ liệu)
+  /// - Nếu Google account đã tồn tại hoặc đang dùng Google khác → đăng nhập thẳng
+  ///   (mỗi Google account có dữ liệu riêng, không merge)
+  Future<GoogleSignInResult> signInWithGoogle() async {
+    try {
+      final googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) return GoogleSignInResult.cancelled;
+
+      final googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      if (isAnonymous) {
+        // Thử link anonymous → Google để giữ nguyên UID & dữ liệu
+        try {
+          final linked = await _currentUser!.linkWithCredential(credential);
+          _currentUser = linked.user;
+          debugPrint('Firebase Auth: Anonymous linked to Google uid=${_currentUser?.uid}');
+          return GoogleSignInResult.success;
+        } on FirebaseAuthException catch (e) {
+          if (e.code == 'credential-already-in-use') {
+            // Google account đã có UID riêng → đăng nhập vào đó
+            // Data isolation: không migrate dữ liệu anonymous sang Google account
+            await _auth.signInWithCredential(credential);
+            _currentUser = _auth.currentUser;
+            debugPrint('Firebase Auth: Signed into existing Google account uid=${_currentUser?.uid}');
+            return GoogleSignInResult.success;
+          }
+          rethrow;
+        }
+      } else {
+        // Đang dùng Google → đăng nhập vào Google account mới
+        // Data isolation: không copy dữ liệu từ account cũ
+        await _auth.signInWithCredential(credential);
+        _currentUser = _auth.currentUser;
+        debugPrint('Firebase Auth: Switched Google account uid=${_currentUser?.uid}');
+        return GoogleSignInResult.success;
+      }
+    } on FirebaseAuthException catch (e) {
+      debugPrint('Firebase Auth Google Error: ${e.code} - ${e.message}');
+      return GoogleSignInResult.error;
+    } catch (e) {
+      debugPrint('Google Sign-In Error: $e');
+      return GoogleSignInResult.error;
+    }
+  }
+
+  /// Đăng xuất → tạo phiên ẩn danh mới (dữ liệu sạch)
+  Future<void> signOut() async {
+    try {
+      await _googleSignIn.signOut();
+      await _auth.signOut();
+      // Tạo anonymous session mới — không có dữ liệu cũ
+      final cred = await _auth.signInAnonymously();
+      _currentUser = cred.user;
+      debugPrint('Firebase Auth: Signed out, new anonymous uid=${_currentUser?.uid}');
+    } catch (e) {
+      debugPrint('Firebase Auth Sign-Out Error: $e');
     }
   }
 
