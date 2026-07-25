@@ -166,6 +166,9 @@ class LocalizationService {
       'sign_in_success': 'Đăng nhập thành công!',
       'sign_in_error': 'Đăng nhập thất bại. Vui lòng thử lại.',
       'signed_in_as': 'Đã đăng nhập với',
+      'premium_price_desc': 'Giá ưu đãi: \$2.00 / Sở hữu vĩnh viễn',
+      'in_development': 'ĐANG PHÁT TRIỂN',
+      'premium_lifetime_package': 'Gói Premium Vĩnh Viễn',
 
       // Detail Screen
       'event_detail': 'Chi tiết Kỷ niệm',
@@ -562,6 +565,9 @@ class LocalizationService {
       'sign_in_success': 'Signed in successfully!',
       'sign_in_error': 'Sign-in failed. Please try again.',
       'signed_in_as': 'Signed in as',
+      'premium_price_desc': 'Special price: \$2.00 / Lifetime access',
+      'in_development': 'IN DEVELOPMENT',
+      'premium_lifetime_package': 'Lifetime Premium Package',
 
       // Detail Screen
       'event_detail': 'Event Details',

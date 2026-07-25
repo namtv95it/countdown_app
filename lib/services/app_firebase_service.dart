@@ -2,6 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/ad_service.dart';
 
 enum GoogleSignInResult { success, cancelled, error }
 
@@ -117,6 +119,7 @@ class AppFirebaseService {
         _currentUser = existing;
         _isInitialized = true;
         debugPrint('Firebase Auth: Reusing existing session uid=${existing.uid} anonymous=${existing.isAnonymous}');
+        await syncPremiumStatusOnStartup();
         return;
       }
       // Chưa có session → đăng nhập ẩn danh
@@ -124,8 +127,26 @@ class AppFirebaseService {
       _currentUser = userCredential.user;
       _isInitialized = true;
       debugPrint('Firebase Auth: Signed in anonymously as ${_currentUser?.uid}');
+      await syncPremiumStatusOnStartup();
     } catch (e) {
       debugPrint('Firebase Auth Error: $e');
+    }
+  }
+
+  /// Đồng bộ trạng thái Premium từ Firebase về Local Cache
+  Future<void> syncPremiumStatusOnStartup() async {
+    if (_currentUser == null) return;
+    try {
+      final features = await getUnlockedFeatures();
+      final hasPremium = features.contains('premium');
+      
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('is_premium_account', hasPremium);
+      AdService.isPremium = hasPremium;
+      
+      debugPrint('Firebase Auth: Synced premium status from cloud: $hasPremium');
+    } catch (e) {
+      debugPrint('Error syncing premium on startup: $e');
     }
   }
 
@@ -150,6 +171,7 @@ class AppFirebaseService {
           final linked = await _currentUser!.linkWithCredential(credential);
           _currentUser = linked.user;
           debugPrint('Firebase Auth: Anonymous linked to Google uid=${_currentUser?.uid}');
+          await syncPremiumStatusOnStartup();
           return GoogleSignInResult.success;
         } on FirebaseAuthException catch (e) {
           if (e.code == 'credential-already-in-use') {
@@ -158,6 +180,7 @@ class AppFirebaseService {
             await _auth.signInWithCredential(credential);
             _currentUser = _auth.currentUser;
             debugPrint('Firebase Auth: Signed into existing Google account uid=${_currentUser?.uid}');
+            await syncPremiumStatusOnStartup();
             return GoogleSignInResult.success;
           }
           rethrow;
@@ -168,6 +191,7 @@ class AppFirebaseService {
         await _auth.signInWithCredential(credential);
         _currentUser = _auth.currentUser;
         debugPrint('Firebase Auth: Switched Google account uid=${_currentUser?.uid}');
+        await syncPremiumStatusOnStartup();
         return GoogleSignInResult.success;
       }
     } on FirebaseAuthException catch (e) {
@@ -188,6 +212,7 @@ class AppFirebaseService {
       final cred = await _auth.signInAnonymously();
       _currentUser = cred.user;
       debugPrint('Firebase Auth: Signed out, new anonymous uid=${_currentUser?.uid}');
+      await syncPremiumStatusOnStartup();
     } catch (e) {
       debugPrint('Firebase Auth Sign-Out Error: $e');
     }
@@ -240,19 +265,18 @@ class AppFirebaseService {
     }
   }
 
-  /// Lấy danh sách các tính năng đã mở khóa của User từ Cloud
+  /// Lấy danh sách các tính năng đã mở khóa của User từ Cloud (luôn lấy từ server)
   Future<List<String>> getUnlockedFeatures() async {
     if (_currentUser == null) return [];
     
-    try {
-      final doc = await _firestore.collection('users').doc(_currentUser!.uid).get();
-      if (doc.exists && doc.data()!.containsKey('unlocked_features')) {
-        List<dynamic> features = doc.data()!['unlocked_features'];
-        return features.map((e) => e.toString()).toList();
-      }
-    } catch (e) {
-      debugPrint('Error getting unlocked features: $e');
+    // Cố gắng lấy trực tiếp từ server. Nếu rớt mạng sẽ throw Exception
+    final doc = await _firestore.collection('users').doc(_currentUser!.uid).get(const GetOptions(source: Source.server));
+    
+    if (doc.exists && doc.data() != null && doc.data()!.containsKey('unlocked_features')) {
+      List<dynamic> features = doc.data()!['unlocked_features'];
+      return features.map((e) => e.toString()).toList();
     }
+    
     return [];
   }
 

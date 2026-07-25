@@ -155,7 +155,9 @@ class SuccessPromoDialog extends StatelessWidget {
                   _buildDetailRow(
                     icon: Icons.card_giftcard_rounded,
                     label: t('activation_package'),
-                    value: promoCode.description,
+                    value: promoCode.type == PromoType.premium
+                        ? t('premium_lifetime_package')
+                        : promoCode.description,
                     valueColor: const Color(0xFF10B981),
                   ),
                   const Divider(color: Colors.white12, height: 16),

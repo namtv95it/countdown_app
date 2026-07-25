@@ -421,7 +421,7 @@ class _PremiumDialogState extends State<PremiumDialog> {
                   ),
                 ),
                 child: Text(
-                  'Giá ưu đãi: \$2.00 / Sở hữu vĩnh viễn',
+                  t('premium_price_desc'),
                   style: GoogleFonts.quicksand(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
@@ -497,7 +497,7 @@ class _PremiumDialogState extends State<PremiumDialog> {
                               const Icon(Icons.build_circle_rounded, color: Colors.white70),
                               const SizedBox(width: 8),
                               Text(
-                                'ĐANG PHÁT TRIỂN',
+                                t('in_development'),
                                 style: GoogleFonts.quicksand(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w900,
