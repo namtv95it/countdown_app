@@ -46,4 +46,20 @@ Bảng (collection) `promo_codes` được dùng để lưu trữ tất cả cá
 
 ### `unlockedEffectId` (String) - *Bắt buộc nếu type là "giftEffect"*
 - **Ý nghĩa:** Tên (ID) của hiệu ứng mà mã này sẽ tặng.
-- **Ví dụ:** `"snow"`, `"hearts"`, `"fireworks"`, `"stars"`, v.v...
+- **Ví dụ:**
+      'hearts',
+      'bubbles',
+      'snow',
+      'stars',
+      'meteor',
+      'rain',
+      'rain_ripple',
+      'rainbow',
+      'waves',
+      'leaves',
+      'sunset_birds',
+      'aurora',
+      'fireflies',
+      'fireworks',
+      'cherry_blossom',
+      'galaxy',
