@@ -2117,37 +2117,27 @@ class _CarouselBannerDialog extends StatefulWidget {
 }
 
 class _CarouselBannerDialogState extends State<_CarouselBannerDialog> {
-  late PageController _pageController;
   int _currentIndex = 0;
   Timer? _timer;
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController();
     _startTimer();
   }
 
   void _startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 4), (timer) {
       if (!mounted) return;
-      if (_currentIndex < widget.items.length - 1) {
-        _currentIndex++;
-      } else {
-        _currentIndex = 0;
-      }
-      _pageController.animateToPage(
-        _currentIndex,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
+      setState(() {
+        _currentIndex = (_currentIndex + 1) % widget.items.length;
+      });
     });
   }
 
   @override
   void dispose() {
     _timer?.cancel();
-    _pageController.dispose();
     super.dispose();
   }
 
@@ -2157,84 +2147,84 @@ class _CarouselBannerDialogState extends State<_CarouselBannerDialog> {
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       elevation: 0,
-      child: Stack(
-        clipBehavior: Clip.none,
-        alignment: Alignment.center,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Banner Image Carousel
-          ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.7,
-              maxWidth: MediaQuery.of(context).size.width * 0.9,
-            ),
-            child: PageView.builder(
-              controller: _pageController,
-              onPageChanged: (index) {
+          // Banner Image (with AnimatedSwitcher for carousel)
+          GestureDetector(
+            onHorizontalDragEnd: (details) {
+              if (details.primaryVelocity == null) return;
+              if (details.primaryVelocity! < 0) { // swipe left -> next
+                _timer?.cancel();
                 setState(() {
-                  _currentIndex = index;
+                  _currentIndex = (_currentIndex + 1) % widget.items.length;
                 });
-              },
-              itemCount: widget.items.length,
-              itemBuilder: (context, index) {
-                final item = widget.items[index];
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.pop(context);
-                    widget.onAction(item);
-                  },
-                  child: Image.network(
-                    item.imageUrl,
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
-                  ),
-                );
-              },
-            ),
-          ),
-          // Pagination dots — ở outer Stack để không bị clip
-          Positioned(
-            bottom: -24,
-            left: 0,
-            right: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                widget.items.length,
-                (index) => AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  width: _currentIndex == index ? 20 : 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: _currentIndex == index ? const Color(0xFFEC4899) : Colors.white54,
-                    borderRadius: BorderRadius.circular(4),
-                    boxShadow: _currentIndex == index
-                        ? [const BoxShadow(color: Color(0xFFEC4899), blurRadius: 4, spreadRadius: -2)]
-                        : null,
-                  ),
+                _startTimer();
+              } else if (details.primaryVelocity! > 0) { // swipe right -> prev
+                _timer?.cancel();
+                setState(() {
+                  _currentIndex = (_currentIndex - 1 + widget.items.length) % widget.items.length;
+                });
+                _startTimer();
+              }
+            },
+            onTap: () {
+              Navigator.pop(context);
+              widget.onAction(widget.items[_currentIndex]);
+            },
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.7,
+                maxWidth: MediaQuery.of(context).size.width * 0.9,
+              ),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                transitionBuilder: (Widget child, Animation<double> animation) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+                child: Image.network(
+                  widget.items[_currentIndex].imageUrl,
+                  key: ValueKey<int>(_currentIndex),
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
                 ),
               ),
             ),
           ),
-          // Close button at bottom center (below dots)
-          Positioned(
-            bottom: -72,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.6),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 1.5),
-                  ),
-                  child: const Icon(Icons.close, color: Colors.white, size: 20),
+          const SizedBox(height: 16),
+          // Pagination dots
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              widget.items.length,
+              (index) => AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                width: _currentIndex == index ? 20 : 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: _currentIndex == index ? const Color(0xFFEC4899) : Colors.white54,
+                  borderRadius: BorderRadius.circular(4),
+                  boxShadow: _currentIndex == index
+                      ? [const BoxShadow(color: Color(0xFFEC4899), blurRadius: 4, spreadRadius: -2)]
+                      : null,
                 ),
               ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          // Close button
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.6),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 1.5),
+              ),
+              child: const Icon(Icons.close, color: Colors.white, size: 20),
             ),
           ),
         ],
