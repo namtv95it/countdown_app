@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'admin_gift_dashboard.dart';
 import 'admin_special_occasions_dashboard.dart';
 import 'admin_categories_dashboard.dart';
+import 'admin_promo_codes_dashboard.dart';
 import '../../services/sync_service.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
@@ -67,6 +68,20 @@ class AdminDashboardScreen extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const AdminCategoriesDashboard()),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            _buildAdminCard(
+              context,
+              title: 'Quản lý Promo Codes',
+              subtitle: 'Tạo, sửa, xóa mã quà tặng, Premium, ẩn...',
+              icon: Icons.qr_code_rounded,
+              color: const Color(0xFFF59E0B),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AdminPromoCodesDashboard()),
                 );
               },
             ),
