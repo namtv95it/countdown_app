@@ -57,3 +57,13 @@
     content: counter(gift-counter);
 }
 
+/* Style select options to prevent white-on-white text issues */
+select option {
+    background-color: #ffffff;
+    color: #1f2937; /* gray-800 */
+}
+.dark select option {
+    background-color: #1a1a2e; /* darkcard */
+    color: #f3f4f6; /* gray-100 */
+}
+
