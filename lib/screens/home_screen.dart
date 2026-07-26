@@ -1561,6 +1561,14 @@ class _HomeScreenState extends State<HomeScreen>
                                                     setState(() { _isFullscreenMode = true; _showFullscreenExitButton = false; _customCountdownTarget = null; });
                                                   }
                                                 },
+                                                onFailed: () {
+                                                  if (mounted) {
+                                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                                      content: Text('Không tải được quảng cáo. Vui lòng thử lại sau.', style: GoogleFonts.quicksand()),
+                                                      backgroundColor: const Color(0xFFEF4444),
+                                                    ));
+                                                  }
+                                                },
                                               );
                                             },
                                           ),

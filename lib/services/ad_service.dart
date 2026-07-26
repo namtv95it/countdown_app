@@ -82,7 +82,12 @@ class AdService {
   }
 
   // Hiển thị quảng cáo có thưởng (Rewarded Ad)
-  static void showRewardedAd({required VoidCallback onEarnedReward}) {
+  // [onEarnedReward] chỉ được gọi khi người dùng xem đủ quảng cáo.
+  // [onFailed] (tuỳ chọn) được gọi khi quảng cáo không tải được để UI thông báo lỗi.
+  static void showRewardedAd({
+    required VoidCallback onEarnedReward,
+    VoidCallback? onFailed,
+  }) {
     if (kIsWeb || isPremium) {
       onEarnedReward();
       return;
@@ -98,6 +103,8 @@ class AdService {
             },
             onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
               ad.dispose();
+              debugPrint('RewardedAd failed to show: $error');
+              onFailed?.call();
             },
           );
           ad.show(onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
@@ -106,8 +113,8 @@ class AdService {
         },
         onAdFailedToLoad: (LoadAdError error) {
           debugPrint('RewardedAd failed to load: $error');
-          // Fallback: nếu lỗi mạng hoặc không có ads, vẫn cho họ phần thưởng
-          onEarnedReward();
+          // KHÔNG trao thưởng khi quảng cáo thất bại — người dùng cần xem quảng cáo thật.
+          onFailed?.call();
         },
       ),
     );

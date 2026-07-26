@@ -183,6 +183,14 @@ class _ThemePickerSheetState extends State<ThemePickerSheet> with SingleTickerPr
                         ));
                       }
                     },
+                    onFailed: () {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text('Không tải được quảng cáo. Vui lòng thử lại sau.', style: GoogleFonts.quicksand()),
+                          backgroundColor: const Color(0xFFEF4444),
+                        ));
+                      }
+                    },
                   );
                 },
               ),
