@@ -307,24 +307,13 @@ class _HomeScreenState extends State<HomeScreen>
           _navigateToOccasion(item.occasionId!);
         } else {
           // Navigate to gift tab (with optional category filter)
-          setState(() => _currentTab = 2);
-          _pageController.animateToPage(2, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
-          // If there's a category filter, we push the gift screen directly with it
-          if (item.giftCategoryId != null && item.giftCategoryId!.isNotEmpty) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => GiftScreen(
-                      initialCategoryId: item.giftCategoryId,
-                      isPremium: false,
-                    ),
-                  ),
-                );
-              }
-            });
-          }
+          setState(() {
+            _currentTab = 2;
+            _hasVisitedGiftTab = true;
+            if (item.giftCategoryId != null && item.giftCategoryId!.isNotEmpty) {
+              _selectedGiftCategory = item.giftCategoryId;
+            }
+          });
         }
         break;
       case 'url':
@@ -366,7 +355,6 @@ class _HomeScreenState extends State<HomeScreen>
         return _CarouselBannerDialog(
           items: items,
           onAction: (item) {
-            Navigator.pop(context);
             _handleBannerAction(item);
           },
         );
