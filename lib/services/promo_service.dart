@@ -149,6 +149,22 @@ class PromoService {
         }
 
         if (type == 'premium') {
+          final isAlreadyPremium = await StorageService().getIsPremium();
+          if (isAlreadyPremium) {
+            final currentExpiry = await StorageService().getPremiumExpiry();
+            if (currentExpiry == null) {
+              return const PromoResult(
+                success: false,
+                message: 'Tài khoản của bạn đã là Premium vĩnh viễn!',
+              );
+            } else if (durationDays != null && durationDays > 0) {
+              // Cộng dồn thời hạn: Lấy thời hạn hiện tại cộng thêm số ngày của mã mới
+              expiryDate = currentExpiry.add(Duration(milliseconds: (durationDays * 86400000).toInt()));
+            } else {
+              // Nâng cấp lên vĩnh viễn
+              expiryDate = null;
+            }
+          }
           await StorageService().setPremium(true, expiryDate);
           AdService.isPremium = true;
         } else if (type == 'giftEffect' && effectId != null) {

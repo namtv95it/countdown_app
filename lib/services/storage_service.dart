@@ -88,6 +88,13 @@ class StorageService {
     return isPremium;
   }
 
+  Future<DateTime?> getPremiumExpiry() async {
+    final prefs = await SharedPreferences.getInstance();
+    final expiryStr = prefs.getString('${_premiumKey}_expiry');
+    if (expiryStr == null) return null;
+    return DateTime.tryParse(expiryStr);
+  }
+
   Future<void> setPremium(bool value, [DateTime? expiry]) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_premiumKey, value);
