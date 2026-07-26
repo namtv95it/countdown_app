@@ -52,21 +52,26 @@
                 <i class="fa-solid fa-lock text-3xl text-primary"></i>
             </div>
             <h2 class="text-2xl font-bold mb-2 text-gray-900 dark:text-white">Xác Thực Quản Trị Viên</h2>
-            <p class="text-gray-500 dark:text-gray-400 mb-8 text-sm">Vui lòng nhập mã bảo mật (Password) để truy cập hệ
-                thống.</p>
+            <p class="text-gray-500 dark:text-gray-400 mb-6 text-sm">Vui lòng đăng nhập tài khoản quản trị để truy cập hệ thống.</p>
+
+            <div class="relative mb-4">
+                <i class="fa-solid fa-envelope absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <input type="email" id="admin-email" placeholder="Email quản trị viên..."
+                    class="w-full pl-12 pr-4 py-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary transition-all">
+            </div>
 
             <div class="relative mb-6">
                 <i class="fa-solid fa-key absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                <input type="password" id="admin-pwd" placeholder="Nhập mã bảo mật..."
+                <input type="password" id="admin-pwd" placeholder="Mật khẩu..."
                     class="w-full pl-12 pr-4 py-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary transition-all">
             </div>
 
             <button id="btn-login"
                 class="w-full py-3 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-bold tracking-wider hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
-                <span>XÁC NHẬN</span>
-                <i class="fa-solid fa-arrow-right"></i>
+                <span>ĐĂNG NHẬP</span>
+                <i class="fa-solid fa-right-to-bracket"></i>
             </button>
-            <p id="login-error" class="text-red-500 mt-4 text-sm font-medium hidden">Mật khẩu không chính xác!</p>
+            <p id="login-error" class="text-red-500 mt-4 text-sm font-medium hidden">Email hoặc mật khẩu không chính xác!</p>
         </div>
     </div>
 
@@ -105,6 +110,11 @@
                     class="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 transition-colors">
                     <i class="fa-solid fa-bullhorn w-5 text-center"></i>
                     Banner Khởi Động
+                </button>
+                <button id="tab-promo-codes"
+                    class="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 transition-colors">
+                    <i class="fa-solid fa-ticket w-5 text-center"></i>
+                    Promo Codes
                 </button>
             </nav>
 
@@ -199,6 +209,11 @@
                     <button id="btn-add-new-sb-trigger"
                         class="hidden px-4 py-2 rounded-xl bg-pink-500 text-white hover:opacity-90 transition-colors text-sm font-medium flex items-center gap-2 shadow-lg shadow-pink-500/30">
                         <i class="fa-solid fa-bullhorn"></i> <span class="hidden sm:inline">Thêm Banner</span>
+                    </button>
+                    <!-- Add Promo Code -->
+                    <button id="btn-add-new-pc-trigger"
+                        class="hidden px-4 py-2 rounded-xl bg-orange-500 text-white hover:opacity-90 transition-colors text-sm font-medium flex items-center gap-2 shadow-lg shadow-orange-500/30">
+                        <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Thêm Promo Code</span>
                     </button>
                 </div>
             </header>
@@ -317,6 +332,47 @@
 
                     <!-- List Container -->
                     <div id="sb-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Items injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Tab Content: Promo Codes -->
+                <div id="view-promo-codes" class="hidden">
+                    <!-- Search & Filter Bar -->
+                    <div class="bg-white dark:bg-darkcard rounded-2xl border border-gray-200 dark:border-darkborder shadow-sm p-4 mb-6 flex flex-col sm:flex-row gap-4 justify-between items-center">
+                        <div class="relative w-full sm:max-w-md">
+                            <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" id="pc-search-input" placeholder="Tìm kiếm mã code..."
+                                class="w-full pl-12 pr-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary transition-all text-sm">
+                        </div>
+                        <div class="flex gap-2 w-full sm:w-auto">
+                            <select id="pc-filter-type" class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary transition-all text-sm cursor-pointer">
+                                <option value="all">Tất cả loại</option>
+                                <option value="premium">Premium</option>
+                                <option value="giftEffect">Hiệu ứng (Gift)</option>
+                                <option value="testMode">Test Mode</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div id="pc-empty-state"
+                        class="hidden text-center py-16 bg-white dark:bg-darkcard rounded-2xl border border-gray-200 dark:border-darkborder shadow-sm mb-6">
+                        <div
+                            class="w-24 h-24 mx-auto bg-gray-100 dark:bg-white/5 rounded-full flex items-center justify-center mb-4">
+                            <i class="fa-solid fa-ticket text-4xl text-gray-400"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Chưa có promo code nào</h3>
+                        <p class="text-gray-500 dark:text-gray-400 mb-6">Hãy thêm promo code để bắt đầu.</p>
+                        <button id="btn-add-pc-empty"
+                            class="px-6 py-2.5 rounded-xl bg-orange-500 text-white hover:bg-opacity-90 font-medium">
+                            Thêm Promo Code Ngay
+                        </button>
+                    </div>
+
+                    <!-- List Container -->
+                    <div id="pc-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <!-- Items injected by JS -->
                     </div>
                 </div>
@@ -927,6 +983,104 @@
         </div>
     </div>
 
+    <!-- Modal Form (Add/Edit Promo Code) -->
+    <div id="pc-modal"
+        class="modal-overlay hidden fixed inset-0 bg-gray-900/60 dark:bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div
+            class="modal-content bg-white dark:bg-darkcard w-full max-w-xl rounded-2xl shadow-2xl border border-gray-200 dark:border-darkborder max-h-[90vh] flex flex-col transform scale-95 opacity-0 transition-all duration-300">
+
+            <div
+                class="px-6 py-4 border-b border-gray-200 dark:border-darkborder flex justify-between items-center sticky top-0 bg-white dark:bg-darkcard z-10 rounded-t-2xl">
+                <h3 id="modal-title-pc"
+                    class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <i class="fa-solid fa-ticket text-orange-500"></i> <span>Thêm Promo Code Mới</span>
+                </h3>
+                <button
+                    class="close-modal w-8 h-8 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 flex items-center justify-center text-gray-500 dark:text-gray-400 transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto custom-scrollbar flex-1">
+                <form id="pc-form" class="space-y-5">
+                    <input type="hidden" id="pc-doc-id">
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Mã Promo * (Tự động in hoa, tối thiểu 5 ký tự)</label>
+                        <input type="text" id="pc-code" required placeholder="Ví dụ: PREMIUM2026"
+                            class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary transition-all">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Loại phần quà *</label>
+                        <select id="pc-type" required
+                            class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary transition-all appearance-none cursor-pointer">
+                            <option value="premium">Premium</option>
+                            <option value="giftEffect">Hiệu ứng (Gift Effect)</option>
+                            <option value="testMode">Chế độ Test (Test Mode)</option>
+                            <option value="admin">Admin Mode</option>
+                        </select>
+                    </div>
+
+                    <div id="pc-effect-wrap" class="hidden">
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Hiệu ứng mở khóa *</label>
+                        <select id="pc-effectId"
+                            class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary transition-all appearance-none cursor-pointer">
+                            <option value="hearts">hearts</option>
+                            <option value="bubbles">bubbles</option>
+                            <option value="snow">snow</option>
+                            <option value="stars">stars</option>
+                            <option value="meteor">meteor</option>
+                            <option value="rain">rain</option>
+                            <option value="rain_ripple">rain_ripple</option>
+                            <option value="rainbow">rainbow</option>
+                            <option value="waves">waves</option>
+                            <option value="leaves">leaves</option>
+                            <option value="sunset_birds">sunset_birds</option>
+                            <option value="aurora">aurora</option>
+                            <option value="fireflies">fireflies</option>
+                            <option value="fireworks">fireworks</option>
+                            <option value="cherry_blossom">cherry_blossom</option>
+                            <option value="galaxy">galaxy</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Mô tả (Hiển thị khi thành công)</label>
+                        <input type="text" id="pc-description" placeholder="Ví dụ: Premium vĩnh viễn"
+                            class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary transition-all">
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Giới hạn số lượt dùng (Trống = vô hạn)</label>
+                            <input type="number" id="pc-maxUsage" min="1" placeholder="Ví dụ: 50"
+                                class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Số ngày hiệu lực phần quà (Trống = vĩnh viễn)</label>
+                            <input type="number" step="any" id="pc-durationDays" min="0" placeholder="Ví dụ: 30 hoặc 0.5"
+                                class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary transition-all">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Thời hạn nhập mã (Hết hạn không dùng được nữa)</label>
+                        <input type="datetime-local" id="pc-expirationDate"
+                            class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary transition-all">
+                    </div>
+                </form>
+            </div>
+
+            <div class="px-6 py-4 border-t border-gray-200 dark:border-darkborder flex justify-end gap-3 sticky bottom-0 bg-white dark:bg-darkcard z-10 rounded-b-2xl">
+                <button class="close-modal px-5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm font-bold">Hủy</button>
+                <button id="btn-save-pc" class="px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold transition-colors text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-floppy-disk"></i> Lưu Lại
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Form (Change Password) -->
     <div id="pwd-modal"
         class="modal-overlay hidden fixed inset-0 bg-gray-900/60 dark:bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -983,6 +1137,7 @@
 
     <!-- Firebase JS SDK (v9 compat) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <!-- SortableJS for Drag and Drop -->

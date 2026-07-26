@@ -85,28 +85,27 @@ document.getElementById('f-imageUrl').addEventListener('input', (e) => {
 });
 
 // ==========================================
-// 3. AUTHENTICATION (SHA-256 HASHING)
+// 3. AUTHENTICATION
 // ==========================================
-async function sha256(message) {
-    const msgBuffer = new TextEncoder().encode(message);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-document.getElementById('admin-pwd').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        btnLogin.click();
+['admin-email', 'admin-pwd'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+        el.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                btnLogin.click();
+            }
+        });
     }
 });
 
 btnLogin.addEventListener('click', async () => {
+    const email = document.getElementById('admin-email').value.trim();
     const pwd = document.getElementById('admin-pwd').value;
     const errorEl = document.getElementById('login-error');
 
-    if (!pwd) {
-        errorEl.textContent = "Vui lòng nhập mật khẩu!";
+    if (!email || !pwd) {
+        errorEl.textContent = "Vui lòng nhập Email và Mật khẩu!";
         errorEl.classList.remove('hidden');
         errorEl.style.display = 'block';
         return;
@@ -116,42 +115,26 @@ btnLogin.addEventListener('click', async () => {
     btnLogin.disabled = true;
 
     try {
-        const hash = await sha256(pwd);
-        const doc = await db.collection('config').doc('admin').get();
-
-        if (doc.exists && doc.data().passwordHash === hash) {
-            // Success: store token expiring at midnight tonight
-            const now = new Date();
-            const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
-            localStorage.setItem('adminToken', midnight.getTime().toString());
-            errorEl.classList.add('hidden');
-            errorEl.style.display = 'none';
-            showDashboard();
-        } else {
-            errorEl.textContent = "Mật khẩu không chính xác!";
-            errorEl.classList.remove('hidden');
-            errorEl.style.display = 'block';
-        }
+        await firebase.auth().signInWithEmailAndPassword(email, pwd);
+        errorEl.classList.add('hidden');
+        errorEl.style.display = 'none';
     } catch (error) {
-        errorEl.textContent = "Lỗi kết nối Firebase. Hãy kiểm tra lại Config.";
+        errorEl.textContent = "Email hoặc mật khẩu không chính xác!";
         errorEl.classList.remove('hidden');
         errorEl.style.display = 'block';
         console.error(error);
     }
 
-    btnLogin.innerHTML = '<span>XÁC NHẬN</span> <i class="fa-solid fa-arrow-right"></i>';
+    btnLogin.innerHTML = '<span>ĐĂNG NHẬP</span> <i class="fa-solid fa-right-to-bracket"></i>';
     btnLogin.disabled = false;
 });
 
 menuLogout.addEventListener('click', (e) => {
     e.preventDefault();
     dropdownMenu.classList.add('hidden');
-    localStorage.removeItem('adminToken');
-    dashboardScreen.classList.add('hidden');
-    dashboardScreen.classList.remove('flex');
-    lockScreen.classList.remove('hidden');
-    lockScreen.classList.add('flex');
-    document.getElementById('admin-pwd').value = '';
+    firebase.auth().signOut().catch(err => {
+        showToast("Lỗi khi đăng xuất", true);
+    });
 });
 
 // Dropdown logic
@@ -195,22 +178,21 @@ btnSavePwd.addEventListener('click', async () => {
     btnSavePwd.disabled = true;
 
     try {
-        const oldHash = await sha256(oldPwd);
-        const docRef = db.collection('config').doc('admin');
-        const doc = await docRef.get();
-
-        if (doc.exists && doc.data().passwordHash === oldHash) {
-            const newHash = await sha256(newPwd);
-            await docRef.update({ passwordHash: newHash });
+        const user = firebase.auth().currentUser;
+        if (user) {
+            const credential = firebase.auth.EmailAuthProvider.credential(user.email, oldPwd);
+            await user.reauthenticateWithCredential(credential);
+            await user.updatePassword(newPwd);
+            
             showToast("Đổi mật khẩu thành công!");
             pwdModal.querySelector('.modal-content').classList.replace('scale-100', 'scale-95');
             pwdModal.querySelector('.modal-content').classList.replace('opacity-100', 'opacity-0');
             setTimeout(() => pwdModal.classList.add('hidden'), 300);
         } else {
-            showToast("Mật khẩu cũ không chính xác!", true);
+            showToast("Không tìm thấy thông tin phiên đăng nhập!", true);
         }
     } catch (e) {
-        showToast("Lỗi kết nối Firebase!", true);
+        showToast("Lỗi khi đổi mật khẩu: " + (e.message || "Kiểm tra lại mật khẩu cũ"), true);
         console.error(e);
     }
 
@@ -236,19 +218,14 @@ btnThemeToggle.addEventListener('click', () => {
     }
 });
 
-// Check auth on load (token expires at midnight)
-(function checkAuth() {
-    const token = localStorage.getItem('adminToken');
-    if (token) {
-        const expiry = parseInt(token, 10);
-        if (Date.now() < expiry) {
-            showDashboard();
-            return;
-        } else {
-            localStorage.removeItem('adminToken'); // expired, require re-login
-        }
+// Check auth on load using Firebase Auth SDK
+firebase.auth().onAuthStateChanged((user) => {
+    if (user) {
+        showDashboard();
+    } else {
+        hideDashboard();
     }
-})();
+});
 
 function showDashboard() {
     lockScreen.classList.add('hidden');
@@ -258,6 +235,17 @@ function showDashboard() {
     loadOccasions();
     loadGifts();
     loadCategories();
+}
+
+function hideDashboard() {
+    dashboardScreen.classList.add('hidden');
+    dashboardScreen.classList.remove('flex');
+    lockScreen.classList.remove('hidden');
+    lockScreen.classList.add('flex');
+    const emailEl = document.getElementById('admin-email');
+    const pwdEl = document.getElementById('admin-pwd');
+    if (emailEl) emailEl.value = '';
+    if (pwdEl) pwdEl.value = '';
 }
 
 async function loadOccasions() {
@@ -1804,29 +1792,44 @@ window.deleteCategory = async (id) => {
 // ==========================================
 // CATEGORY TAB NAVIGATION FIX
 // ==========================================
+// ==========================================
+// CATEGORY TAB NAVIGATION FIX & PROMO CODES TAB NAVIGATION
+// ==========================================
 document.addEventListener('click', (e) => {
     const tabCategories = document.getElementById('tab-categories');
     const viewCategories = document.getElementById('view-categories');
-    if (!tabCategories || !viewCategories) return;
+    const tabPromoCodes = document.getElementById('tab-promo-codes');
+    const viewPromoCodes = document.getElementById('view-promo-codes');
+    
+    if (!tabCategories || !viewCategories || !tabPromoCodes || !viewPromoCodes) return;
 
     const isTabCategories = e.target.closest('#tab-categories');
     const isTabGifts = e.target.closest('#tab-gifts');
     const isTabOccasions = e.target.closest('#tab-occasions');
     const isTabBanner = e.target.closest('#tab-startup-banner');
+    const isTabPromoCodes = e.target.closest('#tab-promo-codes');
 
-    if (isTabGifts || isTabOccasions || isTabBanner) {
-        // One of the other tabs was clicked, so we must hide categories
+    const inactive = "w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 transition-colors";
+
+    if (isTabGifts || isTabOccasions || isTabBanner || isTabPromoCodes) {
         viewCategories.classList.add('hidden');
-        tabCategories.className = "w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 transition-colors";
+        tabCategories.className = inactive;
         const btnCat = document.getElementById('btn-add-new-cat-trigger');
         if(btnCat) btnCat.classList.add('hidden');
-    } else if (isTabCategories) {
-        // Our tab was clicked
+    }
+
+    if (isTabGifts || isTabOccasions || isTabBanner || isTabCategories) {
+        viewPromoCodes.classList.add('hidden');
+        tabPromoCodes.className = inactive;
+        const btnPc = document.getElementById('btn-add-new-pc-trigger');
+        if(btnPc) btnPc.classList.add('hidden');
+    }
+
+    if (isTabCategories) {
         document.getElementById('view-gifts')?.classList.add('hidden');
         document.getElementById('view-occasions')?.classList.add('hidden');
         document.getElementById('view-startup-banner')?.classList.add('hidden');
         
-        const inactive = "w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 transition-colors";
         document.getElementById('tab-gifts').className = inactive;
         document.getElementById('tab-occasions').className = inactive;
         document.getElementById('tab-startup-banner').className = inactive;
@@ -1853,5 +1856,310 @@ document.addEventListener('click', (e) => {
         }
         
         loadCategories();
+    } else if (isTabPromoCodes) {
+        document.getElementById('view-gifts')?.classList.add('hidden');
+        document.getElementById('view-occasions')?.classList.add('hidden');
+        document.getElementById('view-startup-banner')?.classList.add('hidden');
+        
+        document.getElementById('tab-gifts').className = inactive;
+        document.getElementById('tab-occasions').className = inactive;
+        document.getElementById('tab-startup-banner').className = inactive;
+
+        tabPromoCodes.className = "w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl bg-primary/10 text-primary transition-colors";
+        
+        viewPromoCodes.classList.remove('hidden');
+        document.getElementById('page-title').textContent = "Quản lý Promo Codes";
+        
+        document.getElementById('btn-add-new')?.classList.add('hidden');
+        document.getElementById('btn-reorder')?.classList.add('hidden');
+        document.getElementById('btn-add-new-occasion-trigger')?.classList.add('hidden');
+        document.getElementById('btn-add-new-sb-trigger')?.classList.add('hidden');
+        
+        const btnPc = document.getElementById('btn-add-new-pc-trigger');
+        if(btnPc) btnPc.classList.remove('hidden');
+        
+        // Hide sidebar on mobile
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        if(window.innerWidth < 1024 && sidebar) {
+            sidebar.classList.add('-translate-x-full');
+            if(sidebarOverlay) sidebarOverlay.classList.add('hidden');
+        }
+        
+        loadPromoCodes();
     }
 }, true);
+
+// ==========================================
+// 11. PROMO CODES MANAGEMENT LOGIC
+// ==========================================
+let promoCodesList = [];
+const btnAddNewPc = document.getElementById('btn-add-new-pc-trigger');
+const btnAddPcEmpty = document.getElementById('btn-add-pc-empty');
+const pcModal = document.getElementById('pc-modal');
+const pcForm = document.getElementById('pc-form');
+const btnSavePc = document.getElementById('btn-save-pc');
+const pcSearchInput = document.getElementById('pc-search-input');
+const pcFilterType = document.getElementById('pc-filter-type');
+const pcListContainer = document.getElementById('pc-list-container');
+const pcEmptyState = document.getElementById('pc-empty-state');
+
+// Effect dropdown wrap toggler
+const pcTypeSelect = document.getElementById('pc-type');
+if (pcTypeSelect) {
+    pcTypeSelect.addEventListener('change', () => {
+        const wrap = document.getElementById('pc-effect-wrap');
+        if (wrap) {
+            wrap.classList.toggle('hidden', pcTypeSelect.value !== 'giftEffect');
+        }
+    });
+}
+
+function loadPromoCodes() {
+    loadingEl.style.display = 'block';
+    pcListContainer.innerHTML = '';
+    pcEmptyState.classList.add('hidden');
+
+    db.collection('promo_codes').onSnapshot(snapshot => {
+        promoCodesList = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            data.id = doc.id;
+            promoCodesList.push(data);
+        });
+
+        renderPromoCodes();
+    }, error => {
+        showToast("Lỗi tải dữ liệu Promo Codes", true);
+        console.error(error);
+        loadingEl.style.display = 'none';
+    });
+}
+
+function renderPromoCodes() {
+    loadingEl.style.display = 'none';
+    pcListContainer.innerHTML = '';
+
+    const query = pcSearchInput ? pcSearchInput.value.trim().toUpperCase() : '';
+    const filter = pcFilterType ? pcFilterType.value : 'all';
+
+    const filtered = promoCodesList.filter(item => {
+        const matchesQuery = item.code && item.code.toUpperCase().includes(query);
+        const matchesFilter = filter === 'all' || item.type === filter;
+        return matchesQuery && matchesFilter;
+    });
+
+    if (filtered.length === 0) {
+        pcEmptyState.classList.remove('hidden');
+        return;
+    }
+    pcEmptyState.classList.add('hidden');
+
+    filtered.forEach(item => {
+        const code = item.code || '';
+        const type = item.type || 'premium';
+        const description = item.description || 'Quà tặng từ server';
+        const maxUsage = item.maxUsage !== undefined && item.maxUsage !== null ? item.maxUsage : '∞';
+        const usedCount = item.usedCount || 0;
+        const durationDays = item.durationDays || null;
+        
+        let expText = 'Vĩnh viễn (Không hạn)';
+        if (item.expirationDate) {
+            const date = item.expirationDate.toDate ? item.expirationDate.toDate() : new Date(item.expirationDate);
+            expText = date.toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        let typeBadgeColor = 'bg-green-500/20 text-green-400 border-green-500/40';
+        if (type === 'giftEffect') typeBadgeColor = 'bg-pink-500/20 text-pink-400 border-pink-500/40';
+        else if (type === 'testMode') typeBadgeColor = 'bg-amber-500/20 text-amber-400 border-amber-500/40';
+        else if (type === 'admin') typeBadgeColor = 'bg-red-500/20 text-red-400 border-red-500/40';
+
+        const card = document.createElement('div');
+        card.className = 'bg-white dark:bg-darkcard border border-gray-200 dark:border-darkborder rounded-2xl p-5 relative shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col gap-3';
+        
+        card.innerHTML = `
+            <div class="flex justify-between items-start">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white tracking-wide">${code}</h3>
+                <span class="px-2 py-0.5 text-xs font-bold uppercase rounded border ${typeBadgeColor}">${type}</span>
+            </div>
+            <p class="text-sm text-gray-600 dark:text-gray-300">${description}</p>
+            <div class="border-t border-gray-100 dark:border-white/10 my-1"></div>
+            <div class="grid grid-cols-2 gap-2 text-xs text-gray-500 dark:text-gray-400">
+                <div><i class="fa-solid fa-users mr-1"></i> Lượt: <b>${usedCount} / ${maxUsage}</b></div>
+                ${durationDays ? `<div><i class="fa-solid fa-clock mr-1"></i> Hạn dùng: <b>${durationDays} ngày</b></div>` : ''}
+                <div class="col-span-2"><i class="fa-solid fa-calendar-xmark mr-1"></i> Hạn nhập: <b>${expText}</b></div>
+                ${type === 'giftEffect' && item.unlockedEffectId ? `<div class="col-span-2 text-pink-400"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Hiệu ứng: <b>${item.unlockedEffectId}</b></div>` : ''}
+            </div>
+            <div class="mt-auto pt-3 border-t border-gray-100 dark:border-white/10 flex gap-2">
+                <button class="flex-1 py-1.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/20 rounded-lg transition-colors font-semibold text-xs flex justify-center items-center gap-1" onclick="editPromoCode('${item.id}')">
+                    <i class="fa-solid fa-pen-to-square"></i> Sửa
+                </button>
+                <button class="flex-1 py-1.5 bg-red-50 dark:bg-red-500/10 text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 rounded-lg transition-colors font-semibold text-xs flex justify-center items-center gap-1" onclick="deletePromoCode('${item.id}')">
+                    <i class="fa-solid fa-trash-can"></i> Xóa
+                </button>
+            </div>
+        `;
+        pcListContainer.appendChild(card);
+    });
+}
+
+if (pcSearchInput) pcSearchInput.addEventListener('input', renderPromoCodes);
+if (pcFilterType) pcFilterType.addEventListener('change', renderPromoCodes);
+
+function openPcModal(isEdit = false, itemData = null) {
+    const codeInput = document.getElementById('pc-code');
+    const effectWrap = document.getElementById('pc-effect-wrap');
+
+    if (isEdit && itemData) {
+        document.getElementById('modal-title-pc').innerHTML = '<i class="fa-solid fa-pen text-orange-500"></i> <span>Sửa Promo Code</span>';
+        document.getElementById('pc-doc-id').value = itemData.id || '';
+        if (codeInput) {
+            codeInput.value = itemData.code || '';
+            codeInput.disabled = true; // Can't change code string to avoid DB key mismatch
+        }
+        document.getElementById('pc-type').value = itemData.type || 'premium';
+        document.getElementById('pc-description').value = itemData.description || '';
+        document.getElementById('pc-maxUsage').value = itemData.maxUsage || '';
+        document.getElementById('pc-durationDays').value = itemData.durationDays || '';
+        
+        if (itemData.expirationDate) {
+            const date = itemData.expirationDate.toDate ? itemData.expirationDate.toDate() : new Date(itemData.expirationDate);
+            // Format to YYYY-MM-DDTHH:MM
+            const localISOTime = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+            document.getElementById('pc-expirationDate').value = localISOTime;
+        } else {
+            document.getElementById('pc-expirationDate').value = '';
+        }
+
+        if (itemData.type === 'giftEffect') {
+            document.getElementById('pc-effectId').value = itemData.unlockedEffectId || 'hearts';
+            if (effectWrap) effectWrap.classList.remove('hidden');
+        } else {
+            if (effectWrap) effectWrap.classList.add('hidden');
+        }
+    } else {
+        document.getElementById('modal-title-pc').innerHTML = '<i class="fa-solid fa-ticket text-orange-500"></i> <span>Thêm Promo Code Mới</span>';
+        if (pcForm) pcForm.reset();
+        document.getElementById('pc-doc-id').value = '';
+        if (codeInput) {
+            codeInput.disabled = false;
+        }
+        if (effectWrap) effectWrap.classList.add('hidden');
+    }
+
+    pcModal.classList.remove('hidden');
+    setTimeout(() => {
+        pcModal.querySelector('.modal-content')?.classList.remove('scale-95', 'opacity-0');
+        pcModal.querySelector('.modal-content')?.classList.add('scale-100', 'opacity-100');
+    }, 10);
+}
+
+function closePcModalFunc() {
+    const content = pcModal.querySelector('.modal-content');
+    if (content) {
+        content.classList.remove('scale-100', 'opacity-100');
+        content.classList.add('scale-95', 'opacity-0');
+    }
+    setTimeout(() => {
+        pcModal.classList.add('hidden');
+        if (pcForm) pcForm.reset();
+    }, 300);
+}
+
+if (pcModal) {
+    pcModal.querySelectorAll('.close-modal').forEach(btn => {
+        btn.addEventListener('click', closePcModalFunc);
+    });
+}
+
+if (btnAddNewPc) btnAddNewPc.addEventListener('click', () => openPcModal(false));
+if (btnAddPcEmpty) btnAddPcEmpty.addEventListener('click', () => openPcModal(false));
+
+window.editPromoCode = function (id) {
+    const item = promoCodesList.find(x => x.id === id);
+    if (item) openPcModal(true, item);
+};
+
+window.deletePromoCode = async function (id) {
+    if (confirm('Bạn có chắc chắn muốn xóa Promo Code này? Thao tác này không thể hoàn tác.')) {
+        try {
+            await db.collection('promo_codes').doc(id).delete();
+            showToast("Đã xóa Promo Code!");
+        } catch (e) {
+            console.error(e);
+            showToast("Lỗi khi xóa Promo Code", true);
+        }
+    }
+};
+
+if (btnSavePc) {
+    btnSavePc.addEventListener('click', async () => {
+        if (pcForm && !pcForm.reportValidity()) {
+            return;
+        }
+
+        const id = document.getElementById('pc-doc-id').value;
+        const codeInput = document.getElementById('pc-code');
+        const code = codeInput ? codeInput.value.trim().toUpperCase() : '';
+        const type = document.getElementById('pc-type').value;
+        const description = document.getElementById('pc-description').value.trim();
+        const maxUsageVal = document.getElementById('pc-maxUsage').value;
+        const durationDaysVal = document.getElementById('pc-durationDays').value;
+        const expirationDateVal = document.getElementById('pc-expirationDate').value;
+
+        if (code.length < 5) {
+            showToast("Mã code phải từ 5 ký tự trở lên!", true);
+            return;
+        }
+
+        const maxUsage = maxUsageVal ? parseInt(maxUsageVal) : null;
+        const durationDays = durationDaysVal ? parseFloat(durationDaysVal) : null;
+        const expirationDate = expirationDateVal ? firebase.firestore.Timestamp.fromDate(new Date(expirationDateVal)) : null;
+
+        const data = {
+            code: code,
+            type: type,
+            description: description || null,
+            maxUsage: maxUsage,
+            durationDays: durationDays,
+            expirationDate: expirationDate,
+        };
+
+        if (type === 'giftEffect') {
+            data.unlockedEffectId = document.getElementById('pc-effectId').value;
+        } else {
+            // Delete field from firestore on update or set null
+            data.unlockedEffectId = null;
+        }
+
+        btnSavePc.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
+        btnSavePc.disabled = true;
+
+        try {
+            const docId = id || code;
+
+            if (!id) {
+                // Creating new, check duplicate
+                const doc = await db.collection('promo_codes').doc(docId).get();
+                if (doc.exists) {
+                    showToast("Mã code này đã tồn tại trên hệ thống!", true);
+                    btnSavePc.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu Lại';
+                    btnSavePc.disabled = false;
+                    return;
+                }
+                data.usedCount = 0;
+            }
+
+            await db.collection('promo_codes').doc(docId).set(data, { merge: true });
+            showToast(id ? "Đã cập nhật promo code!" : "Đã thêm promo code mới!");
+            closePcModalFunc();
+        } catch (e) {
+            console.error(e);
+            showToast("Lỗi khi lưu Promo Code", true);
+        } finally {
+            btnSavePc.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu Lại';
+            btnSavePc.disabled = false;
+        }
+    });
+}
+
