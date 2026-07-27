@@ -46,9 +46,9 @@ class GiftProductCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image & Badges Section
-            Expanded(
-              flex: 5,
+            // Image & Badges Section (1:1 Aspect Ratio)
+            AspectRatio(
+              aspectRatio: 1.0,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -134,35 +134,34 @@ class GiftProductCard extends StatelessWidget {
 
             // Content Section
             Expanded(
-              flex: 5,
               child: Padding(
-                padding: const EdgeInsets.all(10.0),
+                padding: const EdgeInsets.all(8.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                  // Name
-                  Text(
-                    name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.quicksand(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                    // Name
+                    Text(
+                      name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.quicksand(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 6),
+                    const SizedBox(height: 3),
 
-                  // Price
-                  Text(
-                    gift.priceRange,
-                    style: GoogleFonts.quicksand(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                      color: _brighten(themeColor),
+                    // Price
+                    Text(
+                      gift.priceRange,
+                      style: GoogleFonts.quicksand(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: _brighten(themeColor),
+                      ),
                     ),
-                  ),
-                  const Spacer(),
+                    const Spacer(),
 
                   // Button
                     Container(

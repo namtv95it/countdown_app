@@ -1752,11 +1752,55 @@ modalCat?.querySelectorAll('.close-modal').forEach(btn => {
     });
 });
 
+window.selectCatEmoji = (emoji) => {
+    const input = document.getElementById('cat-emoji');
+    if (input) input.value = emoji;
+};
+
+function hexToColorInt(hexString) {
+    if (!hexString) return 4279286145; // 0xFF10B981
+    let hex = hexString.replace('#', '').trim();
+    if (hex.length === 6) {
+        hex = 'FF' + hex;
+    }
+    return parseInt(hex, 16);
+}
+
+window.selectCatColor = (hex) => {
+    const picker = document.getElementById('cat-color-picker');
+    const hexInput = document.getElementById('cat-color-hex');
+    const valInput = document.getElementById('cat-colorValue');
+    if (picker) picker.value = hex;
+    if (hexInput) hexInput.value = hex.toUpperCase();
+    if (valInput) valInput.value = hexToColorInt(hex);
+};
+
+document.getElementById('cat-color-picker')?.addEventListener('input', (e) => {
+    const hex = e.target.value;
+    const hexInput = document.getElementById('cat-color-hex');
+    const valInput = document.getElementById('cat-colorValue');
+    if (hexInput) hexInput.value = hex.toUpperCase();
+    if (valInput) valInput.value = hexToColorInt(hex);
+});
+
+document.getElementById('cat-color-hex')?.addEventListener('input', (e) => {
+    let hex = e.target.value.trim();
+    if (!hex.startsWith('#')) hex = '#' + hex;
+    if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
+        const picker = document.getElementById('cat-color-picker');
+        const valInput = document.getElementById('cat-colorValue');
+        if (picker) picker.value = hex;
+        if (valInput) valInput.value = hexToColorInt(hex);
+    }
+});
+
 [btnAddCat1, btnAddCat2].forEach(btn => {
     btn?.addEventListener('click', () => {
         isEditingCat = false;
         formCat.reset();
         document.getElementById('cat-id').readOnly = false;
+        document.getElementById('cat-order').value = 99;
+        selectCatColor('#10B981');
         document.getElementById('modal-cat-title').textContent = "Thêm Danh Mục Mới";
         modalCat.classList.remove('hidden');
         setTimeout(() => {
@@ -1778,7 +1822,10 @@ window.editCategory = (id) => {
     document.getElementById('cat-nameEn').value = cat.nameEn || '';
     document.getElementById('cat-emoji').value = cat.emoji || '📅';
     document.getElementById('cat-order').value = cat.order || 99;
-    document.getElementById('cat-colorValue').value = cat.colorValue || 1092163;
+    
+    const hexColor = intToHex(cat.colorValue || 4279286145);
+    selectCatColor(hexColor);
+
     document.getElementById('cat-canSuggest').checked = cat.canSuggestProducts || false;
     document.getElementById('cat-isActive').checked = cat.isActive !== false;
     

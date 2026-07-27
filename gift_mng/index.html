@@ -607,42 +607,82 @@
             </div>
             <div class="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
                 <form id="form-category" class="space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">ID (Ví dụ: birthday)</label>
-                            <input type="text" id="cat-id" required
-                                class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 transition-all">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Thứ tự hiển thị</label>
-                            <input type="number" id="cat-order" required value="99"
-                                class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 transition-all">
-                        </div>
+                    <input type="hidden" id="cat-order" value="99">
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">ID Danh Mục (Ví dụ: wedding, birthday)</label>
+                        <input type="text" id="cat-id" required placeholder="Ví dụ: wedding"
+                            class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 transition-all">
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Tên (Tiếng Việt)</label>
-                            <input type="text" id="cat-name" required
+                            <input type="text" id="cat-name" required placeholder="Ví dụ: Cưới xin"
                                 class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 transition-all">
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Tên (Tiếng Anh)</label>
-                            <input type="text" id="cat-nameEn" required
+                            <input type="text" id="cat-nameEn" required placeholder="Ví dụ: Wedding"
                                 class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 transition-all">
                         </div>
                     </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Emoji (Ví dụ: 🎂)</label>
-                            <input type="text" id="cat-emoji" required
-                                class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 transition-all">
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Emoji biểu tượng (Nhập hoặc Chọn)</label>
+                            <input type="text" id="cat-emoji" required placeholder="Ví dụ: 💍"
+                                class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 transition-all mb-2">
+                            
+                            <!-- Quick Emoji Selector -->
+                            <div class="flex flex-wrap gap-1.5 p-2 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 max-h-24 overflow-y-auto custom-scrollbar">
+                                <span onclick="selectCatEmoji('🎂')" class="w-7 h-7 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 flex items-center justify-center text-base cursor-pointer transition-all">🎂</span>
+                                <span onclick="selectCatEmoji('💍')" class="w-7 h-7 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 flex items-center justify-center text-base cursor-pointer transition-all">💍</span>
+                                <span onclick="selectCatEmoji('💖')" class="w-7 h-7 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 flex items-center justify-center text-base cursor-pointer transition-all">💖</span>
+                                <span onclick="selectCatEmoji('🎁')" class="w-7 h-7 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 flex items-center justify-center text-base cursor-pointer transition-all">🎁</span>
+                                <span onclick="selectCatEmoji('🎄')" class="w-7 h-7 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 flex items-center justify-center text-base cursor-pointer transition-all">🎄</span>
+                                <span onclick="selectCatEmoji('🏮')" class="w-7 h-7 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 flex items-center justify-center text-base cursor-pointer transition-all">🏮</span>
+                                <span onclick="selectCatEmoji('👶')" class="w-7 h-7 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 flex items-center justify-center text-base cursor-pointer transition-all">👶</span>
+                                <span onclick="selectCatEmoji('👩')" class="w-7 h-7 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 flex items-center justify-center text-base cursor-pointer transition-all">👩</span>
+                                <span onclick="selectCatEmoji('🎒')" class="w-7 h-7 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 flex items-center justify-center text-base cursor-pointer transition-all">🎒</span>
+                                <span onclick="selectCatEmoji('🎓')" class="w-7 h-7 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 flex items-center justify-center text-base cursor-pointer transition-all">🎓</span>
+                                <span onclick="selectCatEmoji('🏆')" class="w-7 h-7 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 flex items-center justify-center text-base cursor-pointer transition-all">🏆</span>
+                                <span onclick="selectCatEmoji('✈️')" class="w-7 h-7 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 flex items-center justify-center text-base cursor-pointer transition-all">✈️</span>
+                                <span onclick="selectCatEmoji('🌟')" class="w-7 h-7 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 flex items-center justify-center text-base cursor-pointer transition-all">🌟</span>
+                                <span onclick="selectCatEmoji('☕')" class="w-7 h-7 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 flex items-center justify-center text-base cursor-pointer transition-all">☕</span>
+                                <span onclick="selectCatEmoji('🎮')" class="w-7 h-7 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 flex items-center justify-center text-base cursor-pointer transition-all">🎮</span>
+                                <span onclick="selectCatEmoji('🐶')" class="w-7 h-7 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 flex items-center justify-center text-base cursor-pointer transition-all">🐶</span>
+                                <span onclick="selectCatEmoji('🌸')" class="w-7 h-7 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 flex items-center justify-center text-base cursor-pointer transition-all">🌸</span>
+                                <span onclick="selectCatEmoji('💐')" class="w-7 h-7 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 flex items-center justify-center text-base cursor-pointer transition-all">💐</span>
+                                <span onclick="selectCatEmoji('🍿')" class="w-7 h-7 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 flex items-center justify-center text-base cursor-pointer transition-all">🍿</span>
+                                <span onclick="selectCatEmoji('🎨')" class="w-7 h-7 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 flex items-center justify-center text-base cursor-pointer transition-all">🎨</span>
+                                <span onclick="selectCatEmoji('🏡')" class="w-7 h-7 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 flex items-center justify-center text-base cursor-pointer transition-all">🏡</span>
+                                <span onclick="selectCatEmoji('⌚')" class="w-7 h-7 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 flex items-center justify-center text-base cursor-pointer transition-all">⌚</span>
+                                <span onclick="selectCatEmoji('🕶️')" class="w-7 h-7 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 flex items-center justify-center text-base cursor-pointer transition-all">🕶️</span>
+                                <span onclick="selectCatEmoji('📱')" class="w-7 h-7 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 flex items-center justify-center text-base cursor-pointer transition-all">📱</span>
+                                <span onclick="selectCatEmoji('💻')" class="w-7 h-7 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 flex items-center justify-center text-base cursor-pointer transition-all">💻</span>
+                            </div>
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Mã Màu (Hệ số 10)</label>
-                            <input type="number" id="cat-colorValue" required value="1092163"
-                                class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 transition-all">
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Màu chủ đạo danh mục</label>
+                            <div class="flex items-center gap-3 mb-2">
+                                <input type="color" id="cat-color-picker" class="w-12 h-10 rounded-xl cursor-pointer bg-transparent border-0 p-0" value="#10B981">
+                                <input type="text" id="cat-color-hex" class="flex-1 px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white font-mono text-sm uppercase focus:outline-none focus:ring-2 focus:ring-green-500" value="#10B981">
+                                <input type="hidden" id="cat-colorValue" value="4279286145">
+                            </div>
+                            <!-- Preset Color Swatches -->
+                            <div class="flex flex-wrap gap-2 pt-1">
+                                <button type="button" onclick="selectCatColor('#EC4899')" class="w-7 h-7 rounded-full bg-[#EC4899] border-2 border-white dark:border-gray-800 shadow-sm hover:scale-110 transition-transform" title="Pink"></button>
+                                <button type="button" onclick="selectCatColor('#7C3AED')" class="w-7 h-7 rounded-full bg-[#7C3AED] border-2 border-white dark:border-gray-800 shadow-sm hover:scale-110 transition-transform" title="Purple"></button>
+                                <button type="button" onclick="selectCatColor('#3B82F6')" class="w-7 h-7 rounded-full bg-[#3B82F6] border-2 border-white dark:border-gray-800 shadow-sm hover:scale-110 transition-transform" title="Blue"></button>
+                                <button type="button" onclick="selectCatColor('#10B981')" class="w-7 h-7 rounded-full bg-[#10B981] border-2 border-white dark:border-gray-800 shadow-sm hover:scale-110 transition-transform" title="Emerald"></button>
+                                <button type="button" onclick="selectCatColor('#F59E0B')" class="w-7 h-7 rounded-full bg-[#F59E0B] border-2 border-white dark:border-gray-800 shadow-sm hover:scale-110 transition-transform" title="Amber"></button>
+                                <button type="button" onclick="selectCatColor('#EF4444')" class="w-7 h-7 rounded-full bg-[#EF4444] border-2 border-white dark:border-gray-800 shadow-sm hover:scale-110 transition-transform" title="Red"></button>
+                                <button type="button" onclick="selectCatColor('#06B6D4')" class="w-7 h-7 rounded-full bg-[#06B6D4] border-2 border-white dark:border-gray-800 shadow-sm hover:scale-110 transition-transform" title="Cyan"></button>
+                                <button type="button" onclick="selectCatColor('#F43F5E')" class="w-7 h-7 rounded-full bg-[#F43F5E] border-2 border-white dark:border-gray-800 shadow-sm hover:scale-110 transition-transform" title="Rose"></button>
+                                <button type="button" onclick="selectCatColor('#14B8A6')" class="w-7 h-7 rounded-full bg-[#14B8A6] border-2 border-white dark:border-gray-800 shadow-sm hover:scale-110 transition-transform" title="Teal"></button>
+                                <button type="button" onclick="selectCatColor('#F97316')" class="w-7 h-7 rounded-full bg-[#F97316] border-2 border-white dark:border-gray-800 shadow-sm hover:scale-110 transition-transform" title="Orange"></button>
+                            </div>
                         </div>
                     </div>
                     

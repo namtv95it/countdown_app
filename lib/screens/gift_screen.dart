@@ -615,7 +615,7 @@ class _GiftScreenState extends State<GiftScreen> with SingleTickerProviderStateM
                 padding: const EdgeInsets.fromLTRB(16, 10, 16, 250),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
-                  childAspectRatio: 0.65,
+                  childAspectRatio: 0.58,
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 16,
                 ),
