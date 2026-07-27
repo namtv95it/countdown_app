@@ -424,7 +424,7 @@ class _GiftScreenState extends State<GiftScreen> with SingleTickerProviderStateM
               items: wishCategories
                   .map((c) => DropdownMenuItem(
                         value: c.id,
-                        child: Text('${c.emoji}  ${t('cat_${c.id}')}'),
+                        child: Text('${c.emoji}  ${c.getLocalizedName(LocalizationService.languageNotifier.value)}'),
                       ))
                   .toList(),
               onChanged: (v) {

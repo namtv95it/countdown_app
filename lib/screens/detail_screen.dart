@@ -584,7 +584,7 @@ class _DetailScreenState extends State<DetailScreen>
             child: _buildInfoRow(
               Icons.category_rounded,
               t('category'),
-              '${ann.category.emoji} ${t('cat_${ann.category.id}')}',
+              '${ann.category.emoji} ${ann.category.getLocalizedName(LocalizationService.languageNotifier.value)}',
               cardColor,
               showEdit: true,
             ),
@@ -972,7 +972,7 @@ class _DetailScreenState extends State<DetailScreen>
                   final cat = EventCategory.all[index];
                   return ListTile(
                     leading: Text(cat.emoji, style: const TextStyle(fontSize: 24)),
-                    title: Text(t('cat_${cat.id}'), style: GoogleFonts.quicksand(color: Colors.white)),
+                    title: Text(cat.getLocalizedName(LocalizationService.languageNotifier.value), style: GoogleFonts.quicksand(color: Colors.white)),
                     onTap: () {
                       setState(() {
                         _currentAnniversary = Anniversary(

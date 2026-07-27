@@ -31,6 +31,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
 import 'add_event_screen.dart';
+import 'preset_holidays_screen.dart';
 import 'detail_screen.dart';
 import 'gift_screen.dart';
 import 'settings_screen.dart';
@@ -579,6 +580,149 @@ class _HomeScreenState extends State<HomeScreen>
       });
       await _storageService.saveAnniversaries(_anniversaries);
     }
+  }
+
+  Future<void> _navigateToPresetHolidays() async {
+    final result = await Navigator.push<dynamic>(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (_, a1, a2) => PresetHolidaysScreen(
+          existingEvents: _anniversaries,
+        ),
+        transitionsBuilder: (_, anim, _, child) {
+          return SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, 1),
+              end: Offset.zero,
+            ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOut)),
+            child: child,
+          );
+        },
+      ),
+    );
+
+    if (result != null && result is List<Anniversary>) {
+      setState(() {
+        _anniversaries.addAll(result);
+        _sortAnniversaries();
+        _featuredIndex = 0;
+      });
+      await _storageService.saveAnniversaries(_anniversaries);
+    }
+  }
+
+  void _showAddOptionsSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(24),
+          decoration: const BoxDecoration(
+            color: Color(0xFF161B26),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            border: Border(top: BorderSide(color: Colors.white12, width: 1)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                t('add_anniversary'),
+                style: GoogleFonts.quicksand(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 20),
+              ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: const BorderSide(color: Colors.white10),
+                ),
+                tileColor: Colors.white.withValues(alpha: 0.05),
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: _accentColor.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.edit_calendar_rounded, color: _accentColor, size: 22),
+                ),
+                title: Text(
+                  t('add_custom_event'),
+                  style: GoogleFonts.quicksand(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
+                ),
+                subtitle: Text(
+                  t('add_custom_event_desc'),
+                  style: GoogleFonts.quicksand(
+                    color: Colors.white54,
+                    fontSize: 12,
+                  ),
+                ),
+                trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white30),
+                onTap: () {
+                  Navigator.pop(context);
+                  _navigateToAdd();
+                },
+              ),
+              const SizedBox(height: 12),
+              ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(color: const Color(0xFF7C3AED).withValues(alpha: 0.3)),
+                ),
+                tileColor: const Color(0xFF7C3AED).withValues(alpha: 0.1),
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF7C3AED).withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Text('🌟', style: TextStyle(fontSize: 18)),
+                ),
+                title: Text(
+                  t('add_preset_events'),
+                  style: GoogleFonts.quicksand(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
+                ),
+                subtitle: Text(
+                  t('add_preset_events_desc'),
+                  style: GoogleFonts.quicksand(
+                    color: Colors.white54,
+                    fontSize: 12,
+                  ),
+                ),
+                trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white30),
+                onTap: () {
+                  Navigator.pop(context);
+                  _navigateToPresetHolidays();
+                },
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _navigateToDetail(Anniversary item) async {
@@ -1848,7 +1992,7 @@ class _HomeScreenState extends State<HomeScreen>
               Positioned(
                 bottom: 40,
                 child: GestureDetector(
-                  onTap: _navigateToAdd,
+                  onTap: _showAddOptionsSheet,
                   child: Container(
                     width: 64,
                     height: 64,

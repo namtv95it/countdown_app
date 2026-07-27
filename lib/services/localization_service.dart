@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class LocalizationService {
   static final ValueNotifier<String> languageNotifier = ValueNotifier<String>('vi');
+  static String get currentLanguage => languageNotifier.value;
 
   static final Map<String, Map<String, String>> _translations = {
     'vi': {
@@ -246,6 +247,10 @@ class LocalizationService {
       'all_events_tab': 'Tất cả sự kiện',
       'empty_state_desc': 'Hãy thêm những ngày quan trọng\ncủa bạn để không bao giờ quên!',
       'add_now': '+ Thêm ngay',
+      'add_custom_event': 'Thêm kỷ niệm mới',
+      'add_custom_event_desc': 'Tự tạo ngày kỷ niệm hoặc sự kiện cá nhân',
+      'add_preset_events': 'Chọn từ sự kiện có sẵn',
+      'add_preset_events_desc': 'Các ngày lễ Quốc gia, Quốc tế & Âm lịch phổ biến',
       'no_upcoming_desc': 'Tất cả sự kiện đã diễn ra.\nThêm sự kiện mới hoặc xem tab Tất cả.',
       'view_all_events_arrow': 'Xem tất cả sự kiện →',
 
@@ -357,6 +362,8 @@ class LocalizationService {
       'cat_achievement': 'Thành tựu',
       'cat_national': 'Quốc gia',
       'cat_profession': 'Nghề nghiệp',
+      'cat_holiday': 'Kỳ nghỉ',
+      'cat_mid_autumn': 'Trung thu',
       'cat_awareness': 'Nhận thức',
       'cat_other': 'Khác',
 
@@ -649,6 +656,10 @@ class LocalizationService {
       'all_events_tab': 'All Events',
       'empty_state_desc': 'Add your important dates\nso you never forget!',
       'add_now': '+ Add Now',
+      'add_custom_event': 'Add Custom Anniversary',
+      'add_custom_event_desc': 'Create your own personal anniversary or event',
+      'add_preset_events': 'Choose from Preset Holidays',
+      'add_preset_events_desc': 'Popular National, International & Lunar holidays',
       'no_upcoming_desc': 'All events have passed.\nAdd a new event or view All tab.',
       'view_all_events_arrow': 'View all events →',
 
@@ -760,6 +771,8 @@ class LocalizationService {
       'cat_achievement': 'Achievement',
       'cat_national': 'National',
       'cat_profession': 'Profession',
+      'cat_holiday': 'Holiday',
+      'cat_mid_autumn': 'Mid-Autumn',
       'cat_awareness': 'Awareness',
       'cat_other': 'Other',
 

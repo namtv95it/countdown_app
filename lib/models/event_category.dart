@@ -1,3 +1,5 @@
+import '../services/localization_service.dart';
+
 /// Danh mục sự kiện — mỗi sự kiện thuộc 1 danh mục.
 /// Hỗ trợ đọc/ghi từ Firestore (collection: gift_categories)
 class EventCategory {
@@ -24,7 +26,15 @@ class EventCategory {
   });
 
   /// Trả về tên theo ngôn ngữ
-  String getName(String lang) => lang == 'en' ? nameEn : name;
+  String getName(String lang) => lang == 'en' ? (nameEn.isNotEmpty ? nameEn : name) : (name.isNotEmpty ? name : nameEn);
+
+  /// Trả về tên hiển thị chuẩn hóa đa ngôn ngữ (fallback an toàn không bao giờ lộ raw key)
+  String getLocalizedName(String lang) {
+    final key = 'cat_$id';
+    final translated = LocalizationService.translate(key);
+    if (translated != key && !translated.startsWith('cat_')) return translated;
+    return getName(lang);
+  }
 
   /// Tìm category theo [id]. Trả về [other] nếu không tìm thấy.
   static EventCategory findById(String? id, {List<EventCategory>? fromList}) {

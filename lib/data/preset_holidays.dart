@@ -23,7 +23,7 @@ class PresetHoliday {
 class PresetHolidays {
   static const List<PresetHoliday> all = [
     // --- DƯƠNG LỊCH QUỐC TẾ & VIỆT NAM ---
-    PresetHoliday(title: 'h_solar_new_year', month: 1, day: 1, emoji: '🎆', colorValue: 0xFFEF4444, badge: 'intl', categoryId: 'festival'),
+    PresetHoliday(title: 'h_solar_new_year', month: 1, day: 1, emoji: '🥂', colorValue: 0xFFEF4444, badge: 'intl', categoryId: 'festival'),
     PresetHoliday(title: 'h_students_day', month: 1, day: 9, emoji: '🎓', colorValue: 0xFF3B82F6, badge: 'vn', categoryId: 'education'),
     PresetHoliday(title: 'h_cpv_day', month: 2, day: 3, emoji: '🇻🇳', colorValue: 0xFFEF4444, badge: 'vn', categoryId: 'national'),
     PresetHoliday(title: 'h_valentine', month: 2, day: 14, emoji: '💝', colorValue: 0xFFEC4899, badge: 'intl', categoryId: 'love'),

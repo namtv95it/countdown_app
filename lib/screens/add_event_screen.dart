@@ -135,84 +135,88 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0D0D1A),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0D0D1A),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          t('add_anniversary'),
-          style: GoogleFonts.quicksand(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-          ),
-        ),
-        centerTitle: true,
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            _buildPresetButton(),
-            const SizedBox(height: 24),
-            _buildSectionLabel(t('anniversary_name')),
-            const SizedBox(height: 8),
-            _buildTextField(
-              controller: _titleController,
-              hint: t('anniversary_name_hint'),
-              icon: Icons.edit_rounded,
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? t('please_enter_name') : null,
+    return ValueListenableBuilder<String>(
+      valueListenable: LocalizationService.languageNotifier,
+      builder: (context, currentLang, _) {
+        return Scaffold(
+          backgroundColor: const Color(0xFF0D0D1A),
+          appBar: AppBar(
+            backgroundColor: const Color(0xFF0D0D1A),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
+              onPressed: () => Navigator.pop(context),
             ),
-            const SizedBox(height: 20),
-            _buildSectionLabel(t('days')),
-            const SizedBox(height: 8),
-            _buildDatePicker(),
-            const SizedBox(height: 16),
-            _buildYearlyToggle(),
-            const SizedBox(height: 12),
-            _buildLunarToggle(),
-            const SizedBox(height: 20),
-            _buildSectionLabel(t('event_category')),
-            const SizedBox(height: 8),
-            _buildCategoryPicker(),
-            const SizedBox(height: 20),
-            _buildSectionLabel(t('event_color')),
-            const SizedBox(height: 8),
-            _buildColorPicker(),
-            const SizedBox(height: 20),
-            _buildSectionLabel(t('event_icon')),
-            const SizedBox(height: 8),
-            _buildEmojiBox(),
-            if (!AdService.isPremium) ...[
-              const SizedBox(height: 4),
-              Center(
-                child: Text(
-                  t('need_ad_for_icon'),
-                  style: GoogleFonts.quicksand(fontSize: 11, color: Colors.white54),
-                ),
+            title: Text(
+              t('add_anniversary'),
+              style: GoogleFonts.quicksand(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
               ),
-            ],
-            const SizedBox(height: 20),
-            _buildSectionLabel(t('notes')),
-            const SizedBox(height: 8),
-            _buildTextField(
-              controller: _noteController,
-              hint: t('notes_hint'),
-              icon: Icons.notes_rounded,
-              maxLines: 3,
             ),
-            const SizedBox(height: 32),
-            _buildSaveButton(),
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
+            centerTitle: true,
+          ),
+          body: Form(
+            key: _formKey,
+            child: ListView(
+              padding: const EdgeInsets.all(20),
+              children: [
+                const SizedBox(height: 24),
+                _buildSectionLabel(t('anniversary_name')),
+                const SizedBox(height: 8),
+                _buildTextField(
+                  controller: _titleController,
+                  hint: t('anniversary_name_hint'),
+                  icon: Icons.edit_rounded,
+                  validator: (v) =>
+                      (v == null || v.trim().isEmpty) ? t('please_enter_name') : null,
+                ),
+                const SizedBox(height: 20),
+                _buildSectionLabel(t('days')),
+                const SizedBox(height: 8),
+                _buildDatePicker(),
+                const SizedBox(height: 16),
+                _buildYearlyToggle(),
+                const SizedBox(height: 12),
+                _buildLunarToggle(),
+                const SizedBox(height: 20),
+                _buildSectionLabel(t('event_category')),
+                const SizedBox(height: 8),
+                _buildCategoryPicker(),
+                const SizedBox(height: 20),
+                _buildSectionLabel(t('event_color')),
+                const SizedBox(height: 8),
+                _buildColorPicker(),
+                const SizedBox(height: 20),
+                _buildSectionLabel(t('event_icon')),
+                const SizedBox(height: 8),
+                _buildEmojiBox(),
+                if (!AdService.isPremium) ...[
+                  const SizedBox(height: 4),
+                  Center(
+                    child: Text(
+                      t('need_ad_for_icon'),
+                      style: GoogleFonts.quicksand(fontSize: 11, color: Colors.white54),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 20),
+                _buildSectionLabel(t('notes')),
+                const SizedBox(height: 8),
+                _buildTextField(
+                  controller: _noteController,
+                  hint: t('notes_hint'),
+                  icon: Icons.notes_rounded,
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 32),
+                _buildSaveButton(),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -361,7 +365,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                   const SizedBox(width: 8),
                   Flexible(
                     child: Text(
-                      t('cat_${cat.id}'),
+                      cat.getLocalizedName(LocalizationService.languageNotifier.value),
                       style: GoogleFonts.quicksand(
                         fontSize: 13,
                         fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
