@@ -129,7 +129,7 @@ class SuccessPromoDialog extends StatelessWidget {
               child: Text(
                 promoCode.type == PromoType.premium
                     ? t('welcome_vip_desc')
-                    : t('unlock_success_desc', params: {'promo': promoCode.description}),
+                    : t('unlock_success_desc', params: {'promo': promoCode.localizedDescription}),
                 textAlign: TextAlign.center,
                 style: GoogleFonts.quicksand(
                   fontSize: 13,
@@ -155,7 +155,7 @@ class SuccessPromoDialog extends StatelessWidget {
                   _buildDetailRow(
                     icon: Icons.card_giftcard_rounded,
                     label: t('activation_package'),
-                    value: promoCode.description,
+                    value: promoCode.localizedDescription,
                     valueColor: const Color(0xFF10B981),
                   ),
                   const Divider(color: Colors.white12, height: 16),
@@ -242,29 +242,30 @@ class SuccessPromoDialog extends StatelessWidget {
   }
 
   String _formatDuration(num? durationDays) {
+    final isEn = LocalizationService.languageNotifier.value == 'en';
     if (durationDays == null || durationDays <= 0) {
       return t('lifetime');
     }
 
     final totalMinutes = (durationDays * 24 * 60).round();
     if (totalMinutes < 60) {
-      return '$totalMinutes phút';
+      return isEn ? '$totalMinutes mins' : '$totalMinutes phút';
     }
 
     final totalHours = (durationDays * 24).round();
     if (totalHours < 24) {
-      return '$totalHours giờ';
+      return isEn ? '$totalHours hrs' : '$totalHours giờ';
     }
 
     final days = durationDays.round();
-    if (days == 1) return '1 ngày';
-    if (days < 30) return '$days ngày';
+    if (days == 1) return isEn ? '1 day' : '1 ngày';
+    if (days < 30) return isEn ? '$days days' : '$days ngày';
     if (days < 365) {
       final months = (days / 30).round();
-      return '$months tháng';
+      return isEn ? '$months months' : '$months tháng';
     }
     final years = (days / 365).round();
-    return '$years năm';
+    return isEn ? '$years years' : '$years năm';
   }
 
   Widget _buildDetailRow({

@@ -22,6 +22,7 @@ class _AdminEditPromoCodeScreenState extends State<AdminEditPromoCodeScreen> {
 
   late TextEditingController _codeController;
   late TextEditingController _descriptionController;
+  late TextEditingController _descriptionEnController;
   late TextEditingController _maxUsageController;
   late TextEditingController _durationDaysController;
 
@@ -57,6 +58,7 @@ class _AdminEditPromoCodeScreenState extends State<AdminEditPromoCodeScreen> {
 
     _codeController = TextEditingController(text: data?['code'] ?? '');
     _descriptionController = TextEditingController(text: data?['description'] ?? '');
+    _descriptionEnController = TextEditingController(text: data?['descriptionEn'] ?? '');
     _maxUsageController = TextEditingController(text: data?['maxUsage']?.toString() ?? '');
     _durationDaysController = TextEditingController(text: data?['durationDays']?.toString() ?? '');
 
@@ -73,6 +75,7 @@ class _AdminEditPromoCodeScreenState extends State<AdminEditPromoCodeScreen> {
   void dispose() {
     _codeController.dispose();
     _descriptionController.dispose();
+    _descriptionEnController.dispose();
     _maxUsageController.dispose();
     _durationDaysController.dispose();
     super.dispose();
@@ -141,6 +144,7 @@ class _AdminEditPromoCodeScreenState extends State<AdminEditPromoCodeScreen> {
     try {
       final code = _codeController.text.trim().toUpperCase();
       final description = _descriptionController.text.trim();
+      final descriptionEn = _descriptionEnController.text.trim();
       final maxUsageVal = _maxUsageController.text.trim();
       final durationDaysVal = _durationDaysController.text.trim();
 
@@ -151,6 +155,7 @@ class _AdminEditPromoCodeScreenState extends State<AdminEditPromoCodeScreen> {
         'code': code,
         'type': _selectedType,
         'description': description.isNotEmpty ? description : null,
+        'descriptionEn': descriptionEn.isNotEmpty ? descriptionEn : null,
         'maxUsage': maxUsage,
         'durationDays': durationDays,
         'expirationDate': _expirationDate != null ? Timestamp.fromDate(_expirationDate!) : null,
@@ -327,9 +332,9 @@ class _AdminEditPromoCodeScreenState extends State<AdminEditPromoCodeScreen> {
                       const SizedBox(height: 16),
                     ],
 
-                    // Description field
+                    // Description field (VI)
                     Text(
-                      'Mô tả (Hiển thị khi nhập thành công)',
+                      'Mô tả (Tiếng Việt - Hiển thị khi nhập thành công)',
                       style: GoogleFonts.quicksand(color: Colors.white70, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
@@ -338,6 +343,28 @@ class _AdminEditPromoCodeScreenState extends State<AdminEditPromoCodeScreen> {
                       style: GoogleFonts.quicksand(color: Colors.white),
                       decoration: InputDecoration(
                         hintText: 'Ví dụ: Nhận bản Premium vĩnh viễn',
+                        hintStyle: GoogleFonts.quicksand(color: Colors.white38),
+                        filled: true,
+                        fillColor: Colors.white.withValues(alpha: 0.05),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Description field (EN)
+                    Text(
+                      'Mô tả (Tiếng Anh - English Description)',
+                      style: GoogleFonts.quicksand(color: Colors.white70, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _descriptionEnController,
+                      style: GoogleFonts.quicksand(color: Colors.white),
+                      decoration: InputDecoration(
+                        hintText: 'Ví dụ: Get Lifetime Premium',
                         hintStyle: GoogleFonts.quicksand(color: Colors.white38),
                         filled: true,
                         fillColor: Colors.white.withValues(alpha: 0.05),

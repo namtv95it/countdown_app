@@ -239,7 +239,9 @@ class _AdminPromoCodesDashboardState extends State<AdminPromoCodesDashboard> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              desc,
+                              data['descriptionEn'] != null && data['descriptionEn'].toString().isNotEmpty
+                                  ? '$desc (${data['descriptionEn']})'
+                                  : desc,
                               style: GoogleFonts.quicksand(color: Colors.white70, fontSize: 14),
                             ),
                             const SizedBox(height: 8),

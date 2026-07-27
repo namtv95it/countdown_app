@@ -2065,6 +2065,7 @@ function openPcModal(isEdit = false, itemData = null) {
         }
         document.getElementById('pc-type').value = itemData.type || 'premium';
         document.getElementById('pc-description').value = itemData.description || '';
+        document.getElementById('pc-descriptionEn').value = itemData.descriptionEn || '';
         document.getElementById('pc-maxUsage').value = itemData.maxUsage || '';
         document.getElementById('pc-durationDays').value = itemData.durationDays || '';
         
@@ -2087,6 +2088,7 @@ function openPcModal(isEdit = false, itemData = null) {
         document.getElementById('modal-title-pc').innerHTML = '<i class="fa-solid fa-ticket text-orange-500"></i> <span>Thêm Promo Code Mới</span>';
         if (pcForm) pcForm.reset();
         document.getElementById('pc-doc-id').value = '';
+        document.getElementById('pc-descriptionEn').value = '';
         if (codeInput) {
             codeInput.disabled = false;
         }
@@ -2149,6 +2151,7 @@ if (btnSavePc) {
         const code = codeInput ? codeInput.value.trim().toUpperCase() : '';
         const type = document.getElementById('pc-type').value;
         const description = document.getElementById('pc-description').value.trim();
+        const descriptionEn = document.getElementById('pc-descriptionEn').value.trim();
         const maxUsageVal = document.getElementById('pc-maxUsage').value;
         const durationDaysVal = document.getElementById('pc-durationDays').value;
         const expirationDateVal = document.getElementById('pc-expirationDate').value;
@@ -2166,6 +2169,7 @@ if (btnSavePc) {
             code: code,
             type: type,
             description: description || null,
+            descriptionEn: descriptionEn || null,
             maxUsage: maxUsage,
             durationDays: durationDays,
             expirationDate: expirationDate,
