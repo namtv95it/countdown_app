@@ -346,21 +346,37 @@ function renderGifts() {
         return true;
     });
 
+    const countTextEl = document.getElementById('gift-count-text');
+    if (countTextEl) {
+        if (filteredGifts.length === gifts.length) {
+            countTextEl.textContent = `Tổng số: ${gifts.length} quà tặng`;
+        } else {
+            countTextEl.textContent = `Hiển thị: ${filteredGifts.length}/${gifts.length} quà tặng`;
+        }
+    }
+
     if (filteredGifts.length === 0) {
         emptyStateEl.classList.remove('hidden');
         return;
     }
     emptyStateEl.classList.add('hidden');
 
-    filteredGifts.forEach(gift => {
+    // Adjust grid columns for reordering mode vs normal mode
+    if (isReordering) {
+        giftListEl.className = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 transition-all duration-300';
+    } else {
+        giftListEl.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 transition-all duration-300';
+    }
+
+    filteredGifts.forEach((gift, index) => {
         const nameVi = gift.name && gift.name.vi ? gift.name.vi : 'Chưa có tên';
         const price = gift.priceRange || '0đ';
         const platformLabel = gift.platform || 'Xem Ngay';
         const badgeText = gift.badge || '';
 
         const card = document.createElement('div');
-        // Simulate .glass but adaptive to Light/Dark mode
-        card.className = 'gift-card bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 dark:backdrop-blur-md rounded-2xl overflow-hidden flex flex-col relative shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group';
+        // Compact card styling for reordering mode
+        card.className = `gift-card bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 dark:backdrop-blur-md rounded-2xl overflow-hidden flex flex-col relative shadow-sm hover:shadow-xl transition-all duration-300 group ${isReordering ? 'cursor-grab active:cursor-grabbing border-2 border-primary/50 select-none' : 'hover:-translate-y-1'}`;
         card.dataset.id = gift.id;
 
         const imgUrl = gift.imageUrl || '';
@@ -370,13 +386,16 @@ function renderGifts() {
         const primaryColor = '#EC4899';
         const primaryColorRgb = '236, 72, 153';
 
+        const heroHeight = isReordering ? 'h-20 sm:h-24' : 'h-32 sm:h-40';
+
         card.innerHTML = `
             <!-- Image Hero Section -->
-            <div class="h-32 sm:h-40 w-full relative overflow-hidden bg-gray-100 dark:bg-gray-800" style="background-color: rgba(${primaryColorRgb}, 0.05)">
-                <img src="${imgUrl}" alt="${nameVi}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" ${imageErrorAttr}>
+            <div class="${heroHeight} w-full relative overflow-hidden bg-gray-100 dark:bg-gray-800 transition-all duration-300 pointer-events-none" style="background-color: rgba(${primaryColorRgb}, 0.05)">
+                <img src="${imgUrl}" draggable="false" alt="${nameVi}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 pointer-events-none" ${imageErrorAttr}>
                 
                 <!-- Top Left Badges (Active Toggle & Gender) -->
-                <div class="absolute top-2 left-2 z-20 flex items-center gap-1.5">
+                ${!isReordering ? `
+                <div class="absolute top-2 left-2 z-20 flex items-center gap-1.5 pointer-events-auto">
                     <label class="cursor-pointer bg-black/60 backdrop-blur-md p-1 rounded-full border border-white/20 shadow-md flex items-center justify-center" title="${gift.isActive !== false ? 'Đang bật' : 'Đang tắt'}">
                         <input type="checkbox" ${gift.isActive !== false ? 'checked' : ''} onchange="toggleGiftActive('${gift.id}', this.checked)" class="sr-only peer">
                         <div class="relative w-7 h-4 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-green-500 flex-shrink-0"></div>
@@ -388,10 +407,11 @@ function renderGifts() {
                     </div>
                     ` : ''}
                 </div>
+                ` : ''}
 
                 <!-- Popular Badge -->
-                ${badgeText ? `
-                <div class="absolute top-2 right-2 px-2 h-5 bg-gradient-to-r from-yellow-500 to-amber-600 rounded-md shadow-lg flex items-center justify-center">
+                ${badgeText && !isReordering ? `
+                <div class="absolute top-2 right-2 px-2 h-5 bg-gradient-to-r from-yellow-500 to-amber-600 rounded-md shadow-lg flex items-center justify-center pointer-events-auto">
                     <span class="text-[10px] font-bold text-white tracking-wider uppercase leading-none mt-[1px]">${badgeText}</span>
                 </div>
                 ` : ''}
@@ -402,29 +422,32 @@ function renderGifts() {
                 <!-- Order Index Badge (Only in Reordering Mode) -->
                 ${isReordering ? `
                 <div class="absolute inset-0 bg-black/40 flex items-center justify-center z-20 pointer-events-none">
-                    <div class="order-badge w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center text-xl font-black shadow-xl border-2 border-white/20">
-                    </div>
+                    <div class="order-badge w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center text-sm font-black shadow-lg border-2 border-white/40">${index + 1}</div>
                 </div>
                 ` : ''}
             </div>
             
             <!-- Info Section -->
-            <div class="p-3 flex flex-col flex-grow">
-                <h3 class="text-sm font-bold text-gray-900 dark:text-white line-clamp-2 mb-3 leading-snug ${gift.isActive === false ? 'line-through opacity-60' : ''}" title="${nameVi}">${nameVi}</h3>
+            <div class="${isReordering ? 'p-2' : 'p-3'} flex flex-col flex-grow">
+                <h3 class="${isReordering ? 'text-xs line-clamp-1 mb-1 font-semibold' : 'text-sm font-bold line-clamp-2 mb-3'} text-gray-900 dark:text-white leading-snug ${gift.isActive === false ? 'line-through opacity-60' : ''}" title="${nameVi}">${nameVi}</h3>
                 
                 <div class="mt-auto">
-                    <div class="text-sm font-black mb-2" style="color: ${primaryColor}">${price}</div>
+                    <div class="${isReordering ? 'text-xs font-bold mb-1' : 'text-sm font-black mb-2'}" style="color: ${primaryColor}">${price}</div>
+                    ${!isReordering ? `
                     <div class="w-full py-1.5 rounded-lg border flex items-center justify-center gap-1.5 transition-colors mb-3" 
                          style="background-color: rgba(${primaryColorRgb}, 0.1); border-color: rgba(${primaryColorRgb}, 0.3)">
                         <i class="${gift.platform === 'Tiktok Shop' ? 'fa-brands fa-tiktok' : 'fa-solid fa-bag-shopping'} text-[11px]" style="color: ${primaryColor}"></i>
                         <span class="text-xs font-bold" style="color: ${primaryColor}">${platformLabel}</span>
                     </div>
+                    ` : ''}
                 </div>
 
                 <!-- Admin Actions -->
-                <div class="flex gap-2 pt-3 border-t border-gray-100 dark:border-white/10 mt-auto">
+                <div class="flex gap-2 ${isReordering ? 'pt-1.5' : 'pt-3'} border-t border-gray-100 dark:border-white/10 mt-auto">
                     ${isReordering ?
-                `<button class="drag-handle flex-1 py-1.5 bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary rounded-lg cursor-move transition-colors"><i class="fa-solid fa-grip-lines"></i></button>` :
+                `<div class="drag-handle w-full py-1 bg-primary/10 text-primary rounded-md text-[10px] font-bold flex justify-center items-center gap-1 cursor-grab">
+                    <i class="fa-solid fa-arrows-up-down-left-right"></i> <span>Kéo xếp</span>
+                 </div>` :
                 `<button class="flex-1 py-1.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/20 rounded-lg transition-colors font-semibold text-xs flex justify-center items-center gap-1" onclick="editGift('${gift.id}')">
                             <i class="fa-solid fa-pen-to-square"></i> Sửa
                          </button>
@@ -446,9 +469,21 @@ function initSortable() {
 
     if (isReordering) {
         sortableInstance = new Sortable(giftListEl, {
-            animation: 150,
-            handle: '.drag-handle',
-            ghostClass: 'sortable-ghost'
+            animation: 200,
+            draggable: '.gift-card',
+            forceFallback: true,
+            fallbackTolerance: 3,
+            ghostClass: 'opacity-30',
+            scroll: true,
+            scrollSensitivity: 120,
+            scrollSpeed: 25,
+            bubbleScroll: true,
+            onEnd: () => {
+                const badges = giftListEl.querySelectorAll('.order-badge');
+                badges.forEach((badge, idx) => {
+                    badge.textContent = String(idx + 1);
+                });
+            }
         });
     }
 }
@@ -669,6 +704,18 @@ btnReorder.addEventListener('click', () => {
         renderCategories();
     } else {
         btnAddNew.classList.add('hidden');
+        // Disable filter inputs while dragging
+        const searchInput = document.getElementById('gift-search-input');
+        const filterCat = document.getElementById('gift-filter-category');
+        if (searchInput) searchInput.disabled = true;
+        if (filterCat) filterCat.disabled = true;
+
+        const selectedCatName = filterCat && filterCat.value ? filterCat.options[filterCat.selectedIndex]?.text : '';
+        if (selectedCatName && filterCat.value) {
+            showToast(`Đang sắp xếp cho danh mục: ${selectedCatName}`);
+        } else {
+            showToast("Đang sắp xếp tất cả quà tặng");
+        }
         renderGifts();
     }
 });
@@ -681,6 +728,11 @@ btnCancelReorder.addEventListener('click', () => {
     
     const viewCat = document.getElementById('view-categories');
     const isCat = viewCat && !viewCat.classList.contains('hidden');
+
+    const searchInput = document.getElementById('gift-search-input');
+    const filterCat = document.getElementById('gift-filter-category');
+    if (searchInput) searchInput.disabled = false;
+    if (filterCat) filterCat.disabled = false;
     
     if (isCat) {
         document.getElementById('btn-add-new-cat-trigger')?.classList.remove('hidden');
@@ -694,6 +746,11 @@ btnCancelReorder.addEventListener('click', () => {
 btnSaveReorder.addEventListener('click', async () => {
     btnSaveReorder.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
     btnSaveReorder.disabled = true;
+
+    const searchInput = document.getElementById('gift-search-input');
+    const filterCat = document.getElementById('gift-filter-category');
+    if (searchInput) searchInput.disabled = false;
+    if (filterCat) filterCat.disabled = false;
 
     try {
         const batch = db.batch();
@@ -717,7 +774,13 @@ btnSaveReorder.addEventListener('click', async () => {
         }
 
         await batch.commit();
-        showToast("Đã lưu thứ tự hiển thị!");
+        
+        const catName = filterCat && filterCat.value ? filterCat.options[filterCat.selectedIndex]?.text : '';
+        if (catName && filterCat.value && !isCat) {
+            showToast(`Đã lưu thứ tự cho danh mục: ${catName}`);
+        } else {
+            showToast("Đã lưu thứ tự hiển thị!");
+        }
 
         isReordering = false;
         btnReorder.classList.remove('hidden');
@@ -734,7 +797,8 @@ btnSaveReorder.addEventListener('click', async () => {
             loadGifts(); // reload to get new orders
         }
     } catch (error) {
-        showToast("Lỗi khi lưu thứ tự", true);
+        console.error(error);
+        showToast("Lỗi khi lưu thứ tự!", true);
         btnSaveReorder.innerHTML = '<i class="fa-solid fa-check"></i> Lưu thứ tự';
         btnSaveReorder.disabled = false;
     }
@@ -1770,7 +1834,11 @@ bg-gray-100 text-gray-800 dark:bg-white/10 dark:text-gray-300">
         sortableCatInstance = new Sortable(container, {
             animation: 150,
             handle: '.drag-handle',
-            ghostClass: 'sortable-ghost'
+            ghostClass: 'sortable-ghost',
+            scroll: true,
+            scrollSensitivity: 120,
+            scrollSpeed: 25,
+            bubbleScroll: true
         });
     }
 }
