@@ -98,9 +98,7 @@ class AppFirebaseService {
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    serverClientId: '730119079486-c72nisf179q35ff3mgamop42jmmeq6dk.apps.googleusercontent.com',
-  );
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   User? _currentUser;
   bool _isInitialized = false;
