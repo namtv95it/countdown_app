@@ -339,19 +339,19 @@ function renderGifts() {
             <div class="h-32 sm:h-40 w-full relative overflow-hidden bg-gray-100 dark:bg-gray-800" style="background-color: rgba(${primaryColorRgb}, 0.05)">
                 <img src="${imgUrl}" alt="${nameVi}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" ${imageErrorAttr}>
                 
-                <!-- Active Toggle Switch -->
-                <label class="absolute top-2 left-2 z-20 inline-flex items-center gap-1.5 cursor-pointer bg-black/60 backdrop-blur-md px-2 py-1 rounded-full border border-white/20 shadow-md" title="${gift.isActive !== false ? 'Đang bật' : 'Đang tắt'}">
-                    <input type="checkbox" ${gift.isActive !== false ? 'checked' : ''} onchange="toggleGiftActive('${gift.id}', this.checked)" class="sr-only peer">
-                    <div class="relative w-7 h-4 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-green-500 flex-shrink-0"></div>
-                    <span class="text-[9px] font-bold text-white leading-none">${gift.isActive !== false ? 'Bật' : 'Tắt'}</span>
-                </label>
+                <!-- Top Left Badges (Active Toggle & Gender) -->
+                <div class="absolute top-2 left-2 z-20 flex items-center gap-1.5">
+                    <label class="cursor-pointer bg-black/60 backdrop-blur-md p-1 rounded-full border border-white/20 shadow-md flex items-center justify-center" title="${gift.isActive !== false ? 'Đang bật' : 'Đang tắt'}">
+                        <input type="checkbox" ${gift.isActive !== false ? 'checked' : ''} onchange="toggleGiftActive('${gift.id}', this.checked)" class="sr-only peer">
+                        <div class="relative w-7 h-4 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-green-500 flex-shrink-0"></div>
+                    </label>
 
-                <!-- Gender Badge -->
-                ${gift.gender ? `
-                <div class="absolute top-2 left-[72px] w-6 h-6 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/20 shadow-sm">
-                    <span class="text-xs leading-none" style="margin-top: 1px">${gift.gender === 'male' ? '♂️' : gift.gender === 'female' ? '♀️' : '⚧️'}</span>
+                    ${gift.gender ? `
+                    <div class="w-6 h-6 bg-black/60 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 shadow-sm">
+                        <span class="text-xs leading-none" style="margin-top: 1px">${gift.gender === 'male' ? '♂️' : gift.gender === 'female' ? '♀️' : '⚧️'}</span>
+                    </div>
+                    ` : ''}
                 </div>
-                ` : ''}
 
                 <!-- Popular Badge -->
                 ${badgeText ? `
@@ -1369,10 +1369,9 @@ function renderStartupBanners() {
         card.innerHTML = `
             <div class="h-32 w-full relative">
                 <img src="${item.imageUrl}" class="w-full h-full object-cover" onerror="this.src=''; this.onerror=null; this.parentElement.innerHTML='<div class=\\'w-full h-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center\\'><i class=\\'fa-regular fa-image text-3xl text-gray-400\\'></i></div>'">
-                <label class="absolute top-2 right-2 z-10 flex items-center cursor-pointer bg-black/60 backdrop-blur-md px-2 py-1 rounded-full border border-white/20 shadow-md" title="${item.isActive ? 'Đang bật' : 'Đang tắt'}">
+                <label class="absolute top-2 right-2 z-10 flex items-center cursor-pointer bg-black/60 backdrop-blur-md p-1 rounded-full border border-white/20 shadow-md" title="${item.isActive ? 'Đang bật' : 'Đang tắt'}">
                     <input type="checkbox" ${item.isActive ? 'checked' : ''} onchange="toggleStartupBannerItemActive('${item.id || index}', this.checked)" class="sr-only peer">
                     <div class="relative w-7 h-4 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-green-500 flex-shrink-0"></div>
-                    <span class="text-[9px] font-bold text-white ml-1.5">${item.isActive ? 'Bật' : 'Tắt'}</span>
                 </label>
             </div>
             <div class="p-4 flex flex-col flex-1">
