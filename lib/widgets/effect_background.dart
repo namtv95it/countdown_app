@@ -19,6 +19,7 @@ class _EffectBackgroundState extends State<EffectBackground>
   final List<Particle> _particles = [];
   final Random _random = Random();
   String _currentEffect = 'none';
+  int _lastTickMs = 0;
 
   @override
   void initState() {
@@ -26,10 +27,10 @@ class _EffectBackgroundState extends State<EffectBackground>
     _currentEffect = widget.effectType;
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(days: 365),
-    );
+      duration: const Duration(seconds: 1),
+    )..repeat();
+    _lastTickMs = DateTime.now().millisecondsSinceEpoch;
     _controller.addListener(_updateParticles);
-    _controller.forward();
   }
 
   @override
@@ -67,22 +68,22 @@ class _EffectBackgroundState extends State<EffectBackground>
 
   int _getParticleCount() {
     switch (_currentEffect) {
-      case 'bubbles': return 30;
-      case 'hearts': return 25;
-      case 'snow': return 50;
-      case 'stars': return 40;
-      case 'meteor': return 15;
-      case 'rain': return 70;
-      case 'rain_ripple': return 40;
-      case 'rainbow': return 25;
-      case 'waves': return 15;
-      case 'leaves': return 25;
-      case 'sunset_birds': return 25;
+      case 'bubbles': return 25;
+      case 'hearts': return 22;
+      case 'snow': return 40;
+      case 'stars': return 35;
+      case 'meteor': return 12;
+      case 'rain': return 60;
+      case 'rain_ripple': return 30;
+      case 'rainbow': return 20;
+      case 'waves': return 12;
+      case 'leaves': return 20;
+      case 'sunset_birds': return 20;
       case 'aurora': return 0;
-      case 'fireflies': return 30;
-      case 'fireworks': return 60;
-      case 'cherry_blossom': return 40;
-      case 'galaxy': return 80;
+      case 'fireflies': return 25;
+      case 'fireworks': return 50;
+      case 'cherry_blossom': return 35;
+      case 'galaxy': return 60;
       default: return 0;
     }
   }
@@ -93,239 +94,81 @@ class _EffectBackgroundState extends State<EffectBackground>
     
     switch (_currentEffect) {
       case 'bubbles':
-        return Particle(
-          x: x,
-          y: y,
-          size: _random.nextDouble() * 25 + 5,
-          speedY: -(_random.nextDouble() * 1.0 + 0.2),
-          speedX: 0,
-          color: Colors.white.withValues(alpha: _random.nextDouble() * 0.15 + 0.05),
-          angle: 0,
-          spin: 0,
-        );
+        return Particle(x: x, y: y, size: _random.nextDouble() * 25 + 5, speedY: -(_random.nextDouble() * 1.0 + 0.2), color: Colors.white.withValues(alpha: _random.nextDouble() * 0.15 + 0.05));
       case 'hearts':
-        return Particle(
-          x: x,
-          y: y,
-          size: _random.nextDouble() * 15 + 10,
-          speedY: -(_random.nextDouble() * 1.5 + 0.5),
-          speedX: (_random.nextDouble() - 0.5) * 0.5,
-          color: Colors.pinkAccent.withValues(alpha: _random.nextDouble() * 0.4 + 0.2),
-          angle: _random.nextDouble() * pi,
-          spin: (_random.nextDouble() - 0.5) * 0.05,
-        );
+        return Particle(x: x, y: y, size: _random.nextDouble() * 15 + 10, speedY: -(_random.nextDouble() * 1.5 + 0.5), speedX: (_random.nextDouble() - 0.5) * 0.5, color: Colors.pinkAccent.withValues(alpha: _random.nextDouble() * 0.4 + 0.2), angle: _random.nextDouble() * pi, spin: (_random.nextDouble() - 0.5) * 0.05);
       case 'snow':
-        return Particle(
-          x: x,
-          y: y,
-          size: _random.nextDouble() * 4 + 2,
-          speedY: _random.nextDouble() * 2.0 + 1.0,
-          speedX: (_random.nextDouble() - 0.5) * 1.5,
-          color: Colors.white.withValues(alpha: _random.nextDouble() * 0.5 + 0.3),
-          angle: 0,
-          spin: 0,
-        );
+        return Particle(x: x, y: y, size: _random.nextDouble() * 4 + 2, speedY: _random.nextDouble() * 2.0 + 1.0, speedX: (_random.nextDouble() - 0.5) * 1.5, color: Colors.white.withValues(alpha: _random.nextDouble() * 0.5 + 0.3));
       case 'stars':
-        return Particle(
-          x: x,
-          y: y,
-          size: _random.nextDouble() * 10 + 5,
-          speedY: _random.nextDouble() * 0.2 - 0.1,
-          speedX: _random.nextDouble() * 0.2 - 0.1,
-          color: Colors.amber.withValues(alpha: _random.nextDouble() * 0.8 + 0.2),
-          angle: _random.nextDouble() * pi * 2,
-          spin: (_random.nextDouble() - 0.5) * 0.02,
-          life: _random.nextDouble() * pi * 2,
-        );
+        return Particle(x: x, y: y, size: _random.nextDouble() * 10 + 5, speedY: _random.nextDouble() * 0.2 - 0.1, speedX: _random.nextDouble() * 0.2 - 0.1, color: Colors.amber.withValues(alpha: _random.nextDouble() * 0.8 + 0.2), angle: _random.nextDouble() * pi * 2, spin: (_random.nextDouble() - 0.5) * 0.02, life: _random.nextDouble() * pi * 2);
       case 'meteor':
         double startX = _random.nextDouble() * size.width * 1.5 - size.width * 0.25;
         double startY = _random.nextDouble() * size.height * 0.4 - size.height * 0.1;
         double speed = _random.nextDouble() * 8 + 5;
-        return Particle(
-          x: startX,
-          y: startY,
-          size: _random.nextDouble() * 2.5 + 1.0,
-          speedX: speed * 0.6,
-          speedY: speed,
-          color: Colors.white.withValues(alpha: _random.nextDouble() * 0.6 + 0.4),
-          angle: atan2(speed, speed * 0.6),
-          spin: 0,
-          life: _random.nextDouble() * 80 + 40,
-        );
+        return Particle(x: startX, y: startY, size: _random.nextDouble() * 2.5 + 1.0, speedX: speed * 0.6, speedY: speed, color: Colors.white.withValues(alpha: _random.nextDouble() * 0.6 + 0.4), life: _random.nextDouble() * 80 + 40);
       case 'rain':
-        return Particle(
-          x: x,
-          y: y,
-          size: _random.nextDouble() * 1.5 + 1.0,
-          speedX: _random.nextDouble() * 2.0 + 1.0,
-          speedY: _random.nextDouble() * 15 + 15,
-          color: Colors.white.withValues(alpha: _random.nextDouble() * 0.4 + 0.2),
-          angle: 0,
-          spin: 0,
-        );
+        return Particle(x: x, y: y, size: _random.nextDouble() * 1.5 + 1.0, speedX: _random.nextDouble() * 2.0 + 1.0, speedY: _random.nextDouble() * 15 + 15, color: Colors.white.withValues(alpha: _random.nextDouble() * 0.4 + 0.2));
       case 'rain_ripple':
-        return Particle(
-          x: x,
-          y: y,
-          size: 0,
-          speedX: 0,
-          speedY: 0,
-          color: Colors.white.withValues(alpha: 0.6),
-          angle: 0,
-          spin: 0,
-          life: _random.nextDouble() * 5,
-        );
+        return Particle(x: x, y: y, color: Colors.white.withValues(alpha: 0.6));
       case 'rainbow':
-        return Particle(
-          x: x,
-          y: y,
-          size: _random.nextDouble() * 5 + 3,
-          speedX: _random.nextDouble() * 0.2 - 0.1,
-          speedY: _random.nextDouble() * 0.2 - 0.1,
-          color: HSLColor.fromAHSL(1.0, _random.nextDouble() * 360, 1.0, 0.7).toColor(),
-          angle: _random.nextDouble() * pi * 2,
-          spin: (_random.nextDouble() - 0.5) * 0.02,
-          life: _random.nextDouble() * pi * 2,
-        );
+        return Particle(x: x, y: y, size: _random.nextDouble() * 5 + 3, speedX: _random.nextDouble() * 0.2 - 0.1, speedY: _random.nextDouble() * 0.2 - 0.1, color: HSLColor.fromAHSL(1.0, _random.nextDouble() * 360, 1.0, 0.7).toColor(), angle: _random.nextDouble() * pi * 2, spin: (_random.nextDouble() - 0.5) * 0.02, life: _random.nextDouble() * pi * 2);
       case 'waves':
-        return Particle(
-          x: _random.nextDouble() * size.width,
-          y: size.height * 0.55 + _random.nextDouble() * size.height * 0.45,
-          size: _random.nextDouble() * 4 + 1,
-          speedX: (_random.nextDouble() - 0.5) * 0.6,
-          speedY: -(_random.nextDouble() * 0.4 + 0.15),
-          color: Colors.white.withValues(alpha: _random.nextDouble() * 0.35 + 0.08),
-          angle: 0,
-          spin: 0,
-          life: 0,
-        );
+        return Particle(x: _random.nextDouble() * size.width, y: size.height * 0.55 + _random.nextDouble() * size.height * 0.45, size: _random.nextDouble() * 4 + 1, speedX: (_random.nextDouble() - 0.5) * 0.6, speedY: -(_random.nextDouble() * 0.4 + 0.15), color: Colors.white.withValues(alpha: _random.nextDouble() * 0.35 + 0.08));
       case 'leaves':
-        return Particle(
-          x: _random.nextDouble() * size.width,
-          y: -(_random.nextDouble() * size.height),
-          size: _random.nextDouble() * 15 + 10,
-          speedX: _random.nextDouble() * 2 - 1,
-          speedY: _random.nextDouble() * 2 + 1,
-          color: [
-            Colors.orange[700]!,
-            Colors.orange[400]!,
-            Colors.red[700]!,
-            Colors.yellow[700]!,
-          ][_random.nextInt(4)],
-          angle: _random.nextDouble() * pi * 2,
-          spin: (_random.nextDouble() - 0.5) * 0.1,
-          life: 0,
-        );
+        return Particle(x: _random.nextDouble() * size.width, y: -(_random.nextDouble() * size.height), size: _random.nextDouble() * 15 + 10, speedX: _random.nextDouble() * 2 - 1, speedY: _random.nextDouble() * 2 + 1, color: [Colors.orange[700]!, Colors.orange[400]!, Colors.red[700]!, Colors.yellow[700]!][_random.nextInt(4)], angle: _random.nextDouble() * pi * 2, spin: (_random.nextDouble() - 0.5) * 0.1);
       case 'sunset_birds':
         bool isBird = _particles.length < 8;
-        if (isBird) {
-          return Particle(
-            x: _random.nextDouble() * size.width,
-            y: _random.nextDouble() * size.height * 0.55,
-            size: _random.nextDouble() * 6 + 4,
-            speedX: _random.nextDouble() * 1.5 + 0.8,
-            speedY: 0,
-            color: Colors.black.withValues(alpha: _random.nextDouble() * 0.2 + 0.7),
-            angle: 0,
-            spin: 0,
-            life: _random.nextDouble() * pi * 2,
-          );
-        } else {
-          return Particle(
-            x: _random.nextDouble() * size.width,
-            y: _random.nextDouble() * size.height * 0.42,
-            size: _random.nextDouble() * 1.5 + 0.5,
-            speedX: 0,
-            speedY: 0,
-            color: Colors.white.withValues(alpha: 1.0),
-            angle: 0,
-            spin: 0,
-            life: _random.nextDouble() * pi * 2,
-          );
-        }
+        return Particle(x: _random.nextDouble() * size.width, y: _random.nextDouble() * size.height * (isBird ? 0.55 : 0.42), size: _random.nextDouble() * (isBird ? 6 : 1.5) + (isBird ? 4 : 0.5), speedX: isBird ? (_random.nextDouble() * 1.5 + 0.8) : 0, color: (isBird ? Colors.black : Colors.white).withValues(alpha: isBird ? (_random.nextDouble() * 0.2 + 0.7) : 1.0), life: _random.nextDouble() * pi * 2);
       case 'fireflies':
-        return Particle(
-          x: _random.nextDouble() * size.width,
-          y: _random.nextDouble() * size.height,
-          size: _random.nextDouble() * 3 + 1.5,
-          speedX: _random.nextDouble() * 1.0 - 0.5,
-          speedY: _random.nextDouble() * 1.0 - 0.5,
-          color: const Color(0xFFCEFF1A).withValues(alpha: 0.8),
-          angle: 0,
-          spin: 0,
-          life: _random.nextDouble() * pi * 2,
-        );
+        return Particle(x: _random.nextDouble() * size.width, y: _random.nextDouble() * size.height, size: _random.nextDouble() * 3 + 1.5, speedX: _random.nextDouble() * 1.0 - 0.5, speedY: _random.nextDouble() * 1.0 - 0.5, color: const Color(0xFFCEFF1A).withValues(alpha: 0.8), life: _random.nextDouble() * pi * 2);
       case 'cherry_blossom':
-        return Particle(
-          x: _random.nextDouble() * size.width,
-          y: -(_random.nextDouble() * size.height),
-          size: _random.nextDouble() * 12 + 6,
-          speedX: _random.nextDouble() * 2 + 1,
-          speedY: _random.nextDouble() * 2 + 1.5,
-          color: Colors.pinkAccent.withValues(alpha: _random.nextDouble() * 0.4 + 0.4),
-          angle: _random.nextDouble() * pi * 2,
-          spin: (_random.nextDouble() - 0.5) * 0.1,
-          life: 0,
-        );
+        return Particle(x: _random.nextDouble() * size.width, y: -(_random.nextDouble() * size.height), size: _random.nextDouble() * 12 + 6, speedX: _random.nextDouble() * 2 + 1, speedY: _random.nextDouble() * 2 + 1.5, color: Colors.pinkAccent.withValues(alpha: _random.nextDouble() * 0.4 + 0.4), angle: _random.nextDouble() * pi * 2, spin: (_random.nextDouble() - 0.5) * 0.1);
       case 'fireworks':
-        return Particle(
-          x: _random.nextDouble() * size.width,
-          y: size.height + _random.nextDouble() * 100,
-          size: _random.nextDouble() * 3 + 1.5,
-          speedX: 0,
-          speedY: -(_random.nextDouble() * 4 + 6),
-          color: HSLColor.fromAHSL(1.0, _random.nextDouble() * 360, 1.0, 0.6).toColor(),
-          angle: 0,
-          spin: 0,
-          life: 0,
-        );
+        return Particle(x: _random.nextDouble() * size.width, y: size.height + _random.nextDouble() * 100, size: _random.nextDouble() * 3 + 1.5, speedY: -(_random.nextDouble() * 4 + 6), color: HSLColor.fromAHSL(1.0, _random.nextDouble() * 360, 1.0, 0.6).toColor());
       case 'galaxy':
-        return Particle(
-          x: _random.nextDouble() * size.width,
-          y: _random.nextDouble() * size.height,
-          size: _random.nextDouble() * 2 + 0.5,
-          speedX: (_random.nextDouble() - 0.5) * 2,
-          speedY: (_random.nextDouble() - 0.5) * 2,
-          color: Colors.white.withValues(alpha: _random.nextDouble() * 0.5 + 0.5),
-          angle: 0,
-          spin: 0,
-          life: _random.nextDouble() * size.width / 2,
-        );
+        return Particle(x: _random.nextDouble() * size.width, y: _random.nextDouble() * size.height, size: _random.nextDouble() * 2 + 0.5, speedX: (_random.nextDouble() - 0.5) * 2, speedY: (_random.nextDouble() - 0.5) * 2, color: Colors.white.withValues(alpha: _random.nextDouble() * 0.5 + 0.5), life: _random.nextDouble() * size.width / 2);
       default:
-        return Particle(x: 0, y: 0, size: 0, speedY: 0, speedX: 0, color: Colors.transparent, angle: 0, spin: 0);
+        return Particle(x: 0, y: 0, size: 0, color: Colors.transparent);
     }
   }
 
   void _updateParticles() {
     if (!mounted || _currentEffect == 'none' || _particles.isEmpty) return;
     
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    double dt = (nowMs - _lastTickMs) / 1000.0;
+    _lastTickMs = nowMs;
+
+    if (dt <= 0.0 || dt > 0.05) dt = 1.0 / 60.0;
+    final double factor = dt * 60.0;
+
     final size = MediaQuery.of(context).size;
     if (size.width == 0 || size.height == 0) return;
 
     for (var p in _particles) {
-      p.x += p.speedX;
-      p.y += p.speedY;
-      p.angle += p.spin;
+      p.x += p.speedX * factor;
+      p.y += p.speedY * factor;
+      p.angle += p.spin * factor;
       
       if (_currentEffect == 'bubbles') {
-        p.x += sin(p.y * 0.03) * 0.4;
+        p.x += sin(p.y * 0.03) * 0.4 * factor;
       } else if (_currentEffect == 'waves') {
-        p.x += sin(p.y * 0.02) * 0.8;
+        p.x += sin(p.y * 0.02) * 0.8 * factor;
       } else if (_currentEffect == 'leaves') {
-        p.x += sin(p.y * 0.01) * 2;
+        p.x += sin(p.y * 0.01) * 2.0 * factor;
       } else if (_currentEffect == 'sunset_birds') {
         if (p.speedX > 0.5) {
-          p.y += sin(p.x * 0.02) * 0.3;
-          p.life += 0.15;
+          p.y += sin(p.x * 0.02) * 0.3 * factor;
+          p.life += 0.15 * factor;
         } else {
-          p.life += 0.02;
+          p.life += 0.02 * factor;
         }
       } else if (_currentEffect == 'fireflies') {
-        p.x += sin(p.y * 0.02) * 0.5;
-        p.y += cos(p.x * 0.02) * 0.5;
-        p.life += 0.05;
+        p.x += sin(p.y * 0.02) * 0.5 * factor;
+        p.y += cos(p.x * 0.02) * 0.5 * factor;
+        p.life += 0.05 * factor;
       } else if (_currentEffect == 'cherry_blossom') {
-        p.x += sin(p.y * 0.01) * 1.5;
+        p.x += sin(p.y * 0.01) * 1.5 * factor;
       } else if (_currentEffect == 'galaxy') {
         double centerX = size.width / 2;
         double centerY = size.height / 2;
@@ -333,8 +176,8 @@ class _EffectBackgroundState extends State<EffectBackground>
         double dy = p.y - centerY;
         double dist = sqrt(dx * dx + dy * dy);
         if (dist == 0) dist = 1;
-        p.x += (dx / dist) * (dist * 0.03 + 0.6);
-        p.y += (dy / dist) * (dist * 0.03 + 0.6);
+        p.x += (dx / dist) * (dist * 0.03 + 0.6) * factor;
+        p.y += (dy / dist) * (dist * 0.03 + 0.6) * factor;
         p.size = (dist / size.width) * 2.2 + 0.3;
         if (p.x < 0 || p.x > size.width || p.y < 0 || p.y > size.height) {
           p.x = centerX + (_random.nextDouble() - 0.5) * 10;
@@ -342,32 +185,31 @@ class _EffectBackgroundState extends State<EffectBackground>
         }
       } else if (_currentEffect == 'fireworks') {
         if (p.speedY < 0 && p.life == 0) {
-          p.speedY += 0.05;
+          p.speedY += 0.05 * factor;
           if (p.speedY >= -1.0) {
             p.life = 1; 
             p.speedX = (_random.nextDouble() - 0.5) * 6;
             p.speedY = (_random.nextDouble() - 0.5) * 6;
           }
         } else if (p.life > 0) {
-          p.speedY += 0.08; 
-          p.life += 1;
+          p.speedY += 0.08 * factor; 
+          p.life += 1 * factor;
         }
       } else if (_currentEffect == 'hearts') {
-        p.x += sin(p.y * 0.02) * 0.5;
+        p.x += sin(p.y * 0.02) * 0.5 * factor;
       } else if (_currentEffect == 'stars') {
-        p.life += 0.05;
+        p.life += 0.05 * factor;
       } else if (_currentEffect == 'rain_ripple') {
-        p.life += 0.04;
+        p.life += 0.04 * factor;
         if (p.life > 5) {
           p.life = 0;
           p.x = _random.nextDouble() * size.width;
           p.y = _random.nextDouble() * size.height;
         }
       } else if (_currentEffect == 'rainbow') {
-        p.life += 0.03;
+        p.life += 0.03 * factor;
       }
 
-      // Reset particle if it goes out of bounds
       if (_currentEffect == 'meteor') {
         if (p.x > size.width + 50 || p.y > size.height + 50) {
           final speed = _random.nextDouble() * 8 + 5;
@@ -414,7 +256,7 @@ class _EffectBackgroundState extends State<EffectBackground>
       child: AnimatedBuilder(
         animation: _controller,
         builder: (context, child) {
-          final timeSec = (DateTime.now().millisecondsSinceEpoch % 3600000) / 1000.0;
+          final timeSec = (_lastTickMs % 3600000) / 1000.0;
           return CustomPaint(
             painter: EffectPainter(
               particles: _particles,
@@ -430,26 +272,12 @@ class _EffectBackgroundState extends State<EffectBackground>
 }
 
 class Particle {
-  double x;
-  double y;
-  double size;
-  double speedX;
-  double speedY;
+  double x, y, size, speedX, speedY, angle, spin, life;
   Color color;
-  double angle;
-  double spin;
-  double life;
 
   Particle({
-    required this.x,
-    required this.y,
-    required this.size,
-    required this.speedX,
-    required this.speedY,
-    required this.color,
-    required this.angle,
-    required this.spin,
-    this.life = 0,
+    this.x = 0, this.y = 0, this.size = 0, this.speedX = 0, this.speedY = 0,
+    required this.color, this.angle = 0, this.spin = 0, this.life = 0,
   });
 }
 
@@ -457,8 +285,52 @@ class EffectPainter extends CustomPainter {
   final List<Particle> particles;
   final String effectType;
   final double time;
+  final Paint _sharedPaint = Paint();
+  static final Path _unitHeartPath = _createUnitHeartPath();
+  static final Path _unitStarPath = _createUnitStarPath();
+  static final Path _unitLeafPath = _createUnitLeafPath();
+  static final Path _unitBirdPath = _createUnitBirdPath();
 
   EffectPainter({required this.particles, required this.effectType, this.time = 0});
+
+  static Path _createUnitHeartPath() {
+    Path path = Path();
+    path.moveTo(0, 0.25);
+    path.cubicTo(-0.5, -0.25, -1.0, 0.5, 0, 1.0);
+    path.cubicTo(1.0, 0.5, 0.5, -0.25, 0, 0.25);
+    return path;
+  }
+
+  static Path _createUnitStarPath() {
+    Path path = Path();
+    int points = 5;
+    double step = pi / points;
+    for (int i = 0; i < 2 * points; i++) {
+      double radius = (i % 2 == 0) ? 1.0 : 0.4;
+      double angle = i * step - pi / 2;
+      path.lineTo(radius * cos(angle), radius * sin(angle));
+    }
+    path.close();
+    return path;
+  }
+
+  static Path _createUnitLeafPath() {
+    Path path = Path();
+    path.moveTo(0, -1.0);
+    path.quadraticBezierTo(1.0, -0.5, 0, 1.0);
+    path.quadraticBezierTo(-1.0, -0.5, 0, -1.0);
+    return path;
+  }
+
+  static Path _createUnitBirdPath() {
+    Path path = Path();
+    path.moveTo(-1.0, 0);
+    path.quadraticBezierTo(-0.5, 0.3, 0, 0.3);
+    path.quadraticBezierTo(0.5, 0.3, 1.0, 0);
+    path.quadraticBezierTo(0.5, 0.5, 0, 0.5);
+    path.quadraticBezierTo(-0.5, 0.5, -1.0, 0);
+    return path;
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -468,71 +340,73 @@ class EffectPainter extends CustomPainter {
     if (effectType == 'galaxy') _drawGalaxyBackground(canvas, size);
 
     for (var p in particles) {
-      final paint = Paint()
+      _sharedPaint
         ..color = p.color
-        ..style = PaintingStyle.fill;
+        ..style = PaintingStyle.fill
+        ..maskFilter = null
+        ..shader = null
+        ..strokeWidth = 0;
 
       if (effectType == 'bubbles' || effectType == 'snow') {
-        canvas.drawCircle(Offset(p.x, p.y), p.size, paint);
+        canvas.drawCircle(Offset(p.x, p.y), p.size, _sharedPaint);
       } else if (effectType == 'hearts') {
-        _drawHeart(canvas, p, paint);
+        _drawHeart(canvas, p, _sharedPaint);
       } else if (effectType == 'stars') {
         double opacity = (sin(p.life) + 1) / 2;
-        paint.color = p.color.withValues(alpha: p.color.a * opacity);
-        _drawStar(canvas, p, paint);
+        _sharedPaint.color = p.color.withValues(alpha: p.color.a * opacity);
+        _drawStar(canvas, p, _sharedPaint);
       } else if (effectType == 'waves') {
-        canvas.drawCircle(Offset(p.x, p.y), p.size, paint);
+        canvas.drawCircle(Offset(p.x, p.y), p.size, _sharedPaint);
       } else if (effectType == 'leaves') {
-        _drawLeaf(canvas, p, paint);
+        _drawLeaf(canvas, p, _sharedPaint);
       } else if (effectType == 'sunset_birds') {
         if (p.speedX > 0.5) {
-          _drawBird(canvas, p, paint);
+          _drawBird(canvas, p, _sharedPaint);
         } else {
           double opacity = (sin(p.life) + 1) / 2;
-          paint.color = p.color.withValues(alpha: p.color.a * opacity);
-          canvas.drawCircle(Offset(p.x, p.y), p.size, paint);
+          _sharedPaint.color = p.color.withValues(alpha: p.color.a * opacity);
+          canvas.drawCircle(Offset(p.x, p.y), p.size, _sharedPaint);
         }
       } else if (effectType == 'cherry_blossom') {
-        _drawLeaf(canvas, p, paint);
+        _drawLeaf(canvas, p, _sharedPaint);
       } else if (effectType == 'fireflies') {
         double opacity = (sin(p.life) + 1) / 2 * 0.8 + 0.2;
         final glowPaint = Paint()
           ..color = p.color.withValues(alpha: opacity * 0.4)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0);
         canvas.drawCircle(Offset(p.x, p.y), p.size * 2, glowPaint);
-        paint.color = Colors.white.withValues(alpha: opacity);
-        canvas.drawCircle(Offset(p.x, p.y), p.size * 0.5, paint);
+        _sharedPaint.color = Colors.white.withValues(alpha: opacity);
+        canvas.drawCircle(Offset(p.x, p.y), p.size * 0.5, _sharedPaint);
       } else if (effectType == 'galaxy') {
-        canvas.drawCircle(Offset(p.x, p.y), p.size, paint);
+        canvas.drawCircle(Offset(p.x, p.y), p.size, _sharedPaint);
       } else if (effectType == 'fireworks') {
         if (p.life == 0) { 
-          canvas.drawLine(Offset(p.x, p.y), Offset(p.x, p.y + 10), paint..strokeWidth = 2);
+          _sharedPaint.strokeWidth = 2;
+          _sharedPaint.style = PaintingStyle.stroke;
+          canvas.drawLine(Offset(p.x, p.y), Offset(p.x, p.y + 10), _sharedPaint);
         } else { 
           double opacity = 1.0 - (p.life / 100);
           if (opacity < 0) opacity = 0;
-          paint.color = p.color.withValues(alpha: opacity);
-          canvas.drawCircle(Offset(p.x, p.y), p.size, paint);
+          _sharedPaint.color = p.color.withValues(alpha: opacity);
+          canvas.drawCircle(Offset(p.x, p.y), p.size, _sharedPaint);
         }
       } else if (effectType == 'meteor') {
-        _drawMeteor(canvas, p, paint);
+        _drawMeteor(canvas, p, _sharedPaint);
       } else if (effectType == 'rain') {
-        paint.strokeWidth = p.size;
-        paint.strokeCap = StrokeCap.round;
-        canvas.drawLine(
-          Offset(p.x, p.y),
-          Offset(p.x - p.speedX * 1.5, p.y - p.speedY * 1.5),
-          paint,
-        );
+        _sharedPaint.strokeWidth = p.size;
+        _sharedPaint.strokeCap = StrokeCap.round;
+        _sharedPaint.style = PaintingStyle.stroke;
+        canvas.drawLine(Offset(p.x, p.y), Offset(p.x - p.speedX * 2, p.y - p.speedY * 0.8), _sharedPaint);
       } else if (effectType == 'rain_ripple') {
         double maxRadius = 40.0;
         double radius = p.life * 12;
         if (radius > 0 && radius < maxRadius) {
           double opacity = 1.0 - (radius / maxRadius);
           if (opacity < 0) opacity = 0;
-          paint.style = PaintingStyle.stroke;
-          paint.strokeWidth = 1.5;
-          paint.color = p.color.withValues(alpha: opacity * p.color.a);
-          canvas.drawOval(Rect.fromCenter(center: Offset(p.x, p.y), width: radius * 2, height: radius), paint);
+          _sharedPaint.style = PaintingStyle.stroke;
+          _sharedPaint.strokeWidth = 1.5;
+          _sharedPaint.color = p.color.withValues(alpha: opacity * p.color.a);
+          canvas.drawOval(Rect.fromCenter(center: Offset(p.x, p.y), width: radius * 2, height: radius), _sharedPaint);
         }
       } else if (effectType == 'rainbow') {
         if (p == particles.first) {
@@ -540,27 +414,19 @@ class EffectPainter extends CustomPainter {
            Offset center = Offset(size.width * 0.5, size.height * 0.7);
            double pulse = (sin(p.life) + 1.0) / 2.0; 
            double baseAlpha = 0.3 + pulse * 0.3;
-           
-           List<Color> colors = [
-             Colors.red, Colors.orange, Colors.yellow, Colors.green, Colors.blue, Colors.indigo, Colors.purple
-           ];
-           
+           List<Color> colors = [Colors.red, Colors.orange, Colors.yellow, Colors.green, Colors.blue, Colors.indigo, Colors.purple];
            for (int i = 0; i < colors.length; i++) {
-             double currentRadius = baseRadius - (i * 12.0);
-             Rect rect = Rect.fromCircle(center: center, radius: currentRadius);
              final rainbowPaint = Paint()
                ..style = PaintingStyle.stroke
                ..strokeWidth = 14.0
-               ..strokeCap = StrokeCap.round
                ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10.0)
                ..color = colors[i].withValues(alpha: baseAlpha);
-               
-             canvas.drawArc(rect, pi * 1.1, pi * 0.8, false, rainbowPaint);
+             canvas.drawArc(Rect.fromCircle(center: center, radius: baseRadius - (i * 12.0)), pi * 1.1, pi * 0.8, false, rainbowPaint);
            }
         } else {
            double opacity = (sin(p.life) + 1) / 2;
-           paint.color = p.color.withValues(alpha: p.color.a * opacity);
-           _drawStar(canvas, p, paint);
+           _sharedPaint.color = p.color.withValues(alpha: p.color.a * opacity);
+           _drawStar(canvas, p, _sharedPaint);
         }
       }
     }
@@ -570,16 +436,8 @@ class EffectPainter extends CustomPainter {
     canvas.save();
     canvas.translate(p.x, p.y);
     canvas.rotate(p.angle);
-    
-    double width = p.size;
-    double height = p.size;
-    
-    Path path = Path();
-    path.moveTo(0, height / 4);
-    path.cubicTo(-width / 2, -height / 4, -width, height / 2, 0, height);
-    path.cubicTo(width, height / 2, width / 2, -height / 4, 0, height / 4);
-    
-    canvas.drawPath(path, paint);
+    canvas.scale(p.size, p.size);
+    canvas.drawPath(_unitHeartPath, paint);
     canvas.restore();
   }
 
@@ -587,29 +445,125 @@ class EffectPainter extends CustomPainter {
     canvas.save();
     canvas.translate(p.x, p.y);
     canvas.rotate(p.angle);
-    
-    double r = p.size;
-    double innerR = p.size / 2.5;
-    int points = 5;
-    
-    Path path = Path();
-    double step = pi / points;
-    
-    for (int i = 0; i < 2 * points; i++) {
-      double radius = (i % 2 == 0) ? r : innerR;
-      double angle = i * step - pi / 2;
-      double x = radius * cos(angle);
-      double y = radius * sin(angle);
-      if (i == 0) {
-        path.moveTo(x, y);
-      } else {
+    canvas.scale(p.size, p.size);
+    canvas.drawPath(_unitStarPath, paint);
+    canvas.restore();
+  }
+
+  void _drawLeaf(Canvas canvas, Particle p, Paint paint) {
+    canvas.save();
+    canvas.translate(p.x, p.y);
+    canvas.rotate(p.angle);
+    canvas.scale(p.size, p.size);
+    canvas.drawPath(_unitLeafPath, paint);
+    canvas.restore();
+  }
+
+  void _drawBird(Canvas canvas, Particle p, Paint paint) {
+    canvas.save();
+    canvas.translate(p.x, p.y);
+    canvas.scale(p.size, p.size);
+    canvas.drawPath(_unitBirdPath, paint);
+    canvas.restore();
+  }
+
+  void _drawMeteor(Canvas canvas, Particle p, Paint paint) {
+    final double tailLength = p.life;
+    final double angle = atan2(p.speedY, p.speedX);
+    final double dx = -cos(angle) * tailLength;
+    final double dy = -sin(angle) * tailLength;
+
+    final tailPaint = Paint()
+      ..shader = LinearGradient(
+        colors: [
+          Colors.white.withValues(alpha: 0.0),
+          Colors.purpleAccent.withValues(alpha: 0.6),
+          Colors.white.withValues(alpha: 0.95),
+        ],
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+      ).createShader(Rect.fromPoints(
+        Offset(p.x + dx, p.y + dy),
+        Offset(p.x, p.y),
+      ))
+      ..strokeWidth = p.size * 2
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+
+    canvas.drawLine(
+      Offset(p.x + dx, p.y + dy),
+      Offset(p.x, p.y),
+      tailPaint,
+    );
+
+    final headPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.95)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
+    canvas.drawCircle(Offset(p.x, p.y), p.size + 1.5, headPaint);
+  }
+
+  void _drawOceanBackground(Canvas canvas, Size size) {
+    final double oceanTop = size.height * 0.6;
+    final oceanRect = Rect.fromLTRB(0, oceanTop, size.width, size.height);
+    final oceanPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          const Color(0xFF006994).withValues(alpha: 0.8),
+          const Color(0xFF003B5C).withValues(alpha: 0.9),
+        ],
+      ).createShader(oceanRect);
+    canvas.drawRect(oceanRect, oceanPaint);
+
+    void drawWaveLayer(Color color, double heightOffset, double speed, double amplitude) {
+      final Path path = Path();
+      path.moveTo(0, size.height);
+      path.lineTo(0, oceanTop + heightOffset);
+      for (double x = 0; x <= size.width; x += 10) {
+        double y = oceanTop + heightOffset + sin((x / (size.width / 2.5)) + (time * speed * pi * 2)) * amplitude;
         path.lineTo(x, y);
       }
+      path.lineTo(size.width, size.height);
+      path.close();
+      canvas.drawPath(path, Paint()..color = color);
     }
-    path.close();
-    
-    canvas.drawPath(path, paint);
-    canvas.restore();
+    drawWaveLayer(const Color(0xFF0077BE).withValues(alpha: 0.5), 10, 1.2, 15);
+    drawWaveLayer(const Color(0xFF005B96).withValues(alpha: 0.6), 25, 0.8, 20);
+    drawWaveLayer(const Color(0xFF003B5C).withValues(alpha: 0.7), 45, 1.5, 12);
+  }
+
+  void _drawSunsetBackground(Canvas canvas, Size size) {
+    final bgRect = Rect.fromLTRB(0, 0, size.width, size.height);
+    final bgPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          const Color(0xFF2B1055).withValues(alpha: 0.8),
+          const Color(0xFF75225E).withValues(alpha: 0.8),
+          const Color(0xFFB54559).withValues(alpha: 0.8),
+          const Color(0xFFE27B58).withValues(alpha: 0.8),
+          const Color(0xFFFFB56B).withValues(alpha: 0.8),
+        ],
+        stops: const [0.0, 0.3, 0.6, 0.8, 1.0],
+      ).createShader(bgRect);
+    canvas.drawRect(bgRect, bgPaint);
+
+    final Offset sunCenter = Offset(size.width * 0.5, size.height * 0.65);
+    final double sunRadius = size.width * 0.25;
+
+    final sunGlowPaint = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          Colors.white.withValues(alpha: 0.8),
+          const Color(0xFFFFD180).withValues(alpha: 0.6),
+          const Color(0xFFFF8A65).withValues(alpha: 0.2),
+          const Color(0xFFFF8A65).withValues(alpha: 0.0),
+        ],
+        stops: const [0.0, 0.3, 0.6, 1.0],
+      ).createShader(Rect.fromCircle(center: sunCenter, radius: sunRadius * 2.5));
+    canvas.drawCircle(sunCenter, sunRadius * 2.5, sunGlowPaint);
   }
 
   void _drawAuroraBackground(Canvas canvas, Size size) {
@@ -680,132 +634,4 @@ class EffectPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-
-  void _drawMeteor(Canvas canvas, Particle p, Paint paint) {
-    final double tailLength = p.life;
-    final double angle = atan2(p.speedY, p.speedX);
-
-    final double dx = -cos(angle) * tailLength;
-    final double dy = -sin(angle) * tailLength;
-
-    final tailPaint = Paint()
-      ..shader = LinearGradient(
-        colors: [
-          Colors.white.withValues(alpha: 0.0),
-          Colors.purpleAccent.withValues(alpha: 0.6),
-          Colors.white.withValues(alpha: 0.95),
-        ],
-        begin: Alignment.centerLeft,
-        end: Alignment.centerRight,
-      ).createShader(Rect.fromPoints(
-        Offset(p.x + dx, p.y + dy),
-        Offset(p.x, p.y),
-      ))
-      ..strokeWidth = p.size * 2
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
-
-    canvas.drawLine(
-      Offset(p.x + dx, p.y + dy),
-      Offset(p.x, p.y),
-      tailPaint,
-    );
-
-    final headPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.95)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
-    canvas.drawCircle(Offset(p.x, p.y), p.size + 1.5, headPaint);
-  }
-
-  void _drawLeaf(Canvas canvas, Particle p, Paint paint) {
-    canvas.save();
-    canvas.translate(p.x, p.y);
-    canvas.rotate(p.angle);
-    Path path = Path();
-    double s = p.size;
-    path.moveTo(0, -s);
-    path.quadraticBezierTo(s, -s/2, 0, s);
-    path.quadraticBezierTo(-s, -s/2, 0, -s);
-    canvas.drawPath(path, paint);
-    canvas.restore();
-  }
-
-  void _drawBird(Canvas canvas, Particle p, Paint paint) {
-    canvas.save();
-    canvas.translate(p.x, p.y);
-    double s = p.size;
-    double wingY = sin(p.life) * s * 0.8;
-    Path path = Path();
-    path.moveTo(-s, 0);
-    path.quadraticBezierTo(-s/2, wingY, 0, s/3);
-    path.quadraticBezierTo(s/2, wingY, s, 0);
-    path.quadraticBezierTo(s/2, wingY + s/2, 0, s/2);
-    path.quadraticBezierTo(-s/2, wingY + s/2, -s, 0);
-    canvas.drawPath(path, paint);
-    canvas.restore();
-  }
-
-  void _drawOceanBackground(Canvas canvas, Size size) {
-    final double oceanTop = size.height * 0.6;
-    final oceanRect = Rect.fromLTRB(0, oceanTop, size.width, size.height);
-    final oceanPaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          const Color(0xFF006994).withValues(alpha: 0.8),
-          const Color(0xFF003B5C).withValues(alpha: 0.9),
-        ],
-      ).createShader(oceanRect);
-    canvas.drawRect(oceanRect, oceanPaint);
-
-    void drawWaveLayer(Color color, double heightOffset, double speed, double amplitude) {
-      final Path path = Path();
-      path.moveTo(0, size.height);
-      path.lineTo(0, oceanTop + heightOffset);
-      for (double x = 0; x <= size.width; x += 10) {
-        double y = oceanTop + heightOffset + sin((x / (size.width / 2.5)) + (time * speed * pi * 2)) * amplitude;
-        path.lineTo(x, y);
-      }
-      path.lineTo(size.width, size.height);
-      path.close();
-      canvas.drawPath(path, Paint()..color = color);
-    }
-    drawWaveLayer(const Color(0xFF0077BE).withValues(alpha: 0.5), 10, 1.2, 15);
-    drawWaveLayer(const Color(0xFF005B96).withValues(alpha: 0.6), 25, 0.8, 20);
-    drawWaveLayer(const Color(0xFF003B5C).withValues(alpha: 0.7), 45, 1.5, 12);
-  }
-
-  void _drawSunsetBackground(Canvas canvas, Size size) {
-    final bgRect = Rect.fromLTRB(0, 0, size.width, size.height);
-    final bgPaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          const Color(0xFF2B1055).withValues(alpha: 0.8),
-          const Color(0xFF75225E).withValues(alpha: 0.8),
-          const Color(0xFFB54559).withValues(alpha: 0.8),
-          const Color(0xFFE27B58).withValues(alpha: 0.8),
-          const Color(0xFFFFB56B).withValues(alpha: 0.8),
-        ],
-        stops: const [0.0, 0.3, 0.6, 0.8, 1.0],
-      ).createShader(bgRect);
-    canvas.drawRect(bgRect, bgPaint);
-
-    final Offset sunCenter = Offset(size.width * 0.5, size.height * 0.65);
-    final double sunRadius = size.width * 0.25;
-
-    final sunGlowPaint = Paint()
-      ..shader = RadialGradient(
-        colors: [
-          Colors.white.withValues(alpha: 0.8),
-          const Color(0xFFFFD180).withValues(alpha: 0.6),
-          const Color(0xFFFF8A65).withValues(alpha: 0.2),
-          const Color(0xFFFF8A65).withValues(alpha: 0.0),
-        ],
-        stops: const [0.0, 0.3, 0.6, 1.0],
-      ).createShader(Rect.fromCircle(center: sunCenter, radius: sunRadius * 2.5));
-    canvas.drawCircle(sunCenter, sunRadius * 2.5, sunGlowPaint);
-  }
 }
