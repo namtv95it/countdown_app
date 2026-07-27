@@ -1113,50 +1113,53 @@ const assignProductsModal = document.getElementById('assign-products-modal');
 const btnSaveAssign = document.getElementById('btn-save-assign');
 let initialAssignState = {};
 
-window.openAssignProductsModal = (id) => {
-    const occ = specialOccasions.find(o => o.id === id);
-    if (!occ) return;
+window.openAssignProductsModal = (id, mode = 'occasion') => {
+    let name = '';
+    if (mode === 'category') {
+        const cat = categories.find(c => c.id === id);
+        if (!cat) return;
+        name = cat.name;
+    } else {
+        const occ = specialOccasions.find(o => o.id === id);
+        if (!occ) return;
+        name = occ.nameVi;
+    }
 
-    document.getElementById('assign-modal-title-text').innerText = `Gán SP cho ${occ.nameVi}`;
-    document.getElementById('assign-occ-id').value = id;
+    document.getElementById('assign-modal-title-text').innerText = `Gán SP cho ${name}`;
+    const idInput = document.getElementById('assign-occ-id');
+    idInput.value = id;
+    idInput.dataset.mode = mode;
 
     const listContainer = document.getElementById('assign-products-list');
     listContainer.innerHTML = '';
     initialAssignState = {};
 
     if (gifts.length === 0) {
-        listContainer.innerHTML = '<p class="text-gray-500">Chưa có sản phẩm nào.</p>';
+        listContainer.innerHTML = '<p class="text-gray-500 text-center py-4">Chưa có sản phẩm nào.</p>';
     } else {
         gifts.forEach(gift => {
-            const isSelected = gift.occasionIds && gift.occasionIds.includes(id);
+            const isSelected = mode === 'category'
+                ? (gift.categoryIds && gift.categoryIds.includes(id))
+                : (gift.occasionIds && gift.occasionIds.includes(id));
+
             initialAssignState[gift.id] = isSelected;
 
             const item = document.createElement('label');
             item.className = `flex items-center justify-between p-3 rounded-xl border ${isSelected ? 'border-primary bg-primary/5' : 'border-gray-200 dark:border-white/10 bg-white dark:bg-white/5'} cursor-pointer transition-colors`;
             item.innerHTML = `
-                <div class="flex items-center gap-3">
-                    <input type="checkbox" class="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary" value="${gift.id}" ${isSelected ? 'checked' : ''}>
-                    <div>
-                        <p class="font-bold text-gray-900 dark:text-white">${gift.name.vi || gift.name.en || 'No Name'}</p>
-                        <p class="text-xs text-gray-500">${gift.priceRange}</p>
+                <div class="flex items-center gap-3 min-w-0">
+                    <input type="checkbox" class="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary flex-shrink-0" value="${gift.id}" ${isSelected ? 'checked' : ''}>
+                    <div class="min-w-0">
+                        <p class="font-bold text-gray-900 dark:text-white truncate">${gift.name.vi || gift.name.en || 'No Name'}</p>
+                        <p class="text-xs text-gray-500">${gift.priceRange || '0đ'}</p>
                     </div>
                 </div>
-                <img src="${gift.imageUrl}" class="w-10 h-10 rounded-lg object-cover bg-gray-100" onerror="this.src='https://via.placeholder.com/40'">
+                <img src="${gift.imageUrl}" class="w-10 h-10 rounded-lg object-cover bg-gray-100 flex-shrink-0" onerror="this.src='https://via.placeholder.com/40'">
             `;
 
-            // Add click listener to toggle styling
             const checkbox = item.querySelector('input[type="checkbox"]');
             checkbox.addEventListener('change', () => {
-                if (checkbox.checked) {
-                    item.classList.replace('border-gray-200', 'border-primary');
-                    item.classList.replace('dark:border-white/10', 'border-primary');
-                    item.classList.replace('bg-white', 'bg-primary/5');
-                    item.classList.replace('dark:bg-white/5', 'bg-primary/5');
-                } else {
-                    item.classList.replace('border-primary', 'border-gray-200');
-                    // Need to reset dark mode borders correctly, simplify logic:
-                    item.className = `flex items-center justify-between p-3 rounded-xl border ${checkbox.checked ? 'border-primary bg-primary/5' : 'border-gray-200 dark:border-white/10 bg-white dark:bg-white/5'} cursor-pointer transition-colors`;
-                }
+                item.className = `flex items-center justify-between p-3 rounded-xl border ${checkbox.checked ? 'border-primary bg-primary/5' : 'border-gray-200 dark:border-white/10 bg-white dark:bg-white/5'} cursor-pointer transition-colors`;
             });
 
             listContainer.appendChild(item);
@@ -1181,7 +1184,9 @@ document.querySelectorAll('#assign-products-modal .btn-close-modal').forEach(btn
 
 if (btnSaveAssign) {
     btnSaveAssign.addEventListener('click', async () => {
-        const id = document.getElementById('assign-occ-id').value;
+        const idInput = document.getElementById('assign-occ-id');
+        const id = idInput.value;
+        const mode = idInput.dataset.mode || 'occasion';
         if (!id) return;
 
         btnSaveAssign.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
@@ -1191,6 +1196,7 @@ if (btnSaveAssign) {
             const checkboxes = document.querySelectorAll('#assign-products-list input[type="checkbox"]');
             const batch = db.batch();
             let updatesCount = 0;
+            const targetField = mode === 'category' ? 'categoryIds' : 'occasionIds';
 
             checkboxes.forEach(chk => {
                 const giftId = chk.value;
@@ -1198,17 +1204,15 @@ if (btnSaveAssign) {
                 const isSelected = chk.checked;
 
                 if (isSelected && !wasSelected) {
-                    // Add
                     const ref = db.collection('gifts').doc(giftId);
                     batch.update(ref, {
-                        occasionIds: firebase.firestore.FieldValue.arrayUnion(id)
+                        [targetField]: firebase.firestore.FieldValue.arrayUnion(id)
                     });
                     updatesCount++;
                 } else if (!isSelected && wasSelected) {
-                    // Remove
                     const ref = db.collection('gifts').doc(giftId);
                     batch.update(ref, {
-                        occasionIds: firebase.firestore.FieldValue.arrayRemove(id)
+                        [targetField]: firebase.firestore.FieldValue.arrayRemove(id)
                     });
                     updatesCount++;
                 }
@@ -1217,7 +1221,6 @@ if (btnSaveAssign) {
             if (updatesCount > 0) {
                 await batch.commit();
                 showToast("Đã cập nhật sản phẩm thành công!");
-                // Reload gifts to update state
                 loadGifts();
             }
 
@@ -1617,12 +1620,17 @@ async function loadCategories() {
                         </label>
                     </div>
                     
-                    <div class="mt-auto pt-3 border-t border-gray-100 dark:border-white/10 flex gap-2">
-                        <button onclick="editCategory('${data.id}')" class="flex-1 py-1.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/20 rounded-lg transition-colors font-semibold text-xs flex justify-center items-center gap-1">
-                            <i class="fa-solid fa-pen-to-square"></i> Sửa
-                        </button>
-                        <button onclick="deleteCategory('${data.id}')" class="flex-1 py-1.5 bg-red-50 dark:bg-red-500/10 text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 rounded-lg transition-colors font-semibold text-xs flex justify-center items-center gap-1">
-                            <i class="fa-solid fa-trash-can"></i> Xóa
+                    <div class="mt-auto pt-3 border-t border-gray-100 dark:border-white/10 flex flex-col gap-2">
+                        <div class="flex gap-2">
+                            <button onclick="editCategory('${data.id}')" class="flex-1 py-1.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/20 rounded-lg transition-colors font-semibold text-xs flex justify-center items-center gap-1">
+                                <i class="fa-solid fa-pen-to-square"></i> Sửa
+                            </button>
+                            <button onclick="deleteCategory('${data.id}')" class="flex-1 py-1.5 bg-red-50 dark:bg-red-500/10 text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 rounded-lg transition-colors font-semibold text-xs flex justify-center items-center gap-1">
+                                <i class="fa-solid fa-trash-can"></i> Xóa
+                            </button>
+                        </div>
+                        <button class="w-full py-2.5 bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-500/20 rounded-lg transition-colors font-semibold text-sm flex justify-center items-center gap-2 mt-1" onclick="openAssignProductsModal('${data.id}', 'category')" title="Gán Sản Phẩm">
+                            <i class="fa-solid fa-gift"></i> Gán Sản Phẩm
                         </button>
                     </div>
                 </div>
