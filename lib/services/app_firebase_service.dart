@@ -251,10 +251,11 @@ class AppFirebaseService {
         return GoogleSignInResult.success;
       }
     } on FirebaseAuthException catch (e) {
-      debugPrint('Firebase Auth Google Error: ${e.code} - ${e.message}');
+      debugPrint('Firebase Auth Google Error: [${e.code}] ${e.message}');
       return GoogleSignInResult.error;
-    } catch (e) {
-      debugPrint('Google Sign-In Error: $e');
+    } catch (e, stackTrace) {
+      debugPrint('Google Sign-In Exception: $e');
+      debugPrint('Google Sign-In StackTrace: $stackTrace');
       return GoogleSignInResult.error;
     }
   }
