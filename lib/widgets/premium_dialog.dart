@@ -28,6 +28,31 @@ class _PremiumDialogState extends State<PremiumDialog> {
   bool _isCheckingCode = false;
   String? _promoError;
   bool _showPromoInput = false;
+  DateTime? _premiumExpiry;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadExpiry();
+  }
+
+  Future<void> _loadExpiry() async {
+    final expiry = await StorageService().getPremiumExpiry();
+    if (mounted) {
+      setState(() {
+        _premiumExpiry = expiry;
+      });
+    }
+  }
+
+  String _formatExpiryBadgeText() {
+    if (_premiumExpiry == null) {
+      return t('activated_lifetime');
+    }
+
+    final dateStr = "${_premiumExpiry!.day.toString().padLeft(2, '0')}/${_premiumExpiry!.month.toString().padLeft(2, '0')}/${_premiumExpiry!.year}";
+    return 'HẠN: $dateStr';
+  }
 
   @override
   void dispose() {
@@ -57,7 +82,6 @@ class _PremiumDialogState extends State<PremiumDialog> {
 
     if (result.success) {
       if (result.matchedCode?.type == PromoType.premium) {
-        await StorageService().setPremium(true);
         AdService.isPremium = true;
         widget.onPremiumUnlocked?.call();
       }
@@ -202,7 +226,7 @@ class _PremiumDialogState extends State<PremiumDialog> {
                       const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 14),
                       const SizedBox(width: 6),
                       Text(
-                        t('activated_lifetime'),
+                        _formatExpiryBadgeText(),
                         style: GoogleFonts.quicksand(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,

@@ -40,6 +40,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // Lưu trạng thái mở khóa của từng hiệu ứng để tránh FutureBuilder gây flicker
   final Map<String, bool> _effectUnlocked = {};
 
+  DateTime? _premiumExpiry;
+
   @override
   void initState() {
     super.initState();
@@ -61,9 +63,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _language = prefs.getString('language') ?? 'vi';
     });
 
-    
-    final effect = await StorageService().getSelectedEffect();
-    // Pre-load trạng thái mở khóa
     final effectIds = [
       'hearts',
       'bubbles',
@@ -88,10 +87,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
     final testModeUnlocked = storage.getIsTestModeUnlocked();
     final adminUnlocked = storage.getIsAdminUnlocked();
+    final premiumExpiry = await storage.getPremiumExpiry();
     
     if (mounted) {
       setState(() {
         _isPremium = AdService.isPremium;
+        _premiumExpiry = premiumExpiry;
         _isTestModeUnlocked = testModeUnlocked;
         _isAdminUnlocked = adminUnlocked;
         for (int i = 0; i < effectIds.length; i++) {
@@ -100,6 +101,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  String _formatPremiumSubtitle() {
+    if (!_isPremium) {
+      return t('premium_locked_desc');
+    }
+
+    if (_premiumExpiry == null) {
+      return t('premium_unlocked_desc');
+    }
+
+    final formattedDate =
+        "${_premiumExpiry!.day.toString().padLeft(2, '0')}/${_premiumExpiry!.month.toString().padLeft(2, '0')}/${_premiumExpiry!.year}";
+
+    return _language == 'vi'
+        ? 'Hạn dùng: $formattedDate'
+        : 'Expiry: $formattedDate';
   }
 
   Future<void> _togglePremium(bool value) async {
@@ -530,7 +548,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           return;
                         }
                         if (result.matchedCode?.type == PromoType.premium) {
-                          _togglePremium(true);
+                          await _loadSettings();
+                          widget.onPremiumChanged?.call(_isPremium);
                         } else if (result.matchedCode?.type == PromoType.testMode) {
                           setState(() => _isTestModeUnlocked = true);
                         } else {
@@ -715,8 +734,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onTap: () {
                     PremiumDialog.show(
                       context,
-                      onPremiumUnlocked: () {
-                        _togglePremium(true);
+                      onPremiumUnlocked: () async {
+                        await _loadSettings();
+                        widget.onPremiumChanged?.call(_isPremium);
                       },
                     );
                   },
@@ -767,9 +787,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                _isPremium
-                                    ? t('premium_unlocked_desc')
-                                    : t('premium_locked_desc'),
+                                _formatPremiumSubtitle(),
                                 style: GoogleFonts.quicksand(
                                   fontSize: 12,
                                   color: Colors.white70,
