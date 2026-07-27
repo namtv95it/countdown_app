@@ -1635,12 +1635,12 @@ async function loadCategories() {
             });
             document.getElementById('category-list-container').innerHTML = html;
             
-            // Render dynamic categories in the gift modal form
+            // Render dynamic categories in the gift modal form (Only active & canSuggestProducts === true)
             const fCats = document.getElementById('f-categories');
             if (fCats) {
                 let htmlCats = '';
                 categories.forEach(cat => {
-                    if (cat.isActive === false) return; // Only show active categories
+                    if (cat.isActive === false || !cat.canSuggestProducts) return; // Only show active categories with Gợi Ý Quà Tặng = true
                     htmlCats += `
                     <label class="category-cb-wrapper flex items-center gap-2 p-3 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 cursor-pointer transition-colors hover:border-primary/50 group">
                         <input type="checkbox" value="${cat.id}" class="hidden peer">

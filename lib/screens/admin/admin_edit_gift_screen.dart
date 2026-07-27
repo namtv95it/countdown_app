@@ -79,7 +79,7 @@ class _AdminEditGiftScreenState extends State<AdminEditGiftScreen> {
         setState(() {
           _availableCategories = snap.docs
               .map((d) => EventCategory.fromJson({...d.data(), 'id': d.id}))
-              .where((c) => c.isActive)
+              .where((c) => c.isActive && c.canSuggestProducts)
               .toList();
         });
       }
@@ -87,7 +87,9 @@ class _AdminEditGiftScreenState extends State<AdminEditGiftScreen> {
       // Fallback to defaults if Firebase fails
       if (mounted) {
         setState(() {
-          _availableCategories = EventCategory.defaultCategories;
+          _availableCategories = EventCategory.defaultCategories
+              .where((c) => c.isActive && c.canSuggestProducts)
+              .toList();
         });
       }
     }
