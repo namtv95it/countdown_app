@@ -384,36 +384,6 @@ class _AdminEditSpecialOccasionScreenState extends State<AdminEditSpecialOccasio
                   _buildEmojiSelector(),
                   _buildGradientSelector(),
                   
-                  const SizedBox(height: 8),
-                  Text('Danh mục gốc:', style: GoogleFonts.quicksand(color: Colors.white70, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    initialValue: _selectedCategoryId,
-                    dropdownColor: const Color(0xFF1A1A2E),
-                    style: GoogleFonts.quicksand(color: Colors.white),
-                    decoration: InputDecoration(
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFF7C3AED)),
-                      ),
-                      filled: true,
-                      fillColor: Colors.white.withValues(alpha: 0.05),
-                    ),
-                    items: categories.map((cat) {
-                      return DropdownMenuItem(
-                        value: cat.id,
-                        child: Text('${cat.emoji} ${cat.name}'),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
-                      if (val != null) setState(() => _selectedCategoryId = val);
-                    },
-                  ),
-                  
                   const SizedBox(height: 32),
                   SizedBox(
                     width: double.infinity,

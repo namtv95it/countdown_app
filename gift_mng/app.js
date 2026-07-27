@@ -1000,7 +1000,6 @@ window.editOccasion = (id) => {
     document.getElementById('occ-month').value = occ.month || 1;
     document.getElementById('occ-day').value = occ.day || 1;
     renderGradientOptions(occ.gradient || '');
-    document.getElementById('occ-categoryId').value = occ.categoryId || 'birthday';
 
     openOccasionModal();
 };
@@ -1070,8 +1069,7 @@ if (btnSaveOccasion) {
             emoji: document.getElementById('occ-emoji').value,
             month: parseInt(document.getElementById('occ-month').value) || 1,
             day: parseInt(document.getElementById('occ-day').value) || 1,
-            gradient: document.getElementById('occ-gradient').value,
-            categoryId: document.getElementById('occ-categoryId').value
+            gradient: document.getElementById('occ-gradient').value
         };
 
         if (!id) {
