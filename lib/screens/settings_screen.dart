@@ -208,6 +208,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       });
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt('reminder_days', days);
+      await NotificationService().scheduleNotifications();
     }
   }
 
@@ -254,6 +255,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt('notification_hour', time.hour);
       await prefs.setInt('notification_minute', time.minute);
+      await NotificationService().scheduleNotifications();
     }
   }
 
@@ -861,6 +863,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onChanged: _toggleSound,
                   activeColor: const Color(0xFF7C3AED),
                 ),
+              ),
+              _buildListTile(
+                title: t('test_notification_btn'),
+                subtitle: t('test_notification_msg'),
+                trailing: const Icon(Icons.notifications_active_rounded, color: Color(0xFF10B981)),
+                onTap: () async {
+                  await NotificationService().scheduleTestNotification();
+                  _showMessage(t('test_notification_msg'));
+                },
               ),
             ],
 

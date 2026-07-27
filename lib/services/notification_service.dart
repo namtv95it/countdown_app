@@ -44,6 +44,22 @@ class NotificationService {
             iOS: initializationSettingsDarwin);
 
     await _notificationsPlugin.initialize(settings: initializationSettings);
+
+    if (Platform.isAndroid) {
+      const AndroidNotificationChannel channel = AndroidNotificationChannel(
+        'countdown_events_channel_v3',
+        'Sự kiện đếm ngược',
+        description: 'Thông báo nhắc nhở các ngày kỷ niệm sắp tới',
+        importance: Importance.max,
+        playSound: true,
+      );
+
+      await _notificationsPlugin
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(channel);
+    }
+
     _isInitialized = true;
   }
 

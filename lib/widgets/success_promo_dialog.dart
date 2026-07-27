@@ -42,9 +42,10 @@ class SuccessPromoDialog extends StatelessWidget {
             ),
           ],
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
             // Header Banner
             Stack(
               alignment: Alignment.center,
@@ -230,6 +231,7 @@ class SuccessPromoDialog extends StatelessWidget {
             const SizedBox(height: 20),
           ],
         ),
+      ),
       ),
     );
   }

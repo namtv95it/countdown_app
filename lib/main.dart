@@ -36,7 +36,9 @@ void main() async {
   // Các service nặng như AdMob, Widget, Notification có thể load song song 
   // và không nhất thiết phải block quá trình vẽ frame đầu tiên của app.
   AdService.init(); 
-  NotificationService().initialize();
+  NotificationService().initialize().then((_) {
+    NotificationService().scheduleNotifications();
+  });
 
   bool isFirstLaunch = await StorageService().getIsFirstLaunch();
 

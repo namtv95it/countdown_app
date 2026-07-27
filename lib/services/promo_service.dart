@@ -178,6 +178,13 @@ class PromoService {
           expiryDate = DateTime.now().add(Duration(milliseconds: (durationDays * 86400000).toInt()));
         }
 
+        // 1.5 Cập nhật Database và Local trước
+        if (!isHiddenFeatureCode) {
+          await AppFirebaseService().incrementPromoUsage(docId);
+          await StorageService().markPromoCodeAsUsed(cleanCode);
+        }
+        await storage.setFailedPromoAttempts(0); // Thành công thì reset
+
         if (type == 'premium') {
           final isAlreadyPremium = await StorageService().getIsPremium();
           if (isAlreadyPremium) {
@@ -208,14 +215,6 @@ class PromoService {
           await StorageService().setIsAdminUnlocked(true);
           await StorageService().setTestModeUnlocked(true);
         }
-
-        // 1.5 Cập nhật Database và Local
-        // Mã kích hoạt tính năng ẩn (testMode, admin) không lưu lịch sử để có thể dùng lại
-        if (!isHiddenFeatureCode) {
-          await AppFirebaseService().incrementPromoUsage(docId);
-          await StorageService().markPromoCodeAsUsed(cleanCode);
-        }
-        await storage.setFailedPromoAttempts(0); // Thành công thì reset
 
         return PromoResult(
           success: true,

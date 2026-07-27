@@ -314,8 +314,9 @@ class AppFirebaseService {
       await _firestore.collection('promo_codes').doc(docId).set({
         'usedCount': FieldValue.increment(1),
       }, SetOptions(merge: true));
+      debugPrint('Promo usage incremented successfully for docId: $docId');
     } catch (e) {
-      debugPrint('Error incrementing promo usage: $e');
+      debugPrint('Error incrementing promo usage ($docId): $e');
     }
   }
 
