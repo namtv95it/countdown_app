@@ -361,15 +361,12 @@ class AppFirebaseService {
       };
       
       if (expiryDate != null) {
-        dataToUpdate['expirations'] = {
-          featureId: Timestamp.fromDate(expiryDate)
-        };
+        dataToUpdate['expirations.$featureId'] = Timestamp.fromDate(expiryDate);
+      } else {
+        dataToUpdate['expirations.$featureId'] = FieldValue.delete();
       }
-      
-      await _firestore.collection('users').doc(_currentUser!.uid).set(
-        dataToUpdate,
-        SetOptions(merge: true)
-      );
+
+      await _firestore.collection('users').doc(_currentUser!.uid).update(dataToUpdate);
     } catch (e) {
       debugPrint('Error syncing unlocked feature: $e');
     }

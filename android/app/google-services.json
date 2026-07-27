@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:730119079486:android:4fa00525fde83d392d736f",
         "android_client_info": {
-          "package_name": "com.example.countdown_app"
+          "package_name": "com.mynkyo.lovin"
         }
       },
       "oauth_client": [
@@ -17,7 +17,7 @@
           "client_id": "730119079486-16pjq1ui0fkgln72i93g5airtm79p7nr.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.countdown_app",
+            "package_name": "com.mynkyo.lovin",
             "certificate_hash": "0907609e1f1b74c5132cdf3bad542fabfd961b80"
           }
         },
@@ -25,7 +25,7 @@
           "client_id": "730119079486-tg4qb8gs3f72sf12hug2ls43au9v443c.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.countdown_app",
+            "package_name": "com.mynkyo.lovin",
             "certificate_hash": "2695aa5798a6e8de5e91ef9866071c2e274b8edf"
           }
         },
