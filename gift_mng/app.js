@@ -824,6 +824,38 @@ const btnAddNewOccasion = document.getElementById('btn-add-new-occasion-trigger'
 const btnSaveOccasion = document.getElementById('btn-save-occasion');
 let isOccasionView = false;
 
+function updateHeaderActionButtons(activeTabKey) {
+    const btnGift = document.getElementById('btn-add-new');
+    const btnReorder = document.getElementById('btn-reorder');
+    const btnOccasion = document.getElementById('btn-add-new-occasion-trigger');
+    const btnCategory = document.getElementById('btn-add-new-cat-trigger');
+    const btnCategory2 = document.getElementById('btn-add-new-cat-trigger-2');
+    const btnBanner = document.getElementById('btn-add-new-sb-trigger');
+    const btnPromo = document.getElementById('btn-add-new-pc-trigger');
+
+    const allBtns = [btnGift, btnReorder, btnOccasion, btnCategory, btnCategory2, btnBanner, btnPromo];
+    allBtns.forEach(btn => {
+        if (btn) {
+            btn.style.display = 'none';
+            btn.classList.add('hidden');
+        }
+    });
+
+    if (activeTabKey === 'gifts') {
+        if (btnGift) { btnGift.style.display = 'flex'; btnGift.classList.remove('hidden'); }
+        if (btnReorder) { btnReorder.style.display = 'flex'; btnReorder.classList.remove('hidden'); }
+    } else if (activeTabKey === 'occasions') {
+        if (btnOccasion) { btnOccasion.style.display = 'flex'; btnOccasion.classList.remove('hidden'); }
+    } else if (activeTabKey === 'categories') {
+        if (btnCategory) { btnCategory.style.display = 'flex'; btnCategory.classList.remove('hidden'); }
+        if (btnReorder) { btnReorder.style.display = 'flex'; btnReorder.classList.remove('hidden'); }
+    } else if (activeTabKey === 'banner') {
+        if (btnBanner) { btnBanner.style.display = 'flex'; btnBanner.classList.remove('hidden'); }
+    } else if (activeTabKey === 'promo') {
+        if (btnPromo) { btnPromo.style.display = 'flex'; btnPromo.classList.remove('hidden'); }
+    }
+}
+
 // Tab Switching
 if (tabGifts && tabOccasions) {
     tabGifts.addEventListener('click', () => {
@@ -850,11 +882,7 @@ if (tabGifts && tabOccasions) {
         if (viewStartupBanner) viewStartupBanner.classList.add('hidden');
 
         // Show/hide correct buttons
-        if (btnAddNew) btnAddNew.style.display = 'flex';
-        if (btnAddNewOccasion) btnAddNewOccasion.style.display = 'none';
-        if (btnReorder) btnReorder.style.display = 'flex'; // Changed to flex for alignment
-        const btnAddNewSb = document.getElementById('btn-add-new-sb-trigger');
-        if (btnAddNewSb) btnAddNewSb.style.display = 'none';
+        updateHeaderActionButtons('gifts');
 
         // Close sidebar on mobile
         if (typeof closeSidebar === 'function') closeSidebar();
@@ -884,11 +912,7 @@ if (tabGifts && tabOccasions) {
         if (viewStartupBanner) viewStartupBanner.classList.add('hidden');
 
         // Hide gift-specific buttons and show occasion button
-        if (btnAddNew) btnAddNew.style.display = 'none';
-        if (btnReorder) btnReorder.style.display = 'none';
-        if (btnAddNewOccasion) btnAddNewOccasion.style.display = 'flex';
-        const btnAddNewSb = document.getElementById('btn-add-new-sb-trigger');
-        if (btnAddNewSb) btnAddNewSb.style.display = 'none';
+        updateHeaderActionButtons('occasions');
 
         // Close sidebar on mobile
         if (typeof closeSidebar === 'function') closeSidebar();
@@ -1287,10 +1311,7 @@ if (tabStartupBanner) {
         if (viewOccasions) viewOccasions.classList.add('hidden');
         viewStartupBanner.classList.remove('hidden');
 
-        if (btnAddNew) btnAddNew.style.display = 'none';
-        if (btnReorder) btnReorder.style.display = 'none';
-        if (btnAddNewOccasion) btnAddNewOccasion.style.display = 'none';
-        if (btnAddNewSb) btnAddNewSb.style.display = 'flex';
+        updateHeaderActionButtons('banner');
 
         if (typeof closeSidebar === 'function') closeSidebar();
 
@@ -1839,13 +1860,7 @@ document.addEventListener('click', (e) => {
         viewCategories.classList.remove('hidden');
         document.getElementById('page-title').textContent = "Danh Mục Quà Tặng";
         
-        document.getElementById('btn-add-new')?.classList.add('hidden');
-        document.getElementById('btn-reorder')?.classList.remove('hidden');
-        document.getElementById('btn-reorder').style.display = 'flex';
-        document.getElementById('btn-add-new-occasion-trigger')?.classList.add('hidden');
-        document.getElementById('btn-add-new-sb-trigger')?.classList.add('hidden');
-        const btnCat = document.getElementById('btn-add-new-cat-trigger');
-        if(btnCat) btnCat.classList.remove('hidden');
+        updateHeaderActionButtons('categories');
         
         // Hide sidebar on mobile
         const sidebar = document.getElementById('sidebar');
@@ -1870,13 +1885,7 @@ document.addEventListener('click', (e) => {
         viewPromoCodes.classList.remove('hidden');
         document.getElementById('page-title').textContent = "Quản lý Promo Codes";
         
-        document.getElementById('btn-add-new')?.classList.add('hidden');
-        document.getElementById('btn-reorder')?.classList.add('hidden');
-        document.getElementById('btn-add-new-occasion-trigger')?.classList.add('hidden');
-        document.getElementById('btn-add-new-sb-trigger')?.classList.add('hidden');
-        
-        const btnPc = document.getElementById('btn-add-new-pc-trigger');
-        if(btnPc) btnPc.classList.remove('hidden');
+        updateHeaderActionButtons('promo');
         
         // Hide sidebar on mobile
         const sidebar = document.getElementById('sidebar');
