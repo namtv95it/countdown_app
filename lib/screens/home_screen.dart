@@ -188,9 +188,16 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
+  void _onLanguageChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    LocalizationService.languageNotifier.addListener(_onLanguageChanged);
     _pageController = PageController(initialPage: 0);
     _checkFirstLaunchPermissions();
     _loadAnniversaries();
@@ -478,6 +485,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   void dispose() {
+    LocalizationService.languageNotifier.removeListener(_onLanguageChanged);
     _pageController.dispose();
     _eventsScrollController.dispose();
     _bannerAd?.dispose();
@@ -944,7 +952,7 @@ class _HomeScreenState extends State<HomeScreen>
         _buildHeroTab(),
         _buildAllEventsTab(),
         _hasVisitedGiftTab ? GiftScreen(
-          key: ValueKey('gift_$_selectedGiftCategory'),
+          key: ValueKey('gift_${_selectedGiftCategory}_${LocalizationService.languageNotifier.value}'),
           isPremium: AdService.isPremium,
           initialCategoryId: _selectedGiftCategory,
         ) : const SizedBox.shrink(),
