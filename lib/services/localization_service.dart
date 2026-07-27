@@ -158,7 +158,7 @@ class LocalizationService {
 
       // Account / Google Sign-In
       'account': 'Tài khoản',
-      'anonymous_user': 'Người dùng ẩn danh',
+      'anonymous_user': 'Đăng nhập bằng Google',
       'anonymous_user_desc': 'Đăng nhập Google để lưu & khôi phục dữ liệu khi đổi máy',
       'google_account': 'Tài khoản Google',
       'sign_in_google': 'Đăng nhập với Google',
@@ -567,7 +567,7 @@ class LocalizationService {
 
       // Account / Google Sign-In
       'account': 'Account',
-      'anonymous_user': 'Anonymous User',
+      'anonymous_user': 'Sign in with Google',
       'anonymous_user_desc': 'Sign in with Google to save & restore data when switching devices',
       'google_account': 'Google Account',
       'sign_in_google': 'Sign in with Google',
