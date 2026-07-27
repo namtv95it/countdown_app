@@ -1594,34 +1594,36 @@ async function loadCategories() {
                 const textStyle = `color: ${intToHex(data.colorValue)};`;
                 
                 html += `
-                <div class="bg-white dark:bg-darkcard rounded-2xl p-5 shadow-sm border border-gray-200 dark:border-darkborder hover:shadow-md transition-all group relative">
-                    <div class="flex items-start gap-4">
-                        <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0" style="${bgStyle}">
-                            ${data.emoji || '📅'}
+                <div class="bg-white dark:bg-darkcard rounded-2xl p-5 shadow-sm border border-gray-200 dark:border-darkborder hover:shadow-md transition-all flex flex-col gap-3 relative">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="flex items-start gap-4 min-w-0">
+                            <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0" style="${bgStyle}">
+                                ${data.emoji || '📅'}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h3 class="text-base font-bold text-gray-900 dark:text-white truncate ${!data.isActive ? 'line-through opacity-60' : ''}">${data.name}</h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 truncate mb-1">ID: ${data.id}</p>
+                                <div class="flex flex-wrap gap-1">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-white/10 dark:text-gray-300">
+                                        Thứ tự: ${data.order || 99}
+                                    </span>
+                                    ${data.canSuggestProducts ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Gợi ý</span>' : ''}
+                                </div>
+                            </div>
                         </div>
-                        <div class="flex-1 min-w-0">
-                            <h3 class="text-base font-bold text-gray-900 dark:text-white truncate" style="${!data.isActive ? 'text-decoration: line-through;' : ''}">${data.name}</h3>
-                            <p class="text-sm text-gray-500 dark:text-gray-400 truncate mb-1">ID: ${data.id}</p>
-                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-white/10 dark:text-gray-300">
-                                Thứ tự: ${data.order || 99}
-                            </span>
-                            ${data.canSuggestProducts ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 ml-1">Gợi ý</span>' : ''}
-                        </div>
-                    </div>
-                    
-                    <div class="absolute top-4 right-4 flex items-center gap-3">
-                        <label class="relative inline-flex items-center cursor-pointer" title="${data.isActive !== false ? 'Đang bật' : 'Đang tắt'}">
+                        <label class="relative inline-flex items-center cursor-pointer flex-shrink-0" title="${data.isActive !== false ? 'Đang bật' : 'Đang tắt'}">
                             <input type="checkbox" ${data.isActive !== false ? 'checked' : ''} onchange="toggleCategoryActive('${data.id}', this.checked)" class="sr-only peer">
                             <div class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-green-500 shadow-sm flex-shrink-0"></div>
                         </label>
-                        <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onclick="editCategory('${data.id}')" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 flex items-center justify-center transition-colors">
-                                <i class="fa-solid fa-pen"></i>
-                            </button>
-                            <button onclick="deleteCategory('${data.id}')" class="w-8 h-8 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 flex items-center justify-center transition-colors">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        </div>
+                    </div>
+                    
+                    <div class="mt-auto pt-3 border-t border-gray-100 dark:border-white/10 flex gap-2">
+                        <button onclick="editCategory('${data.id}')" class="flex-1 py-1.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/20 rounded-lg transition-colors font-semibold text-xs flex justify-center items-center gap-1">
+                            <i class="fa-solid fa-pen-to-square"></i> Sửa
+                        </button>
+                        <button onclick="deleteCategory('${data.id}')" class="flex-1 py-1.5 bg-red-50 dark:bg-red-500/10 text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 rounded-lg transition-colors font-semibold text-xs flex justify-center items-center gap-1">
+                            <i class="fa-solid fa-trash-can"></i> Xóa
+                        </button>
                     </div>
                 </div>
                 `;
