@@ -339,9 +339,16 @@ function renderGifts() {
             <div class="h-32 sm:h-40 w-full relative overflow-hidden bg-gray-100 dark:bg-gray-800" style="background-color: rgba(${primaryColorRgb}, 0.05)">
                 <img src="${imgUrl}" alt="${nameVi}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" ${imageErrorAttr}>
                 
+                <!-- Active Toggle Switch -->
+                <label class="absolute top-2 left-2 z-20 inline-flex items-center gap-1.5 cursor-pointer bg-black/60 backdrop-blur-md px-2 py-1 rounded-full border border-white/20 shadow-md" title="${gift.isActive !== false ? 'Đang bật' : 'Đang tắt'}">
+                    <input type="checkbox" ${gift.isActive !== false ? 'checked' : ''} onchange="toggleGiftActive('${gift.id}', this.checked)" class="sr-only peer">
+                    <div class="relative w-7 h-4 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-green-500 flex-shrink-0"></div>
+                    <span class="text-[9px] font-bold text-white leading-none">${gift.isActive !== false ? 'Bật' : 'Tắt'}</span>
+                </label>
+
                 <!-- Gender Badge -->
                 ${gift.gender ? `
-                <div class="absolute top-2 left-2 w-6 h-6 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/20 shadow-sm">
+                <div class="absolute top-2 left-[72px] w-6 h-6 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/20 shadow-sm">
                     <span class="text-xs leading-none" style="margin-top: 1px">${gift.gender === 'male' ? '♂️' : gift.gender === 'female' ? '♀️' : '⚧️'}</span>
                 </div>
                 ` : ''}
@@ -367,7 +374,7 @@ function renderGifts() {
             
             <!-- Info Section -->
             <div class="p-3 flex flex-col flex-grow">
-                <h3 class="text-sm font-bold text-gray-900 dark:text-white line-clamp-2 mb-3 leading-snug" title="${nameVi}">${nameVi}</h3>
+                <h3 class="text-sm font-bold text-gray-900 dark:text-white line-clamp-2 mb-3 leading-snug ${gift.isActive === false ? 'line-through opacity-60' : ''}" title="${nameVi}">${nameVi}</h3>
                 
                 <div class="mt-auto">
                     <div class="text-sm font-black mb-2" style="color: ${primaryColor}">${price}</div>
@@ -934,14 +941,20 @@ function renderOccasions() {
         const card = document.createElement('div');
         card.className = 'bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl p-5 relative shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col gap-3';
         card.innerHTML = `
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shadow-inner" style="background: ${occ.gradient || 'gray'}">
-                    ${occ.emoji || '✨'}
+            <div class="flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shadow-inner flex-shrink-0" style="background: ${occ.gradient || 'gray'}">
+                        ${occ.emoji || '✨'}
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white truncate ${occ.isActive === false ? 'line-through opacity-60' : ''}">${occ.nameVi}</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">${occ.day} tháng ${occ.month}</p>
+                    </div>
                 </div>
-                <div>
-                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">${occ.nameVi}</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">${occ.day} tháng ${occ.month}</p>
-                </div>
+                <label class="relative inline-flex items-center cursor-pointer flex-shrink-0" title="${occ.isActive !== false ? 'Đang bật' : 'Đang tắt'}">
+                    <input type="checkbox" ${occ.isActive !== false ? 'checked' : ''} onchange="toggleOccasionActive('${occ.id}', this.checked)" class="sr-only peer">
+                    <div class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-green-500 shadow-sm flex-shrink-0"></div>
+                </label>
             </div>
             <div class="mt-auto pt-3 border-t border-gray-100 dark:border-white/10 flex flex-col gap-2">
                 <div class="flex gap-2">
@@ -1355,10 +1368,14 @@ function renderStartupBanners() {
         card.innerHTML = `
             <div class="h-32 w-full relative">
                 <img src="${item.imageUrl}" class="w-full h-full object-cover" onerror="this.src=''; this.onerror=null; this.parentElement.innerHTML='<div class=\\'w-full h-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center\\'><i class=\\'fa-regular fa-image text-3xl text-gray-400\\'></i></div>'">
-                <div class="absolute top-2 right-2 px-2 py-1 rounded text-[10px] font-bold text-white uppercase tracking-wider ${badgeColor}">${badgeText}</div>
+                <label class="absolute top-2 right-2 z-10 flex items-center cursor-pointer bg-black/60 backdrop-blur-md px-2 py-1 rounded-full border border-white/20 shadow-md" title="${item.isActive ? 'Đang bật' : 'Đang tắt'}">
+                    <input type="checkbox" ${item.isActive ? 'checked' : ''} onchange="toggleStartupBannerItemActive('${item.id || index}', this.checked)" class="sr-only peer">
+                    <div class="relative w-7 h-4 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-green-500 flex-shrink-0"></div>
+                    <span class="text-[9px] font-bold text-white ml-1.5">${item.isActive ? 'Bật' : 'Tắt'}</span>
+                </label>
             </div>
             <div class="p-4 flex flex-col flex-1">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white line-clamp-1 mb-1">${item.title || '(Không tiêu đề)'}</h3>
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white line-clamp-1 mb-1 ${!item.isActive ? 'line-through opacity-60' : ''}">${item.title || '(Không tiêu đề)'}</h3>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mb-4"><i class="fa-solid fa-link mr-1"></i> ${item.actionType === 'gift'
                 ? (item.occasionId ? '🎉 Sự kiện đặc biệt' : '🎁 Trang Quà Tặng' + (item.giftCategoryId ? ` (${item.giftCategoryId})` : ''))
                 : item.actionType === 'url'
@@ -1592,13 +1609,19 @@ async function loadCategories() {
                         </div>
                     </div>
                     
-                    <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onclick="editCategory('${data.id}')" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 flex items-center justify-center transition-colors">
-                            <i class="fa-solid fa-pen"></i>
-                        </button>
-                        <button onclick="deleteCategory('${data.id}')" class="w-8 h-8 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 flex items-center justify-center transition-colors">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
+                    <div class="absolute top-4 right-4 flex items-center gap-3">
+                        <label class="relative inline-flex items-center cursor-pointer" title="${data.isActive !== false ? 'Đang bật' : 'Đang tắt'}">
+                            <input type="checkbox" ${data.isActive !== false ? 'checked' : ''} onchange="toggleCategoryActive('${data.id}', this.checked)" class="sr-only peer">
+                            <div class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-green-500 shadow-sm flex-shrink-0"></div>
+                        </label>
+                        <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="editCategory('${data.id}')" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 flex items-center justify-center transition-colors">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button onclick="deleteCategory('${data.id}')" class="w-8 h-8 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 flex items-center justify-center transition-colors">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
                 `;
@@ -1987,9 +2010,15 @@ function renderPromoCodes() {
         card.className = 'bg-white dark:bg-darkcard border border-gray-200 dark:border-darkborder rounded-2xl p-5 relative shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col gap-3';
         
         card.innerHTML = `
-            <div class="flex justify-between items-start">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white tracking-wide">${code}</h3>
-                <span class="px-2 py-0.5 text-xs font-bold uppercase rounded border ${typeBadgeColor}">${type}</span>
+            <div class="flex justify-between items-start gap-2">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white tracking-wide ${item.isActive === false ? 'line-through opacity-60' : ''}">${code}</h3>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <span class="px-2 py-0.5 text-xs font-bold uppercase rounded border ${typeBadgeColor}">${type}</span>
+                    <label class="relative inline-flex items-center cursor-pointer" title="${item.isActive !== false ? 'Đang bật' : 'Đang tắt'}">
+                        <input type="checkbox" ${item.isActive !== false ? 'checked' : ''} onchange="togglePromoCodeActive('${item.id}', this.checked)" class="sr-only peer">
+                        <div class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-green-500 shadow-sm flex-shrink-0"></div>
+                    </label>
+                </div>
             </div>
             <p class="text-sm text-gray-600 dark:text-gray-300">${description}</p>
             <div class="border-t border-gray-100 dark:border-white/10 my-1"></div>
@@ -2171,4 +2200,73 @@ if (btnSavePc) {
         }
     });
 }
+
+// ==========================================
+// 12. ITEM ACTIVE TOGGLE HANDLERS
+// ==========================================
+window.toggleGiftActive = async (id, isActive) => {
+    try {
+        await db.collection('gifts').doc(id).update({ isActive: isActive });
+        const g = gifts.find(x => x.id === id);
+        if (g) g.isActive = isActive;
+        showToast(isActive ? "Đã bật hiển thị quà tặng!" : "Đã tắt quà tặng!");
+        renderGifts();
+    } catch (e) {
+        console.error(e);
+        showToast("Lỗi khi cập nhật trạng thái quà tặng!", "error");
+    }
+};
+
+window.toggleOccasionActive = async (id, isActive) => {
+    try {
+        await db.collection('special_occasions').doc(id).update({ isActive: isActive });
+        const item = specialOccasions.find(x => x.id === id);
+        if (item) item.isActive = isActive;
+        showToast(isActive ? "Đã bật sự kiện!" : "Đã tắt sự kiện!");
+        renderOccasions();
+    } catch (e) {
+        console.error(e);
+        showToast("Lỗi khi cập nhật trạng thái sự kiện!", "error");
+    }
+};
+
+window.toggleCategoryActive = async (id, isActive) => {
+    try {
+        await db.collection('gift_categories').doc(id).update({ isActive: isActive });
+        const item = categories.find(x => x.id === id);
+        if (item) item.isActive = isActive;
+        showToast(isActive ? "Đã bật danh mục!" : "Đã tắt danh mục!");
+        loadCategories();
+    } catch (e) {
+        console.error(e);
+        showToast("Lỗi khi cập nhật trạng thái danh mục!", "error");
+    }
+};
+
+window.toggleStartupBannerItemActive = async (id, isActive) => {
+    try {
+        const item = startupBannerData.items.find((x, idx) => (x.id === id) || (idx.toString() === id.toString()));
+        if (item) {
+            item.isActive = isActive;
+            await saveStartupBannerData(false);
+            showToast(isActive ? "Đã bật banner!" : "Đã tắt banner!");
+        }
+    } catch (e) {
+        console.error(e);
+        showToast("Lỗi khi cập nhật trạng thái banner!", "error");
+    }
+};
+
+window.togglePromoCodeActive = async (id, isActive) => {
+    try {
+        await db.collection('promo_codes').doc(id).update({ isActive: isActive });
+        const item = promoCodesList.find(x => x.id === id);
+        if (item) item.isActive = isActive;
+        showToast(isActive ? "Đã bật promo code!" : "Đã tắt promo code!");
+        renderPromoCodes();
+    } catch (e) {
+        console.error(e);
+        showToast("Lỗi khi cập nhật trạng thái promo code!", "error");
+    }
+};
 
