@@ -306,17 +306,53 @@ function loadGifts() {
     });
 }
 
+function renderGiftCategoryFilter() {
+    const filterSelect = document.getElementById('gift-filter-category');
+    if (!filterSelect) return;
+
+    const currentVal = filterSelect.value;
+    let html = '<option value="">🎁 Tất cả danh mục gợi ý</option>';
+
+    categories.forEach(cat => {
+        if (cat.isActive === false || !cat.canSuggestProducts) return;
+        html += `<option value="${cat.id}">${cat.emoji || '🎁'} ${cat.name}</option>`;
+    });
+
+    filterSelect.innerHTML = html;
+    if (currentVal) filterSelect.value = currentVal;
+}
+
 function renderGifts() {
     loadingEl.style.display = 'none';
     giftListEl.innerHTML = '';
 
-    if (gifts.length === 0) {
+    const searchInput = document.getElementById('gift-search-input');
+    const filterCategory = document.getElementById('gift-filter-category');
+
+    const searchVal = (searchInput ? searchInput.value : '').toLowerCase().trim();
+    const catVal = filterCategory ? filterCategory.value : '';
+
+    const filteredGifts = gifts.filter(gift => {
+        if (catVal && (!gift.categoryIds || !gift.categoryIds.includes(catVal))) {
+            return false;
+        }
+        if (searchVal) {
+            const nameVi = (gift.name && gift.name.vi ? gift.name.vi : '').toLowerCase();
+            const nameEn = (gift.name && gift.name.en ? gift.name.en : '').toLowerCase();
+            if (!nameVi.includes(searchVal) && !nameEn.includes(searchVal)) {
+                return false;
+            }
+        }
+        return true;
+    });
+
+    if (filteredGifts.length === 0) {
         emptyStateEl.classList.remove('hidden');
         return;
     }
     emptyStateEl.classList.add('hidden');
 
-    gifts.forEach(gift => {
+    filteredGifts.forEach(gift => {
         const nameVi = gift.name && gift.name.vi ? gift.name.vi : 'Chưa có tên';
         const price = gift.priceRange || '0đ';
         const platformLabel = gift.platform || 'Xem Ngay';
@@ -487,6 +523,8 @@ function editGift(id) {
     });
 
     giftModal.classList.remove('hidden');
+    const scrollContainer1 = giftModal.querySelector('.overflow-y-auto');
+    if (scrollContainer1) scrollContainer1.scrollTop = 0;
     setTimeout(() => giftModal.querySelector('.modal-content').classList.replace('scale-95', 'scale-100'), 10);
     setTimeout(() => giftModal.querySelector('.modal-content').classList.replace('opacity-0', 'opacity-100'), 10);
 }
@@ -503,6 +541,8 @@ btnAddNew.addEventListener('click', () => {
     document.querySelectorAll('.occasion-cb').forEach(cb => cb.parentElement.classList.remove('border-primary', 'bg-primary/5'));
 
     giftModal.classList.remove('hidden');
+    const scrollContainer2 = giftModal.querySelector('.overflow-y-auto');
+    if (scrollContainer2) scrollContainer2.scrollTop = 0;
     setTimeout(() => giftModal.querySelector('.modal-content').classList.replace('scale-95', 'scale-100'), 10);
     setTimeout(() => giftModal.querySelector('.modal-content').classList.replace('opacity-0', 'opacity-100'), 10);
 });
@@ -1020,6 +1060,8 @@ window.deleteOccasion = async (id) => {
 
 function openOccasionModal() {
     occasionModal.classList.remove('hidden');
+    const scrollContainer = occasionModal.querySelector('.overflow-y-auto');
+    if (scrollContainer) scrollContainer.scrollTop = 0;
     setTimeout(() => occasionModal.querySelector('.modal-content').classList.replace('scale-95', 'scale-100'), 10);
     setTimeout(() => occasionModal.querySelector('.modal-content').classList.replace('opacity-0', 'opacity-100'), 10);
 }
@@ -1446,6 +1488,8 @@ function openSbModal(isEdit = false, itemData = null) {
     }
 
     sbModal.classList.remove('hidden');
+    const scrollContainerSb = sbModal.querySelector('.overflow-y-auto');
+    if (scrollContainerSb) scrollContainerSb.scrollTop = 0;
     setTimeout(() => {
         sbModal.querySelector('.modal-content').classList.remove('scale-95', 'opacity-0');
     }, 10);
@@ -1660,6 +1704,9 @@ async function loadCategories() {
                     });
                 });
             }
+            
+            // Populate category filter in Gifts tab
+            renderGiftCategoryFilter();
         }
     } catch (e) {
         console.error("Error loading categories:", e);
@@ -1803,6 +1850,8 @@ document.getElementById('cat-color-hex')?.addEventListener('input', (e) => {
         selectCatColor('#10B981');
         document.getElementById('modal-cat-title').textContent = "Thêm Danh Mục Mới";
         modalCat.classList.remove('hidden');
+        const scrollContainer = modalCat.querySelector('.overflow-y-auto');
+        if (scrollContainer) scrollContainer.scrollTop = 0;
         setTimeout(() => {
             modalCat.querySelector('.modal-content')?.classList.replace('scale-95', 'scale-100');
             modalCat.querySelector('.modal-content')?.classList.replace('opacity-0', 'opacity-100');
@@ -1830,6 +1879,8 @@ window.editCategory = (id) => {
     document.getElementById('cat-isActive').checked = cat.isActive !== false;
     
     modalCat.classList.remove('hidden');
+    const scrollContainer = modalCat.querySelector('.overflow-y-auto');
+    if (scrollContainer) scrollContainer.scrollTop = 0;
     setTimeout(() => {
         modalCat.querySelector('.modal-content')?.classList.replace('scale-95', 'scale-100');
         modalCat.querySelector('.modal-content')?.classList.replace('opacity-0', 'opacity-100');
@@ -2142,6 +2193,8 @@ function openPcModal(isEdit = false, itemData = null) {
     }
 
     pcModal.classList.remove('hidden');
+    const scrollContainerPc = pcModal.querySelector('.overflow-y-auto');
+    if (scrollContainerPc) scrollContainerPc.scrollTop = 0;
     setTimeout(() => {
         pcModal.querySelector('.modal-content')?.classList.remove('scale-95', 'opacity-0');
         pcModal.querySelector('.modal-content')?.classList.add('scale-100', 'opacity-100');
@@ -2328,3 +2381,5 @@ window.togglePromoCodeActive = async (id, isActive) => {
     }
 };
 
+document.getElementById('gift-search-input')?.addEventListener('input', renderGifts);
+document.getElementById('gift-filter-category')?.addEventListener('change', renderGifts);
