@@ -137,11 +137,12 @@ class AppFirebaseService {
   Future<void> syncPremiumStatusOnStartup() async {
     if (_currentUser == null) return;
     try {
-      final featuresMap = await getUnlockedFeatures();
       final prefs = await SharedPreferences.getInstance();
+      bool localPremium = prefs.getBool('is_premium_account') ?? false;
+      final featuresMap = await getUnlockedFeatures();
       
       final features = featuresMap.keys.toList();
-      bool hasPremium = false;
+      bool cloudPremium = false;
       DateTime? premiumExpiry = featuresMap['premium'];
 
       if (features.contains('premium')) {
@@ -149,15 +150,24 @@ class AppFirebaseService {
           // Đã hết hạn
           await removeUnlockedFeature('premium');
         } else {
-          hasPremium = true;
-          await prefs.setBool('is_premium_account', true);
-          if (premiumExpiry != null) {
-            await prefs.setString('is_premium_account_expiry', premiumExpiry.toIso8601String());
-          }
+          cloudPremium = true;
         }
       }
 
-      if (!hasPremium) {
+      // Nếu trước khi đăng nhập local đã có Premium mà Cloud chưa có -> Tích hợp/Đồng bộ lên Cloud
+      if (localPremium && !cloudPremium) {
+        await syncUnlockedFeature('premium');
+        cloudPremium = true;
+      }
+
+      bool hasPremium = cloudPremium;
+
+      if (hasPremium) {
+        await prefs.setBool('is_premium_account', true);
+        if (premiumExpiry != null) {
+          await prefs.setString('is_premium_account_expiry', premiumExpiry.toIso8601String());
+        }
+      } else {
         await prefs.remove('is_premium_account');
         await prefs.remove('is_premium_account_expiry');
       }
@@ -252,6 +262,20 @@ class AppFirebaseService {
     try {
       await _googleSignIn.signOut();
       await _auth.signOut();
+
+      // Reset local cache khi đăng xuất
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('is_premium_account');
+      await prefs.remove('is_premium_account_expiry');
+      final allKeys = prefs.getKeys();
+      for (String key in allKeys) {
+        if (key.endsWith('_effect_unlocked')) {
+          await prefs.remove(key);
+          await prefs.remove('${key}_expiry');
+        }
+      }
+      AdService.isPremium = false;
+
       // Tạo anonymous session mới — không có dữ liệu cũ
       final cred = await _auth.signInAnonymously();
       _currentUser = cred.user;

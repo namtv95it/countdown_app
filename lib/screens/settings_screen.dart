@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
-import 'dart:io';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -12,7 +11,6 @@ import '../services/localization_service.dart';
 import '../widgets/premium_dialog.dart';
 import '../widgets/success_promo_dialog.dart';
 import '../widgets/theme_picker_sheet.dart';
-import '../widgets/google_sign_in_button.dart';
 import '../services/app_firebase_service.dart';
 import 'admin_screen.dart';
 
@@ -426,6 +424,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         onTap: () async {
                           final result = await AppFirebaseService().signInWithGoogle();
                           if (!context.mounted) return;
+                          await _loadSettings();
+                          widget.onPremiumChanged?.call(_isPremium);
                           setDialogState(() {});
                           if (result == GoogleSignInResult.success) {
                             _showMessage(t('sign_in_success'));
@@ -592,7 +592,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final photoUrl = auth.userPhotoUrl;
 
     if (!isAnonymous) {
-      // Logged in: show as a simple _buildListTile-style box
+      // Logged in: show user info with green checkmark
       return _buildListTile(
         title: email ?? displayName,
         subtitle: t('google_account'),
@@ -648,7 +648,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
           : () async {
               setState(() => _isSigningIn = true);
               final result = await auth.signInWithGoogle();
-              setState(() => _isSigningIn = false);
+              if (mounted) {
+                await _loadSettings();
+                widget.onPremiumChanged?.call(_isPremium);
+                setState(() => _isSigningIn = false);
+              }
 
               if (result == GoogleSignInResult.success) {
                 _showMessage(t('sign_in_success'));
@@ -921,7 +925,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     if (confirm == true) {
                       setState(() => _isSigningIn = true);
                       await AppFirebaseService().signOut();
-                      setState(() => _isSigningIn = false);
+                      if (mounted) {
+                        await _loadSettings();
+                        widget.onPremiumChanged?.call(_isPremium);
+                        setState(() => _isSigningIn = false);
+                        _showMessage(t('sign_out_success'));
+                      }
                     }
                   },
                   icon: _isSigningIn

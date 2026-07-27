@@ -163,6 +163,7 @@ class LocalizationService {
       'sign_in_google': 'Đăng nhập với Google',
       'sign_out': 'Đăng xuất',
       'sign_out_confirm': 'Bạn có chắc muốn đăng xuất không? Dữ liệu tài khoản vẫn được giữ nguyên.',
+      'sign_out_success': 'Đã đăng xuất thành công!',
       'signing_in': 'Đang đăng nhập...',
       'sign_in_success': 'Đăng nhập thành công!',
       'sign_in_error': 'Đăng nhập thất bại. Vui lòng thử lại.',
@@ -343,7 +344,7 @@ class LocalizationService {
       'usage_code': 'Mã sử dụng:',
       'expiration_date': 'Thời hạn sử dụng:',
       'lifetime': 'Vĩnh viễn ✨',
-      'explore_now': 'KHÁM PHÁ NGAY',
+      'explore_now_uppercase': 'KHÁM PHÁ NGAY',
 
       // Event Categories
       'cat_love': 'Tình yêu',
@@ -565,6 +566,7 @@ class LocalizationService {
       'sign_in_google': 'Sign in with Google',
       'sign_out': 'Sign out',
       'sign_out_confirm': 'Are you sure you want to sign out? Your account data will be preserved.',
+      'sign_out_success': 'Signed out successfully!',
       'signing_in': 'Signing in...',
       'sign_in_success': 'Signed in successfully!',
       'sign_in_error': 'Sign-in failed. Please try again.',
@@ -745,7 +747,7 @@ class LocalizationService {
       'usage_code': 'Usage code:',
       'expiration_date': 'Expiration date:',
       'lifetime': 'Lifetime ✨',
-      'explore_now': 'EXPLORE NOW',
+      'explore_now_uppercase': 'EXPLORE NOW',
 
       // Event Categories
       'cat_love': 'Love',
