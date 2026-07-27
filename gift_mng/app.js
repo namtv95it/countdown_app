@@ -2383,3 +2383,17 @@ window.togglePromoCodeActive = async (id, isActive) => {
 
 document.getElementById('gift-search-input')?.addEventListener('input', renderGifts);
 document.getElementById('gift-filter-category')?.addEventListener('change', renderGifts);
+
+// Lock background body scroll when any modal is open
+const modalScrollObserver = new MutationObserver(() => {
+    const hasOpenModal = Array.from(document.querySelectorAll('.modal-overlay')).some(m => !m.classList.contains('hidden'));
+    if (hasOpenModal) {
+        document.body.style.overflow = 'hidden';
+    } else {
+        document.body.style.overflow = '';
+    }
+});
+
+document.querySelectorAll('.modal-overlay').forEach(modal => {
+    modalScrollObserver.observe(modal, { attributes: true, attributeFilter: ['class'] });
+});
