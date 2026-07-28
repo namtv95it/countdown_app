@@ -5,6 +5,7 @@ import 'admin_special_occasions_dashboard.dart';
 import 'admin_categories_dashboard.dart';
 import 'admin_promo_codes_dashboard.dart';
 import 'admin_users_dashboard.dart';
+import '../../services/app_firebase_service.dart';
 import '../../services/sync_service.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
@@ -101,7 +102,12 @@ class AdminDashboardScreen extends StatelessWidget {
               },
             ),
             const SizedBox(height: 24),
-            SizedBox(
+            // Chỉ hiển thị cho super_admin và admin, ẩn với manager
+            Builder(builder: (context) {
+              final auth = AppFirebaseService();
+              final isAdminOnly = auth.isSuperAdmin || (auth.isAdmin && !auth.isManager);
+              if (!isAdminOnly) return const SizedBox.shrink();
+              return SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () async {
@@ -144,7 +150,8 @@ class AdminDashboardScreen extends StatelessWidget {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
               ),
-            ),
+            );  // SizedBox
+            }),  // Builder adminOnly
           ],
         ),
       ),
