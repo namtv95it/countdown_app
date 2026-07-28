@@ -14,7 +14,8 @@ class AdminUsersDashboard extends StatefulWidget {
 class _AdminUsersDashboardState extends State<AdminUsersDashboard> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  String _filterType = 'all'; // 'all', 'premium', 'free', 'blocked'
+  String _filterType = 'all'; // 'all', 'google', 'anonymous', 'premium', 'free', 'blocked'
+  String _roleFilter = 'all'; // 'all', 'super_admin', 'admin', 'manager', 'user'
 
   @override
   void dispose() {
@@ -164,6 +165,10 @@ service cloud.firestore {
           int blockedUsers = 0;
           int googleUsers = 0;
           int anonymousUsers = 0;
+          int cntSuperAdmin = 0;
+          int cntAdmin = 0;
+          int cntManager = 0;
+          int cntUser = 0;
 
           for (var u in allUsers) {
             final email = (u['email'] ?? '').toString();
@@ -178,8 +183,13 @@ service cloud.firestore {
           for (var u in targetUsers) {
             final unlocked = List<String>.from(u['unlocked_features'] ?? []);
             final isBlocked = u['is_blocked'] == true;
+            final role = (u['role'] ?? 'user').toString().toLowerCase();
             if (isBlocked) blockedUsers++;
             if (unlocked.contains('premium')) premiumUsers++;
+            if (role == 'super_admin') { cntSuperAdmin++; }
+            else if (role == 'admin') { cntAdmin++; }
+            else if (role == 'manager') { cntManager++; }
+            else { cntUser++; }
           }
           int freeUsers = totalUsers - premiumUsers;
 
@@ -201,18 +211,29 @@ service cloud.firestore {
             final isPremium = unlocked.contains('premium');
             final isBlocked = u['is_blocked'] == true;
             final isAnon = u['isAnonymous'] == true || email.isEmpty;
+            final role = (u['role'] ?? 'user').toString().toLowerCase();
 
             // Manager chỉ có thể xem được người dùng đã đăng nhập (ẩn người dùng ẩn danh)
             if (AppFirebaseService().isManager && !AppFirebaseService().isSuperAdmin && isAnon) {
               return false;
             }
 
-            if (_filterType == 'google') return !isAnon;
-            if (_filterType == 'anonymous') return isAnon;
-            if (_filterType == 'premium') return isPremium;
-            if (_filterType == 'free') return !isPremium && !u.containsKey('is_premium_account');
-            if (_filterType == 'blocked') return isBlocked;
-            return true;
+            // Lọc theo loại tài khoản
+            bool matchesType = true;
+            if (_filterType == 'google') { matchesType = !isAnon; }
+            else if (_filterType == 'anonymous') { matchesType = isAnon; }
+            else if (_filterType == 'premium') { matchesType = isPremium; }
+            else if (_filterType == 'free') { matchesType = !isPremium; }
+            else if (_filterType == 'blocked') { matchesType = isBlocked; }
+
+            // Lọc theo vai trò
+            bool matchesRole = true;
+            if (_roleFilter == 'super_admin') { matchesRole = role == 'super_admin'; }
+            else if (_roleFilter == 'admin') { matchesRole = role == 'admin'; }
+            else if (_roleFilter == 'manager') { matchesRole = role == 'manager'; }
+            else if (_roleFilter == 'user') { matchesRole = role != 'super_admin' && role != 'admin' && role != 'manager'; }
+
+            return matchesType && matchesRole;
           }).toList();
 
           return Column(
@@ -270,27 +291,99 @@ service cloud.firestore {
                 ),
               ),
 
-              // 3. Filter Chips
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
+              // 3. Filter Chips - 2 Rows
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1A1A2E),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: Colors.white10),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildFilterChip(isManagerOnly ? 'Tất cả ($googleUsers)' : 'Tất cả ($totalUsers)', 'all'),
-                    const SizedBox(width: 8),
-                    _buildFilterChip('Google ($googleUsers)', 'google'),
-                    if (!isManagerOnly) ...[
-                      const SizedBox(width: 8),
-                      _buildFilterChip('Ẩn danh ($anonymousUsers)', 'anonymous'),
-                    ],
-                    const SizedBox(width: 8),
-                    _buildFilterChip('Premium ($premiumUsers)', 'premium'),
-                    const SizedBox(width: 8),
-                    _buildFilterChip('Miễn phí ($freeUsers)', 'free'),
-                    if (blockedUsers > 0 && !isManagerOnly) ...[
-                      const SizedBox(width: 8),
-                      _buildFilterChip('Đã khóa ($blockedUsers)', 'blocked'),
-                    ],
+                    // Group 1: Loại tài khoản
+                    Row(
+                      children: [
+                        const Icon(Icons.tune_rounded, color: Color(0xFF60A5FA), size: 13),
+                        const SizedBox(width: 5),
+                        Text(
+                          'Loại:',
+                          style: GoogleFonts.quicksand(
+                            color: const Color(0xFF60A5FA),
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _buildFilterChip(isManagerOnly ? 'Tất cả ($googleUsers)' : 'Tất cả ($totalUsers)', 'all', const Color(0xFF3B82F6)),
+                          const SizedBox(width: 6),
+                          _buildFilterChip('Google ($googleUsers)', 'google', const Color(0xFF3B82F6)),
+                          if (!isManagerOnly) ...[
+                            const SizedBox(width: 6),
+                            _buildFilterChip('Ẩn danh ($anonymousUsers)', 'anonymous', const Color(0xFF3B82F6)),
+                          ],
+                          const SizedBox(width: 6),
+                          _buildFilterChip('Premium ($premiumUsers)', 'premium', const Color(0xFFF59E0B)),
+                          const SizedBox(width: 6),
+                          _buildFilterChip('Miễn phí ($freeUsers)', 'free', const Color(0xFF10B981)),
+                          if (blockedUsers > 0 && !isManagerOnly) ...[
+                            const SizedBox(width: 6),
+                            _buildFilterChip('Đã khóa ($blockedUsers)', 'blocked', Colors.redAccent),
+                          ],
+                        ],
+                      ),
+                    ),
+
+                    // Divider
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 10),
+                      child: Divider(color: Colors.white10, height: 1),
+                    ),
+
+                    // Group 2: Vai trò
+                    Row(
+                      children: [
+                        const Icon(Icons.shield_rounded, color: Color(0xFFA78BFA), size: 13),
+                        const SizedBox(width: 5),
+                        Text(
+                          'Vai trò:',
+                          style: GoogleFonts.quicksand(
+                            color: const Color(0xFFA78BFA),
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _buildRoleChip('Tất cả', 'all', null),
+                          if (AppFirebaseService().isSuperAdmin) ...[
+                            const SizedBox(width: 6),
+                            _buildRoleChip('👑 Super Admin ($cntSuperAdmin)', 'super_admin', const Color(0xFFF59E0B)),
+                          ],
+                          const SizedBox(width: 6),
+                          _buildRoleChip('🛡️ Admin ($cntAdmin)', 'admin', const Color(0xFF10B981)),
+                          const SizedBox(width: 6),
+                          _buildRoleChip('👔 Manager ($cntManager)', 'manager', const Color(0xFF3B82F6)),
+                          const SizedBox(width: 6),
+                          _buildRoleChip('👤 User ($cntUser)', 'user', Colors.white60),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -362,23 +455,58 @@ service cloud.firestore {
     );
   }
 
-  Widget _buildFilterChip(String label, String value) {
+  Widget _buildFilterChip(String label, String value, Color accentColor) {
     final isSelected = _filterType == value;
-    return ChoiceChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (_) => setState(() => _filterType = value),
-      selectedColor: const Color(0xFF3B82F6),
-      backgroundColor: const Color(0xFF1A1A2E),
-      labelStyle: GoogleFonts.quicksand(
-        color: isSelected ? Colors.white : Colors.white60,
-        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-        fontSize: 13,
+    return GestureDetector(
+      onTap: () => setState(() => _filterType = value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: isSelected ? accentColor.withValues(alpha: 0.18) : Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? accentColor : Colors.white10,
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.quicksand(
+            color: isSelected ? accentColor : Colors.white54,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+            fontSize: 12,
+          ),
+        ),
       ),
-      side: BorderSide(
-        color: isSelected ? const Color(0xFF3B82F6) : Colors.white12,
+    );
+  }
+
+  Widget _buildRoleChip(String label, String value, Color? accentColor) {
+    final isSelected = _roleFilter == value;
+    final color = accentColor ?? const Color(0xFFA78BFA);
+    return GestureDetector(
+      onTap: () => setState(() => _roleFilter = value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withValues(alpha: 0.18) : Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? color : Colors.white10,
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.quicksand(
+            color: isSelected ? color : Colors.white54,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+            fontSize: 12,
+          ),
+        ),
       ),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     );
   }
 
@@ -820,43 +948,49 @@ service cloud.firestore {
                               style: GoogleFonts.quicksand(color: const Color(0xFFA78BFA), fontWeight: FontWeight.bold, fontSize: 16),
                             ),
                             const SizedBox(height: 10),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
+                            Row(
                               children: [
                                 if ((user['role'] ?? '').toString().toLowerCase() != 'admin' && (user['role'] ?? '').toString().toLowerCase() != 'super_admin')
-                                  _buildActionBtn('Cấp Quyền Admin', Icons.shield_rounded, const Color(0xFF10B981), () async {
-                                    final navigator = Navigator.of(context);
-                                    try {
-                                      await AppFirebaseService().adminSetUserRole(uid, 'admin');
-                                      navigator.pop();
-                                      _showSnackBar('Đã cấp quyền Admin cho User!');
-                                    } catch (e) {
-                                      _showSnackBar('Lỗi phân quyền: $e');
-                                    }
-                                  }),
+                                  Expanded(
+                                    child: _buildActionBtn('Quyền Admin', Icons.shield_rounded, const Color(0xFF10B981), () async {
+                                      final navigator = Navigator.of(context);
+                                      try {
+                                        await AppFirebaseService().adminSetUserRole(uid, 'admin');
+                                        navigator.pop();
+                                        _showSnackBar('Đã cấp quyền Admin cho User!');
+                                      } catch (e) {
+                                        _showSnackBar('Lỗi phân quyền: $e');
+                                      }
+                                    }),
+                                  ),
+                                if ((user['role'] ?? '').toString().toLowerCase() != 'admin' && (user['role'] ?? '').toString().toLowerCase() != 'super_admin' && (user['role'] ?? '').toString().toLowerCase() != 'manager')
+                                  const SizedBox(width: 8),
                                 if ((user['role'] ?? '').toString().toLowerCase() != 'manager' && (user['role'] ?? '').toString().toLowerCase() != 'super_admin')
-                                  _buildActionBtn('Cấp Quyền Manager', Icons.badge_rounded, const Color(0xFF3B82F6), () async {
-                                    final navigator = Navigator.of(context);
-                                    try {
-                                      await AppFirebaseService().adminSetUserRole(uid, 'manager');
-                                      navigator.pop();
-                                      _showSnackBar('Đã cấp quyền Manager cho User!');
-                                    } catch (e) {
-                                      _showSnackBar('Lỗi phân quyền: $e');
-                                    }
-                                  }),
+                                  Expanded(
+                                    child: _buildActionBtn('Quyền Manager', Icons.badge_rounded, const Color(0xFF3B82F6), () async {
+                                      final navigator = Navigator.of(context);
+                                      try {
+                                        await AppFirebaseService().adminSetUserRole(uid, 'manager');
+                                        navigator.pop();
+                                        _showSnackBar('Đã cấp quyền Manager cho User!');
+                                      } catch (e) {
+                                        _showSnackBar('Lỗi phân quyền: $e');
+                                      }
+                                    }),
+                                  ),
                                 if ((user['role'] ?? '').toString().toLowerCase() == 'admin' || (user['role'] ?? '').toString().toLowerCase() == 'manager')
-                                  _buildActionBtn('Thu Hồi Vai Trò (Về User)', Icons.no_encryption_rounded, Colors.orangeAccent, () async {
-                                    final navigator = Navigator.of(context);
-                                    try {
-                                      await AppFirebaseService().adminSetUserRole(uid, 'user');
-                                      navigator.pop();
-                                      _showSnackBar('Đã thu hồi vai trò về User thông thường!');
-                                    } catch (e) {
-                                      _showSnackBar('Lỗi thu hồi quyền: $e');
-                                    }
-                                  }),
+                                  Expanded(
+                                    child: _buildActionBtn('Thu Hồi Vai Trò', Icons.no_encryption_rounded, Colors.orangeAccent, () async {
+                                      final navigator = Navigator.of(context);
+                                      try {
+                                        await AppFirebaseService().adminSetUserRole(uid, 'user');
+                                        navigator.pop();
+                                        _showSnackBar('Đã thu hồi vai trò về User thông thường!');
+                                      } catch (e) {
+                                        _showSnackBar('Lỗi thu hồi quyền: $e');
+                                      }
+                                    }),
+                                  ),
                               ],
                             ),
                             const SizedBox(height: 24),
@@ -889,43 +1023,57 @@ service cloud.firestore {
                                 ],
                               ),
                             )
-                          else
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
+                          else ...[
+                            Row(
                               children: [
-                                if (!isPremium || (!AppFirebaseService().isManager || AppFirebaseService().isSuperAdmin))
-                                  _buildActionBtn('Cấp 30 Ngày VIP', Icons.add_moderator_rounded, const Color(0xFF3B82F6), () async {
+                                Expanded(
+                                  child: _buildActionBtn('30 Ngày VIP', Icons.add_moderator_rounded, const Color(0xFF3B82F6), () async {
                                     final navigator = Navigator.of(context);
                                     final expiry = DateTime.now().add(const Duration(days: 30));
                                     await AppFirebaseService().adminSetUserPremium(uid, true, expiry);
                                     navigator.pop();
                                     _showSnackBar('Đã cấp 30 Ngày VIP Premium cho User!');
                                   }),
-                                if (!AppFirebaseService().isManager || AppFirebaseService().isSuperAdmin) ...[
-                                  _buildActionBtn('Cấp 1 Năm VIP', Icons.workspace_premium_rounded, const Color(0xFF10B981), () async {
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: _buildActionBtn('1 Năm VIP', Icons.workspace_premium_rounded, const Color(0xFF10B981), () async {
                                     final navigator = Navigator.of(context);
                                     final expiry = DateTime.now().add(const Duration(days: 365));
                                     await AppFirebaseService().adminSetUserPremium(uid, true, expiry);
                                     navigator.pop();
                                     _showSnackBar('Đã cấp 1 Năm VIP Premium cho User!');
                                   }),
-                                  _buildActionBtn('Cấp VIP Vĩnh Viễn', Icons.star_rounded, const Color(0xFFF59E0B), () async {
-                                    final navigator = Navigator.of(context);
-                                    await AppFirebaseService().adminSetUserPremium(uid, true, null);
-                                    navigator.pop();
-                                    _showSnackBar('Đã cấp VIP Vĩnh Viễn cho User!');
-                                  }),
-                                  if (isPremium)
-                                    _buildActionBtn('Hủy Quyền VIP', Icons.remove_moderator_rounded, Colors.redAccent, () async {
-                                      final navigator = Navigator.of(context);
-                                      await AppFirebaseService().adminSetUserPremium(uid, false);
-                                      navigator.pop();
-                                      _showSnackBar('Đã hủy quyền VIP Premium của User!');
-                                    }),
-                                ],
+                                ),
                               ],
                             ),
+                            if (!AppFirebaseService().isManager || AppFirebaseService().isSuperAdmin) ...[
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildActionBtn('VIP Vĩnh Viễn', Icons.star_rounded, const Color(0xFFF59E0B), () async {
+                                      final navigator = Navigator.of(context);
+                                      await AppFirebaseService().adminSetUserPremium(uid, true, null);
+                                      navigator.pop();
+                                      _showSnackBar('Đã cấp VIP Vĩnh Viễn cho User!');
+                                    }),
+                                  ),
+                                  if (isPremium) ...[
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: _buildActionBtn('Hủy Quyền VIP', Icons.remove_moderator_rounded, Colors.redAccent, () async {
+                                        final navigator = Navigator.of(context);
+                                        await AppFirebaseService().adminSetUserPremium(uid, false);
+                                        navigator.pop();
+                                        _showSnackBar('Đã hủy quyền VIP Premium của User!');
+                                      }),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ],
+                          ],
                           const SizedBox(height: 24),
 
                           // Section 2: Trạng thái tài khoản (Block / Unblock) - Chỉ Admin / Super Admin mới có quyền thực hiện
@@ -970,9 +1118,13 @@ service cloud.firestore {
                             style: GoogleFonts.quicksand(color: const Color(0xFFA78BFA), fontWeight: FontWeight.bold, fontSize: 16),
                           ),
                           const SizedBox(height: 10),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
+                          GridView.count(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            crossAxisCount: 3,
+                            mainAxisSpacing: 8,
+                            crossAxisSpacing: 8,
+                            childAspectRatio: 2.5,
                             children: [
                               'hearts', 'bubbles', 'snow', 'stars', 'meteor', 'rain',
                               'rain_ripple', 'rainbow', 'waves', 'leaves', 'sunset_birds',
@@ -983,7 +1135,15 @@ service cloud.firestore {
                               final effectName = _getEffectName(effectId);
 
                               return FilterChip(
-                                label: Text(effectName),
+                                label: SizedBox(
+                                  width: double.infinity,
+                                  child: Text(
+                                    effectName,
+                                    textAlign: TextAlign.center,
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
+                                ),
                                 selected: isEffectUnlocked,
                                 onSelected: (val) async {
                                   final navigator = Navigator.of(context);
@@ -996,11 +1156,13 @@ service cloud.firestore {
                                 labelStyle: GoogleFonts.quicksand(
                                   color: isEffectUnlocked ? Colors.white : Colors.white54,
                                   fontWeight: isEffectUnlocked ? FontWeight.bold : FontWeight.normal,
+                                  fontSize: 11,
                                 ),
                                 side: BorderSide(
                                   color: isEffectUnlocked ? const Color(0xFFA78BFA) : Colors.white12,
                                 ),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                padding: EdgeInsets.zero,
                               );
                             }).toList(),
                           ),

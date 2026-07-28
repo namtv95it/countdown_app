@@ -2659,6 +2659,10 @@ function renderUsersDashboard() {
     let freeCount = 0;
     let googleCount = 0;
     let anonCount = 0;
+    let superAdminCount = 0;
+    let adminCount = 0;
+    let managerCount = 0;
+    let userRoleCount = 0;
 
     targetUsers.forEach(u => {
         const unlocked = Array.isArray(u.unlocked_features) ? u.unlocked_features : [];
@@ -2669,6 +2673,12 @@ function renderUsersDashboard() {
         const isAnon = u.isAnonymous === true || !(u.email || '').trim();
         if (isAnon) anonCount++;
         else googleCount++;
+
+        const role = (u.role || '').toLowerCase();
+        if (role === 'super_admin') superAdminCount++;
+        else if (role === 'admin') adminCount++;
+        else if (role === 'manager') managerCount++;
+        else userRoleCount++;
     });
 
     const elTotal = document.getElementById('stat-total-users');
@@ -2679,6 +2689,10 @@ function renderUsersDashboard() {
     const cntAnon = document.getElementById('cnt-anon');
     const cntPrem = document.getElementById('cnt-premium');
     const cntFree = document.getElementById('cnt-free');
+    const cntSuperAdmin = document.getElementById('cnt-superadmin');
+    const cntAdmin = document.getElementById('cnt-admin');
+    const cntManager = document.getElementById('cnt-manager');
+    const cntUserRole = document.getElementById('cnt-userrole');
 
     if (elTotal) elTotal.textContent = totalCount;
     if (elPrem) elPrem.textContent = premiumCount;
@@ -2688,6 +2702,10 @@ function renderUsersDashboard() {
     if (cntAnon) cntAnon.textContent = anonCount;
     if (cntPrem) cntPrem.textContent = premiumCount;
     if (cntFree) cntFree.textContent = freeCount;
+    if (cntSuperAdmin) cntSuperAdmin.textContent = superAdminCount;
+    if (cntAdmin) cntAdmin.textContent = adminCount;
+    if (cntManager) cntManager.textContent = managerCount;
+    if (cntUserRole) cntUserRole.textContent = userRoleCount;
 
     // Filter by selected chip & query
     const filtered = targetUsers.filter(u => {
@@ -2699,12 +2717,17 @@ function renderUsersDashboard() {
         const unlocked = Array.isArray(u.unlocked_features) ? u.unlocked_features : [];
         const isPrem = unlocked.includes('premium');
         const isAnon = u.isAnonymous === true || !email;
+        const role = (u.role || '').toLowerCase();
 
         let matchesChip = true;
         if (currentUserFilter === 'google') matchesChip = !isAnon;
         else if (currentUserFilter === 'anon') matchesChip = isAnon;
         else if (currentUserFilter === 'premium') matchesChip = isPrem;
         else if (currentUserFilter === 'free') matchesChip = !isPrem;
+        else if (currentUserFilter === 'super_admin') matchesChip = (role === 'super_admin');
+        else if (currentUserFilter === 'admin') matchesChip = (role === 'admin');
+        else if (currentUserFilter === 'manager') matchesChip = (role === 'manager');
+        else if (currentUserFilter === 'user_role') matchesChip = (role !== 'super_admin' && role !== 'admin' && role !== 'manager');
 
         return matchesQuery && matchesChip;
     });
