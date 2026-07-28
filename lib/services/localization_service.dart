@@ -175,6 +175,24 @@ class LocalizationService {
       'in_development': 'ĐANG PHÁT TRIỂN',
       'premium_lifetime_package': 'Gói Premium Vĩnh Viễn',
 
+      // Backup & Restore
+      'account_and_backup': 'Quản lý Tài khoản & Dữ liệu',
+      'backup_now': 'Sao lưu lên Đám mây',
+      'restore_now': 'Khôi phục từ Đám mây',
+      'last_backup_time': 'Lần sao lưu gần nhất',
+      'no_backup_yet': 'Chưa từng sao lưu',
+      'backup_confirm_title': 'Xác nhận sao lưu dữ liệu',
+      'backup_confirm_msg': 'Danh sách ngày kỷ niệm hiện tại trên máy sẽ được lưu lên đám mây Firebase để ghi đè bản sao lưu cũ.',
+      'backup_checkbox_agree': 'Tôi đã hiểu và đồng ý sao lưu dữ liệu',
+      'restore_confirm_title': 'Xác nhận khôi phục dữ liệu',
+      'restore_confirm_msg': 'Dữ liệu ngày kỷ niệm từ đám mây sẽ tải về và thay thế hoàn toàn danh sách hiện tại trên thiết bị.',
+      'restore_checkbox_agree': 'Tôi đã hiểu và đồng ý khôi phục dữ liệu',
+      'backup_success': 'Sao lưu dữ liệu thành công!',
+      'restore_success': 'Khôi phục dữ liệu thành công!',
+      'no_cloud_data': 'Không tìm thấy dữ liệu sao lưu nào trên mây!',
+      'confirm_btn': 'Xác nhận',
+      'cancel_btn': 'Hủy',
+
       // Detail Screen
       'event_detail': 'Chi tiết Kỷ niệm',
       'edit': 'Sửa',
@@ -583,6 +601,24 @@ class LocalizationService {
       'premium_price_desc': 'Special price: \$2.00 / Lifetime access',
       'in_development': 'IN DEVELOPMENT',
       'premium_lifetime_package': 'Lifetime Premium Package',
+
+      // Backup & Restore
+      'account_and_backup': 'Account & Data Management',
+      'backup_now': 'Backup to Cloud',
+      'restore_now': 'Restore from Cloud',
+      'last_backup_time': 'Last backup',
+      'no_backup_yet': 'No backup yet',
+      'backup_confirm_title': 'Confirm Data Backup',
+      'backup_confirm_msg': 'Your local anniversary list will be saved to Firebase Cloud, overwriting any existing cloud backup.',
+      'backup_checkbox_agree': 'I understand and agree to back up data',
+      'restore_confirm_title': 'Confirm Data Restore',
+      'restore_confirm_msg': 'Cloud backup data will be downloaded, replacing the current local anniversary list on this device.',
+      'restore_checkbox_agree': 'I understand and agree to restore data',
+      'backup_success': 'Data backed up successfully!',
+      'restore_success': 'Data restored successfully!',
+      'no_cloud_data': 'No backup data found on cloud!',
+      'confirm_btn': 'Confirm',
+      'cancel_btn': 'Cancel',
 
       // Detail Screen
       'event_detail': 'Event Details',

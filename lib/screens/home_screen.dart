@@ -1107,6 +1107,9 @@ class _HomeScreenState extends State<HomeScreen>
           onPremiumChanged: (isPremium) {
             setState(() {}); // Rebuild để ẩn/hiện banner
           },
+          onEventsChanged: () {
+            _loadAnniversaries();
+          },
         ),
       ],
     );

@@ -13,11 +13,13 @@ import '../widgets/success_promo_dialog.dart';
 import '../widgets/theme_picker_sheet.dart';
 import '../services/app_firebase_service.dart';
 import 'admin_screen.dart';
+import 'account_sync_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   final ValueChanged<String>? onEffectChanged;
   final ValueChanged<bool>? onPremiumChanged;
-  const SettingsScreen({super.key, this.onEffectChanged, this.onPremiumChanged});
+  final VoidCallback? onEventsChanged;
+  const SettingsScreen({super.key, this.onEffectChanged, this.onPremiumChanged, this.onEventsChanged});
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -625,18 +627,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
               )
             : Container(
                 width: 40,
-                height: 40,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white,
-                ),
-                padding: const EdgeInsets.all(8),
                 child: Image.network(
                   'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/120px-Google_%22G%22_logo.svg.png',
                   fit: BoxFit.contain,
                   errorBuilder: (_, __, ___) => const Icon(Icons.g_mobiledata, color: Color(0xFF4285F4), size: 24),
                 ),
               ),
+        onTap: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AccountSyncScreen(
+                onDataChanged: () {
+                  widget.onEventsChanged?.call();
+                },
+              ),
+            ),
+          );
+          if (mounted) {
+            await _loadSettings();
+            setState(() {});
+          }
+        },
       );
     }
 

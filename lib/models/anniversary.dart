@@ -1,6 +1,7 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:lunar/lunar.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'event_category.dart';
 
 class Anniversary {
@@ -99,20 +100,28 @@ class Anniversary {
   }
 
   factory Anniversary.fromMap(Map<String, dynamic> map) {
-    final emoji = map['emoji'] as String? ?? '🎉';
-    // Backward compatibility: nếu không có categoryId,
-    // thử map từ emoji cũ sang category.
-    final categoryId = map['categoryId'] as String?
+    final emoji = map['emoji']?.toString() ?? '🎉';
+    final categoryId = map['categoryId']?.toString()
         ?? EventCategory.fromLegacyEmoji(emoji).id;
+
+    DateTime parsedDate;
+    if (map['date'] is Timestamp) {
+      parsedDate = (map['date'] as Timestamp).toDate();
+    } else if (map['date'] != null) {
+      parsedDate = DateTime.tryParse(map['date'].toString()) ?? DateTime.now();
+    } else {
+      parsedDate = DateTime.now();
+    }
+
     return Anniversary(
-      id: map['id'] as String,
-      title: map['title'] as String,
-      date: DateTime.parse(map['date'] as String),
+      id: map['id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      title: map['title']?.toString() ?? '',
+      date: parsedDate,
       emoji: emoji,
-      colorValue: map['colorValue'] as int? ?? 0xFF7C3AED,
-      isYearly: map['isYearly'] as bool? ?? false,
-      isLunar: map['isLunar'] as bool? ?? false,
-      note: map['note'] as String? ?? '',
+      colorValue: (map['colorValue'] as num?)?.toInt() ?? 0xFF7C3AED,
+      isYearly: map['isYearly'] == true,
+      isLunar: map['isLunar'] == true,
+      note: map['note']?.toString() ?? '',
       categoryId: categoryId,
     );
   }

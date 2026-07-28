@@ -419,6 +419,67 @@ class AppFirebaseService {
     return result;
   }
 
+  /// Lấy thời gian sao lưu gần nhất
+  Future<DateTime?> getLastBackupTime() async {
+    if (_currentUser == null) return null;
+    try {
+      final doc = await _firestore.collection('users').doc(_currentUser!.uid).get();
+      if (doc.exists && doc.data() != null && doc.data()!['last_backup_time'] is Timestamp) {
+        return (doc.data()!['last_backup_time'] as Timestamp).toDate();
+      }
+    } catch (e) {
+      debugPrint('Error getting last backup time: $e');
+    }
+    return null;
+  }
+
+  /// Sao lưu mảng các ngày kỷ niệm lên Firestore (gom 1 Document duy nhất)
+  Future<bool> backupAnniversariesToCloud(List<Map<String, dynamic>> dataList) async {
+    if (_currentUser == null) return false;
+    try {
+      final now = DateTime.now();
+      await _firestore.collection('users').doc(_currentUser!.uid).set({
+        'anniversaries': dataList,
+        'last_backup_time': Timestamp.fromDate(now),
+        'last_active': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      return true;
+    } catch (e) {
+      debugPrint('Error backing up anniversaries to cloud: $e');
+      return false;
+    }
+  }
+
+  /// Khôi phục mảng ngày kỷ niệm từ Firestore
+  Future<Map<String, dynamic>?> restoreAnniversariesFromCloud() async {
+    if (_currentUser == null) return null;
+    try {
+      final doc = await _firestore.collection('users').doc(_currentUser!.uid).get();
+      if (doc.exists && doc.data() != null) {
+        final data = doc.data()!;
+        final list = data['anniversaries'];
+        DateTime? lastBackup;
+        if (data['last_backup_time'] is Timestamp) {
+          lastBackup = (data['last_backup_time'] as Timestamp).toDate();
+        }
+        if (list is List) {
+          final List<Map<String, dynamic>> parsedList = list
+              .whereType<Map>()
+              .map((item) => Map<String, dynamic>.from(item))
+              .toList();
+          return {
+            'anniversaries': parsedList,
+            'last_backup_time': lastBackup,
+          };
+        }
+      }
+    } catch (e) {
+      debugPrint('Error restoring anniversaries from cloud: $e');
+      rethrow;
+    }
+    return null;
+  }
+
   /// Lấy cấu hình Startup Banner từ Cloud
   Future<StartupBanner?> getStartupBanner() async {
     try {
