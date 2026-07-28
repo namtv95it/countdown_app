@@ -182,7 +182,7 @@ class LocalizationService {
       'last_backup_time': 'Lần sao lưu gần nhất',
       'no_backup_yet': 'Chưa từng sao lưu',
       'backup_confirm_title': 'Xác nhận sao lưu dữ liệu',
-      'backup_confirm_msg': 'Danh sách ngày kỷ niệm hiện tại trên máy sẽ được lưu lên đám mây Firebase để ghi đè bản sao lưu cũ.',
+      'backup_confirm_msg': 'Danh sách ngày kỷ niệm hiện tại trên máy sẽ được lưu lên đám mây để ghi đè bản sao lưu cũ.',
       'backup_checkbox_agree': 'Tôi đã hiểu và đồng ý sao lưu dữ liệu',
       'restore_confirm_title': 'Xác nhận khôi phục dữ liệu',
       'restore_confirm_msg': 'Dữ liệu ngày kỷ niệm từ đám mây sẽ tải về và thay thế hoàn toàn danh sách hiện tại trên thiết bị.',
