@@ -13,6 +13,8 @@ import '../widgets/success_promo_dialog.dart';
 import '../widgets/theme_picker_sheet.dart';
 import '../services/app_firebase_service.dart';
 import 'admin_screen.dart';
+import 'admin/admin_dashboard_screen.dart';
+import 'admin/admin_users_dashboard.dart';
 import 'account_sync_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -88,7 +90,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       effectIds.map((id) => storage.isFeatureUnlocked('${id}_effect_unlocked')),
     );
     final testModeUnlocked = storage.getIsTestModeUnlocked();
-    final adminUnlocked = storage.getIsAdminUnlocked();
+    final firebaseAdmin = await AppFirebaseService().checkIsCurrentUserAdmin();
+    final adminUnlocked = storage.getIsAdminUnlocked() || firebaseAdmin;
     final premiumExpiry = await storage.getPremiumExpiry();
     
     if (mounted) {
@@ -937,15 +940,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _buildSectionHeader('🛠️ Khu Vực Quản Trị'),
               _buildListTile(
                 title: 'Admin Dashboard',
-                subtitle: 'Quản lý ứng dụng (Yêu cầu mật khẩu)',
+                subtitle: AppFirebaseService().isAdmin
+                    ? 'Bảng điều khiển quản trị viên (Tài khoản Google Admin)'
+                    : 'Quản lý ứng dụng (Yêu cầu mật khẩu)',
                 trailing: const Icon(Icons.admin_panel_settings_rounded, color: Color(0xFF10B981)),
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const AdminScreen(),
-                    ),
-                  );
+                  if (AppFirebaseService().isManager && !AppFirebaseService().isSuperAdmin) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AdminUsersDashboard(),
+                      ),
+                    );
+                  } else if (AppFirebaseService().isAdmin) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AdminDashboardScreen(),
+                      ),
+                    );
+                  } else {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AdminScreen(),
+                      ),
+                    );
+                  }
                 },
               ),
             ],

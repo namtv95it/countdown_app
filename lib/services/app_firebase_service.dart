@@ -138,6 +138,7 @@ class AppFirebaseService {
     if (_currentUser == null) return;
     try {
       final prefs = await SharedPreferences.getInstance();
+      await syncUserProfileMetadata();
       bool localPremium = prefs.getBool('is_premium_account') ?? false;
       final featuresMap = await getUnlockedFeatures();
       
@@ -500,5 +501,152 @@ class AppFirebaseService {
       debugPrint('Error fetching startup banner: $e');
     }
     return null;
+  }
+
+  static const String defaultSuperAdminUid = 'dKth5JKXdKg9SLEoyCSDTMsqYrr2';
+
+  bool _isAdmin = false;
+  bool _isSuperAdmin = false;
+  bool _isManager = false;
+  bool get isAdmin => _isAdmin;
+  bool get isSuperAdmin => _isSuperAdmin;
+  bool get isManager => _isManager;
+
+  /// Kiểm tra vai trò Admin / Super Admin / Manager của User hiện tại trên Firestore
+  Future<bool> checkIsCurrentUserAdmin() async {
+    if (_currentUser == null) {
+      _isAdmin = false;
+      _isSuperAdmin = false;
+      _isManager = false;
+      return false;
+    }
+
+    if (_currentUser!.uid == defaultSuperAdminUid) {
+      _isSuperAdmin = true;
+      _isAdmin = true;
+    }
+
+    try {
+      final doc = await _firestore.collection('users').doc(_currentUser!.uid).get();
+      if (doc.exists && doc.data() != null) {
+        final data = doc.data()!;
+        final role = (data['role'] ?? '').toString().toLowerCase();
+        final isAdminField = data['is_admin'] == true;
+        _isSuperAdmin = _isSuperAdmin || role == 'super_admin';
+        _isManager = role == 'manager';
+        _isAdmin = _isSuperAdmin || role == 'admin' || _isManager || isAdminField;
+        return _isAdmin;
+      }
+    } catch (e) {
+      debugPrint('Error checking admin status: $e');
+    }
+    return _isAdmin;
+  }
+
+  /// Admin/Super Admin thay đổi vai trò (role) cho một User theo UID
+  Future<void> adminSetUserRole(String targetUid, String newRole) async {
+    try {
+      await _firestore.collection('users').doc(targetUid).set({
+        'role': newRole,
+        'is_admin': newRole == 'admin' || newRole == 'super_admin' || newRole == 'manager',
+      }, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('Error admin setting user role: $e');
+      rethrow;
+    }
+  }
+
+  /// Đồng bộ thông tin cá nhân cơ bản của User lên Firestore collection 'users'
+  Future<void> syncUserProfileMetadata() async {
+    if (_currentUser == null) return;
+    try {
+      final data = {
+        'uid': _currentUser!.uid,
+        'email': _currentUser!.email ?? '',
+        'displayName': _currentUser!.displayName ?? (_currentUser!.isAnonymous ? 'User Ẩn Danh' : 'Người dùng'),
+        'photoUrl': _currentUser!.photoURL ?? '',
+        'isAnonymous': _currentUser!.isAnonymous,
+        'last_active': FieldValue.serverTimestamp(),
+      };
+      await _firestore.collection('users').doc(_currentUser!.uid).set(data, SetOptions(merge: true));
+      await checkIsCurrentUserAdmin();
+    } catch (e) {
+      debugPrint('Error syncing user profile metadata: $e');
+    }
+  }
+
+  /// Stream danh sách tất cả Users cho Admin
+  Stream<List<Map<String, dynamic>>> getUsersStream() {
+    return _firestore.collection('users').snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['uid'] = doc.id;
+        return data;
+      }).toList();
+    });
+  }
+
+  /// Admin cập nhật trạng thái Premium cho một User theo UID
+  Future<void> adminSetUserPremium(String uid, bool isPremium, [DateTime? expiryDate]) async {
+    try {
+      final docRef = _firestore.collection('users').doc(uid);
+      if (isPremium) {
+        Map<String, dynamic> updateData = {
+          'unlocked_features': FieldValue.arrayUnion(['premium']),
+        };
+        if (expiryDate != null) {
+          updateData['expirations.premium'] = Timestamp.fromDate(expiryDate);
+        } else {
+          updateData['expirations.premium'] = FieldValue.delete();
+        }
+        await docRef.set(updateData, SetOptions(merge: true));
+      } else {
+        await docRef.set({
+          'unlocked_features': FieldValue.arrayRemove(['premium']),
+          'expirations.premium': FieldValue.delete(),
+        }, SetOptions(merge: true));
+      }
+    } catch (e) {
+      debugPrint('Error admin updating user premium: $e');
+      rethrow;
+    }
+  }
+
+  /// Admin bật/tắt tính năng/hiệu ứng cho một User theo UID
+  Future<void> adminToggleUserFeature(String uid, String featureId, bool unlock, [DateTime? expiryDate]) async {
+    try {
+      final docRef = _firestore.collection('users').doc(uid);
+      if (unlock) {
+        Map<String, dynamic> updateData = {
+          'unlocked_features': FieldValue.arrayUnion([featureId]),
+        };
+        if (expiryDate != null) {
+          updateData['expirations.$featureId'] = Timestamp.fromDate(expiryDate);
+        } else {
+          updateData['expirations.$featureId'] = FieldValue.delete();
+        }
+        await docRef.set(updateData, SetOptions(merge: true));
+      } else {
+        await docRef.set({
+          'unlocked_features': FieldValue.arrayRemove([featureId]),
+          'expirations.$featureId': FieldValue.delete(),
+        }, SetOptions(merge: true));
+      }
+    } catch (e) {
+      debugPrint('Error admin toggling feature: $e');
+      rethrow;
+    }
+  }
+
+  /// Admin bật/tắt trạng thái Khóa tài khoản User (is_blocked)
+  Future<void> adminToggleBlockUser(String uid, bool isBlocked) async {
+    try {
+      await _firestore.collection('users').doc(uid).set({
+        'is_blocked': isBlocked,
+      }, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('Error admin toggling block user: $e');
+      rethrow;
+    }
   }
 }

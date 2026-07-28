@@ -4,6 +4,7 @@ import 'admin_gift_dashboard.dart';
 import 'admin_special_occasions_dashboard.dart';
 import 'admin_categories_dashboard.dart';
 import 'admin_promo_codes_dashboard.dart';
+import 'admin_users_dashboard.dart';
 import '../../services/sync_service.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
@@ -25,10 +26,24 @@ class AdminDashboardScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            const SizedBox(height: 16),
+            _buildAdminCard(
+              context,
+              title: 'Quản Lý Người Dùng',
+              subtitle: 'Xem danh sách user, cấp VIP, quản lý hiệu ứng & dữ liệu',
+              icon: Icons.people_alt_rounded,
+              color: const Color(0xFF3B82F6),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AdminUsersDashboard()),
+                );
+              },
+            ),
             const SizedBox(height: 16),
             _buildAdminCard(
               context,
@@ -85,7 +100,7 @@ class AdminDashboardScreen extends StatelessWidget {
                 );
               },
             ),
-            const Spacer(),
+            const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(

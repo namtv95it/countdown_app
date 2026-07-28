@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'admin/admin_dashboard_screen.dart';
 
+import '../services/app_firebase_service.dart';
+
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
 
@@ -17,6 +19,20 @@ class _AdminScreenState extends State<AdminScreen> {
   String? _errorMsg;
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    if (AppFirebaseService().isAdmin) {
+      _isUnlocked = true;
+    } else {
+      AppFirebaseService().checkIsCurrentUserAdmin().then((isAdmin) {
+        if (mounted && isAdmin) {
+          setState(() => _isUnlocked = true);
+        }
+      });
+    }
+  }
 
   Future<void> _signIn() async {
     final email = _emailController.text.trim();
