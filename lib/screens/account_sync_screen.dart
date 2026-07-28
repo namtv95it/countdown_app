@@ -231,42 +231,102 @@ class _AccountSyncScreenState extends State<AccountSyncScreen> {
 
   // ── Handle Sign Out ──
   Future<void> _handleSignOut() async {
-    final confirm = await showDialog<bool>(
+    final action = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF1E1E2E),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          t('sign_out'),
-          style: GoogleFonts.quicksand(color: Colors.white, fontWeight: FontWeight.bold),
+        title: Row(
+          children: [
+            const Icon(Icons.logout_rounded, color: Colors.redAccent, size: 24),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                t('sign_out_smart_title'),
+                style: GoogleFonts.quicksand(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 17,
+                ),
+              ),
+            ),
+          ],
         ),
         content: Text(
-          t('sign_out_confirm'),
-          style: GoogleFonts.quicksand(color: Colors.white70),
+          t('sign_out_smart_msg'),
+          style: GoogleFonts.quicksand(color: Colors.white70, fontSize: 14, height: 1.4),
         ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(t('cancel_btn'), style: GoogleFonts.quicksand(color: Colors.white54)),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            child: Text(t('sign_out'), style: GoogleFonts.quicksand(color: Colors.white)),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ElevatedButton.icon(
+                onPressed: () => Navigator.pop(context, 'backup_and_signout'),
+                icon: const Icon(Icons.cloud_upload_rounded, size: 18, color: Colors.white),
+                label: Text(
+                  t('backup_and_sign_out'),
+                  style: GoogleFonts.quicksand(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF7C3AED),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 2,
+                ),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: () => Navigator.pop(context, 'signout_only'),
+                icon: const Icon(Icons.logout_rounded, size: 18, color: Colors.redAccent),
+                label: Text(
+                  t('sign_out_only'),
+                  style: GoogleFonts.quicksand(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Colors.redAccent, width: 1.2),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => Navigator.pop(context, null),
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.white.withOpacity(0.12),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: Text(
+                  t('cancel_btn'),
+                  style: GoogleFonts.quicksand(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
 
-    if (confirm == true) {
+    if (action == null) return;
+
+    setState(() => _isOperating = true);
+    try {
+      if (action == 'backup_and_signout') {
+        final list = await _storage.getAnniversaries();
+        final dataList = list.map((item) => item.toMap()).toList();
+        await _auth.backupAnniversariesToCloud(dataList);
+      }
+
       await _auth.signOut();
       if (mounted) {
         _showMessage(t('sign_out_success'));
         Navigator.pop(context);
       }
+    } catch (e) {
+      _showMessage(e.toString(), isError: true);
+    } finally {
+      if (mounted) setState(() => _isOperating = false);
     }
   }
 

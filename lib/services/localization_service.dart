@@ -192,6 +192,10 @@ class LocalizationService {
       'no_cloud_data': 'Không tìm thấy dữ liệu sao lưu nào trên mây!',
       'confirm_btn': 'Xác nhận',
       'cancel_btn': 'Hủy',
+      'sign_out_smart_title': 'Xác nhận Đăng xuất',
+      'sign_out_smart_msg': 'Bạn có muốn sao lưu dữ liệu ngày kỷ niệm mới nhất lên đám mây trước khi đăng xuất không?',
+      'backup_and_sign_out': 'Sao lưu & Đăng xuất',
+      'sign_out_only': 'Chỉ Đăng xuất',
 
       // Detail Screen
       'event_detail': 'Chi tiết Kỷ niệm',
@@ -619,6 +623,10 @@ class LocalizationService {
       'no_cloud_data': 'No backup data found on cloud!',
       'confirm_btn': 'Confirm',
       'cancel_btn': 'Cancel',
+      'sign_out_smart_title': 'Confirm Sign Out',
+      'sign_out_smart_msg': 'Do you want to back up your latest anniversary data to the cloud before signing out?',
+      'backup_and_sign_out': 'Backup & Sign Out',
+      'sign_out_only': 'Sign Out Only',
 
       // Detail Screen
       'event_detail': 'Event Details',
