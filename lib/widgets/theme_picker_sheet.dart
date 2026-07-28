@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import '../services/localization_service.dart';
 import '../services/storage_service.dart';
 import '../services/font_service.dart';
@@ -12,11 +13,13 @@ import '../widgets/premium_dialog.dart';
 class ThemePickerSheet extends StatefulWidget {
   final int initialTabIndex;
   final ValueChanged<String>? onEffectChanged;
+  final bool isTutorialMode;
 
   const ThemePickerSheet({
     super.key,
     this.initialTabIndex = 0,
     this.onEffectChanged,
+    this.isTutorialMode = false,
   });
 
   @override
@@ -32,11 +35,23 @@ class _ThemePickerSheetState extends State<ThemePickerSheet> with SingleTickerPr
   bool _isPremium = false;
   final Map<String, bool> _effectUnlocked = {};
 
+  final GlobalKey _heartsEffectKey = GlobalKey();
+  final GlobalKey _fontTabKey = GlobalKey();
+  final GlobalKey _dancingFontKey = GlobalKey();
+  final GlobalKey _closeSheetKey = GlobalKey();
+  TutorialCoachMark? _activeSheetTutorial;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this, initialIndex: widget.initialTabIndex);
-    _loadData();
+    _loadData().then((_) {
+      if (widget.isTutorialMode && mounted) {
+        Future.delayed(const Duration(milliseconds: 400), () {
+          if (mounted) _showSheetTutorial();
+        });
+      }
+    });
   }
 
   Future<void> _loadData() async {
@@ -247,11 +262,186 @@ class _ThemePickerSheetState extends State<ThemePickerSheet> with SingleTickerPr
     }
   }
 
+  @override
+  void dispose() {
+    _activeSheetTutorial?.finish();
+    _activeSheetTutorial = null;
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  void _showSheetTutorial() {
+    _activeSheetTutorial?.finish();
+    _activeSheetTutorial = null;
+
+    _activeSheetTutorial = TutorialCoachMark(
+      targets: [
+        TargetFocus(
+          identify: "hearts_effect",
+          keyTarget: _heartsEffectKey,
+          alignSkip: Alignment.topRight,
+          enableOverlayTab: true,
+          contents: [
+            TargetContent(
+              align: ContentAlign.bottom,
+              builder: (context, controller) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Bước 1: Chọn hiệu ứng Trái tim",
+                      style: GoogleFonts.quicksand(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      "Chạm vào Trái tim để tạo các biểu tượng tình yêu bay rực rỡ!",
+                      style: GoogleFonts.quicksand(color: Colors.white70, fontSize: 14),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+        TargetFocus(
+          identify: "font_tab",
+          keyTarget: _fontTabKey,
+          alignSkip: Alignment.topRight,
+          enableOverlayTab: true,
+          contents: [
+            TargetContent(
+              align: ContentAlign.bottom,
+              builder: (context, controller) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Bước 2: Sang tab Kiểu chữ",
+                      style: GoogleFonts.quicksand(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      "Chạm vào tab Kiểu chữ để thay đổi phông chữ của ứng dụng!",
+                      style: GoogleFonts.quicksand(color: Colors.white70, fontSize: 14),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+        TargetFocus(
+          identify: "dancing_font",
+          keyTarget: _dancingFontKey,
+          alignSkip: Alignment.topRight,
+          enableOverlayTab: true,
+          contents: [
+            TargetContent(
+              align: ContentAlign.top,
+              builder: (context, controller) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Bước 3: Chọn phông Dancing Script",
+                      style: GoogleFonts.quicksand(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      "Chạm vào Dancing Script để đổi phông chữ nghệ thuật uốn lượn!",
+                      style: GoogleFonts.quicksand(color: Colors.white70, fontSize: 14),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+        TargetFocus(
+          identify: "close_sheet",
+          keyTarget: _closeSheetKey,
+          alignSkip: Alignment.topLeft,
+          enableOverlayTab: true,
+          contents: [
+            TargetContent(
+              align: ContentAlign.bottom,
+              builder: (context, controller) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      "Bước 4: Hoàn tất & Trải nghiệm",
+                      style: GoogleFonts.quicksand(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      "Nhấn nút Đóng (X) để quay về Trang chủ và xem kết quả!",
+                      style: GoogleFonts.quicksand(color: Colors.white70, fontSize: 14),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ],
+      colorShadow: const Color(0xFF7C3AED),
+      textSkip: "Bỏ qua",
+      alignSkip: Alignment.topRight,
+      paddingFocus: 6,
+      opacityShadow: 0.85,
+      onFinish: () {
+        _activeSheetTutorial = null;
+        StorageService().setTutorialShown();
+      },
+      onClickTarget: (target) {
+        if (target.identify == "hearts_effect") {
+          _selectEffect('hearts', 'Trái tim');
+        } else if (target.identify == "font_tab") {
+          _tabController.animateTo(1);
+        } else if (target.identify == "dancing_font") {
+          _changeFont('Dancing Script');
+        } else if (target.identify == "close_sheet") {
+          _activeSheetTutorial?.finish();
+          _activeSheetTutorial = null;
+          if (mounted) Navigator.pop(context);
+        }
+      },
+      onSkip: () {
+        _activeSheetTutorial = null;
+        StorageService().setTutorialShown();
+        return true;
+      },
+    );
+    _activeSheetTutorial!.show(context: context);
+  }
+
   Widget _buildEffectChip(String id, String name, IconData icon) {
     final isSelected = _selectedEffect == id;
     final isUnlocked = id == 'none' || id == 'hearts' || (_effectUnlocked[id] ?? false) || _isPremium;
     
     return InkWell(
+      key: id == 'hearts' ? _heartsEffectKey : null,
       onTap: () => _selectEffect(id, name),
       borderRadius: BorderRadius.circular(16),
       child: AnimatedContainer(
@@ -327,6 +517,7 @@ class _ThemePickerSheetState extends State<ThemePickerSheet> with SingleTickerPr
   Widget _buildFontChip(String fontName) {
     final isSelected = FontService.currentFont == fontName;
     return InkWell(
+      key: fontName == 'Dancing Script' ? _dancingFontKey : null,
       onTap: () => _changeFont(fontName),
       borderRadius: BorderRadius.circular(16),
       child: AnimatedContainer(
@@ -388,7 +579,27 @@ class _ThemePickerSheetState extends State<ThemePickerSheet> with SingleTickerPr
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 12, 0),
+            child: Row(
+              children: [
+                Text(
+                  'Tùy chỉnh giao diện',
+                  style: GoogleFonts.quicksand(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  key: _closeSheetKey,
+                  icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+          ),
           TabBar(
             controller: _tabController,
             indicatorColor: const Color(0xFFA78BFA),
@@ -397,7 +608,7 @@ class _ThemePickerSheetState extends State<ThemePickerSheet> with SingleTickerPr
             labelStyle: GoogleFonts.quicksand(fontWeight: FontWeight.bold, fontSize: 16),
             tabs: [
               Tab(text: t('background_effect')),
-              Tab(text: t('font_style')),
+              Tab(key: _fontTabKey, text: t('font_style')),
               Tab(text: t('tab_music') == 'tab_music' ? 'Nhạc nền' : t('tab_music')),
             ],
           ),

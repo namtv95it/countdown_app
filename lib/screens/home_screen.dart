@@ -67,6 +67,7 @@ class _HomeScreenState extends State<HomeScreen>
   Timer? _hideExitButtonTimer;
   final GlobalKey _repaintBoundaryKey = GlobalKey();
   final GlobalKey _themeButtonKey = GlobalKey();
+  TutorialCoachMark? _activeTutorial;
   bool _isCapturing = false;
   DateTime? _customCountdownTarget;
   void _showCustomTimerDialog() {
@@ -218,7 +219,10 @@ class _HomeScreenState extends State<HomeScreen>
     final storage = StorageService();
     final isTutorialShown = await storage.getIsTutorialShown();
     if (!isTutorialShown && mounted) {
-      _showTutorial();
+      await Future.delayed(const Duration(milliseconds: 600));
+      if (mounted) {
+        _showTutorial();
+      }
     } else {
       _checkAndShowStartupBanner();
     }
@@ -371,7 +375,10 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _showTutorial() {
-    TutorialCoachMark(
+    _activeTutorial?.finish();
+    _activeTutorial = null;
+
+    _activeTutorial = TutorialCoachMark(
       targets: [
         TargetFocus(
           identify: "theme_button",
@@ -408,16 +415,38 @@ class _HomeScreenState extends State<HomeScreen>
       paddingFocus: 10,
       opacityShadow: 0.8,
       onFinish: () {
+        _activeTutorial = null;
         StorageService().setTutorialShown();
+        _checkAndShowStartupBanner();
       },
       onClickTarget: (target) {
-        StorageService().setTutorialShown();
+        _activeTutorial?.finish();
+        _activeTutorial = null;
+        Future.delayed(const Duration(milliseconds: 350), () {
+          if (!mounted) return;
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (_) => ThemePickerSheet(
+              isTutorialMode: true,
+              onEffectChanged: (effect) {
+                setState(() => _selectedEffect = effect);
+              },
+            ),
+          ).then((_) {
+            _checkAndShowStartupBanner();
+          });
+        });
       },
       onSkip: () {
+        _activeTutorial = null;
         StorageService().setTutorialShown();
+        _checkAndShowStartupBanner();
         return true;
       },
-    ).show(context: context);
+    );
+    _activeTutorial!.show(context: context);
   }
 
   Future<void> _loadThemeSettings() async {
@@ -2136,7 +2165,7 @@ class _HomeScreenState extends State<HomeScreen>
                         color: Colors.white),
                   ),
                   const Spacer(),
-                  if (showThemeButton) _buildThemeButton(),
+                  if (showThemeButton) _buildThemeButton(key: _themeButtonKey),
                 ],
               ),
             ),
