@@ -1,6 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:countdown_app/services/app_firebase_service.dart';
 import '../models/anniversary.dart';
+import 'font_service.dart';
 
 class StorageService {
   static final StorageService _instance = StorageService._internal();
@@ -182,6 +183,45 @@ class StorageService {
   Future<void> setSelectedEffect(String effect) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_effectKey, effect);
+  }
+
+  Future<Map<String, dynamic>> getAllSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    return {
+      'selected_effect_id': prefs.getString(_effectKey) ?? 'none',
+      'app_font': prefs.getString('app_font') ?? 'Quicksand',
+      'notifications_enabled': prefs.getBool('notifications_enabled') ?? true,
+      'sound_enabled': prefs.getBool('sound_enabled') ?? true,
+      'reminder_days': prefs.getInt('reminder_days') ?? 1,
+      'notification_hour': prefs.getInt('notification_hour') ?? 8,
+      'notification_minute': prefs.getInt('notification_minute') ?? 0,
+    };
+  }
+
+  Future<void> saveAllSettings(Map<String, dynamic> settings) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (settings.containsKey('selected_effect_id')) {
+      await prefs.setString(_effectKey, settings['selected_effect_id'].toString());
+    }
+    if (settings.containsKey('app_font')) {
+      final font = settings['app_font'].toString();
+      await FontService.setFont(font);
+    }
+    if (settings.containsKey('notifications_enabled')) {
+      await prefs.setBool('notifications_enabled', settings['notifications_enabled'] == true);
+    }
+    if (settings.containsKey('sound_enabled')) {
+      await prefs.setBool('sound_enabled', settings['sound_enabled'] == true);
+    }
+    if (settings.containsKey('reminder_days')) {
+      await prefs.setInt('reminder_days', int.tryParse(settings['reminder_days'].toString()) ?? 1);
+    }
+    if (settings.containsKey('notification_hour')) {
+      await prefs.setInt('notification_hour', int.tryParse(settings['notification_hour'].toString()) ?? 8);
+    }
+    if (settings.containsKey('notification_minute')) {
+      await prefs.setInt('notification_minute', int.tryParse(settings['notification_minute'].toString()) ?? 0);
+    }
   }
 
   Future<bool> isFeatureUnlocked(String featureKey) async {

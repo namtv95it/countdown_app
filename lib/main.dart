@@ -54,11 +54,16 @@ class MyApp extends StatelessWidget {
     return ValueListenableBuilder<String>(
       valueListenable: LocalizationService.languageNotifier,
       builder: (context, lang, child) {
-        return MaterialApp(
-          title: t('app_name'),
-          debugShowCheckedModeBanner: false,
-          theme: _buildTheme(),
-          home: isFirstLaunch ? const OnboardingScreen() : const HomeScreen(),
+        return ValueListenableBuilder<String>(
+          valueListenable: FontService.fontNotifier,
+          builder: (context, font, child) {
+            return MaterialApp(
+              title: t('app_name'),
+              debugShowCheckedModeBanner: false,
+              theme: _buildTheme(),
+              home: isFirstLaunch ? const OnboardingScreen() : const HomeScreen(),
+            );
+          },
         );
       },
     );

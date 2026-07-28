@@ -5,6 +5,7 @@ import '../models/anniversary.dart';
 import '../services/app_firebase_service.dart';
 import '../services/localization_service.dart';
 import '../services/storage_service.dart';
+import '../services/notification_service.dart';
 
 class AccountSyncScreen extends StatefulWidget {
   final Function()? onDataChanged;
@@ -180,8 +181,9 @@ class _AccountSyncScreenState extends State<AccountSyncScreen> {
     try {
       final list = await _storage.getAnniversaries();
       final dataList = list.map((item) => item.toMap()).toList();
+      final settingsMap = await _storage.getAllSettings();
 
-      final success = await _auth.backupAnniversariesToCloud(dataList);
+      final success = await _auth.backupAnniversariesToCloud(dataList, settings: settingsMap);
       if (success) {
         await _loadBackupInfo();
         _showMessage(t('backup_success'));
@@ -218,6 +220,10 @@ class _AccountSyncScreenState extends State<AccountSyncScreen> {
           rawList.map<Anniversary>((map) => Anniversary.fromMap(map)).toList();
 
       await _storage.saveAnniversaries(restoredList);
+      if (result['settings'] is Map) {
+        await _storage.saveAllSettings(Map<String, dynamic>.from(result['settings']));
+        await NotificationService().scheduleNotifications();
+      }
       widget.onDataChanged?.call();
       await _loadBackupInfo();
       _showMessage(t('restore_success'));
@@ -315,7 +321,8 @@ class _AccountSyncScreenState extends State<AccountSyncScreen> {
       if (action == 'backup_and_signout') {
         final list = await _storage.getAnniversaries();
         final dataList = list.map((item) => item.toMap()).toList();
-        await _auth.backupAnniversariesToCloud(dataList);
+        final settingsMap = await _storage.getAllSettings();
+        await _auth.backupAnniversariesToCloud(dataList, settings: settingsMap);
       }
 
       await _auth.signOut();

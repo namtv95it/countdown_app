@@ -3,11 +3,20 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class FontService {
-  static String currentFont = 'Quicksand';
+  static final ValueNotifier<String> fontNotifier = ValueNotifier<String>('Quicksand');
+
+  static String get currentFont => fontNotifier.value;
+  static set currentFont(String value) => fontNotifier.value = value;
   
   static Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     currentFont = prefs.getString('app_font') ?? 'Quicksand';
+  }
+
+  static Future<void> setFont(String fontName) async {
+    currentFont = fontName;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('app_font', fontName);
   }
 
   static TextStyle getStyleForFont(String fontName, {

@@ -433,16 +433,23 @@ class AppFirebaseService {
     return null;
   }
 
-  /// Sao lưu mảng các ngày kỷ niệm lên Firestore (gom 1 Document duy nhất)
-  Future<bool> backupAnniversariesToCloud(List<Map<String, dynamic>> dataList) async {
+  /// Sao lưu mảng các ngày kỷ niệm & cài đặt cá nhân lên Firestore (gom 1 Document duy nhất)
+  Future<bool> backupAnniversariesToCloud(
+    List<Map<String, dynamic>> dataList, {
+    Map<String, dynamic>? settings,
+  }) async {
     if (_currentUser == null) return false;
     try {
       final now = DateTime.now();
-      await _firestore.collection('users').doc(_currentUser!.uid).set({
+      final Map<String, dynamic> updateData = {
         'anniversaries': dataList,
         'last_backup_time': Timestamp.fromDate(now),
         'last_active': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      };
+      if (settings != null) {
+        updateData['app_settings'] = settings;
+      }
+      await _firestore.collection('users').doc(_currentUser!.uid).set(updateData, SetOptions(merge: true));
       return true;
     } catch (e) {
       debugPrint('Error backing up anniversaries to cloud: $e');
@@ -450,7 +457,7 @@ class AppFirebaseService {
     }
   }
 
-  /// Khôi phục mảng ngày kỷ niệm từ Firestore
+  /// Khôi phục mảng ngày kỷ niệm & cài đặt cá nhân từ Firestore
   Future<Map<String, dynamic>?> restoreAnniversariesFromCloud() async {
     if (_currentUser == null) return null;
     try {
@@ -458,6 +465,7 @@ class AppFirebaseService {
       if (doc.exists && doc.data() != null) {
         final data = doc.data()!;
         final list = data['anniversaries'];
+        final settings = data['app_settings'] is Map ? Map<String, dynamic>.from(data['app_settings']) : null;
         DateTime? lastBackup;
         if (data['last_backup_time'] is Timestamp) {
           lastBackup = (data['last_backup_time'] as Timestamp).toDate();
@@ -469,6 +477,7 @@ class AppFirebaseService {
               .toList();
           return {
             'anniversaries': parsedList,
+            'settings': settings,
             'last_backup_time': lastBackup,
           };
         }
