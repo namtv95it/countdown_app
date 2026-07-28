@@ -111,6 +111,22 @@ class AdminDashboardScreen extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () async {
+                  // Re-check role từ Firestore trước khi thực hiện
+                  final auth = AppFirebaseService();
+                  await auth.checkIsCurrentUserAdmin();
+                  final isAdminOnly = auth.isSuperAdmin || (auth.isAdmin && !auth.isManager);
+                  if (!isAdminOnly) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('⛔ Bạn không có quyền thực hiện thao tác này.'),
+                          backgroundColor: Colors.redAccent,
+                        ),
+                      );
+                    }
+                    return;
+                  }
+
                   final confirm = await showDialog<bool>(
                     context: context,
                     builder: (ctx) => AlertDialog(
