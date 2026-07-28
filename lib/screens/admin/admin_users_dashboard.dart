@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -14,12 +15,44 @@ class AdminUsersDashboard extends StatefulWidget {
 class _AdminUsersDashboardState extends State<AdminUsersDashboard> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  String _filterType = 'all'; // 'all', 'google', 'anonymous', 'premium', 'free', 'blocked'
-  String _roleFilter = 'all'; // 'all', 'super_admin', 'admin', 'manager', 'user'
+  String _filterType = 'all';
+  String _roleFilter = 'all';
+  bool _filterExpanded = false;
+
+  // Stream data cached — tránh rebuild StreamBuilder khi setState UI
+  List<Map<String, dynamic>> _allUsers = [];
+  bool _isLoading = true;
+  String? _errorStr;
+  StreamSubscription<List<Map<String, dynamic>>>? _usersSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _usersSub = AppFirebaseService().getUsersStream().listen(
+      (users) {
+        if (mounted) {
+          setState(() {
+            _allUsers = users;
+            _isLoading = false;
+            _errorStr = null;
+          });
+        }
+      },
+      onError: (err) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _errorStr = err.toString();
+          });
+        }
+      },
+    );
+  }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _usersSub?.cancel();
     super.dispose();
   }
 
@@ -42,15 +75,13 @@ class _AdminUsersDashboardState extends State<AdminUsersDashboard> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: StreamBuilder<List<Map<String, dynamic>>>(
-        stream: AppFirebaseService().getUsersStream(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+      body: Builder(builder: (context) {
+          if (_isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (snapshot.hasError) {
-            final errStr = snapshot.error.toString();
+          if (_errorStr != null) {
+            final errStr = _errorStr!;
             final isPermissionDenied = errStr.contains('PERMISSION_DENIED') || errStr.contains('permission');
 
             return Padding(
@@ -62,92 +93,26 @@ class _AdminUsersDashboardState extends State<AdminUsersDashboard> {
                     const Icon(Icons.shield_outlined, color: Colors.amber, size: 56),
                     const SizedBox(height: 16),
                     Text(
-                      isPermissionDenied ? 'Chưa Cấu Hình Quyền Firestore (Rules)' : 'Lỗi Tải Dữ Liệu',
+                      isPermissionDenied ? 'Không có quyền truy cập' : 'Lỗi Tải Dữ Liệu',
                       style: GoogleFonts.quicksand(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 8),
                     Text(
                       isPermissionDenied
-                          ? 'Firebase đang chặn quyền đọc danh sách user trong collection "users". Bạn cần cập nhật Firestore Rules trên Firebase Console.'
+                          ? 'Tài khoản của bạn không có quyền truy cập vào hệ thống Quản trị.'
                           : 'Chi tiết lỗi: $errStr',
                       style: GoogleFonts.quicksand(color: Colors.white70, fontSize: 14),
                       textAlign: TextAlign.center,
                     ),
-                    if (isPermissionDenied) ...[
-                      const SizedBox(height: 16),
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.copy_rounded, size: 18),
-                        label: Text('Sao Chép Rules Chuẩn', style: GoogleFonts.quicksand(fontWeight: FontWeight.bold)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF3B82F6),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        onPressed: () {
-                          const rulesText = '''rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    
-    // Tự động kiểm tra quyền Quản trị (Super Admin / Admin / Manager) từ trường 'role'
-    function isAdmin() {
-      return request.auth != null && 
-        (get(/databases/\$(database)/documents/users/\$(request.auth.uid)).data.role in ['super_admin', 'admin', 'manager'] ||
-         get(/databases/\$(database)/documents/users/\$(request.auth.uid)).data.is_admin == true);
-    }
-
-    match /config/{document} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    
-    match /gifts/{document} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    match /gift_categories/{document} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    match /special_occasions/{document} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    match /settings/{document} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    match /promo_codes/{document} {
-      allow read: if true;
-      allow write: if isAdmin();
-      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedCount']);
-    }
-    
-    // User tự quản lý dữ liệu cá nhân, Admin có toàn quyền quản lý
-    match /users/{userId} {
-      allow read, write: if (request.auth != null && request.auth.uid == userId) || isAdmin();
-    }
-  }
-}''';
-                          Clipboard.setData(const ClipboardData(text: rulesText));
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Đã sao chép Rules! Hãy dán vào Firebase Console ➔ Firestore Database ➔ Rules.', style: GoogleFonts.quicksand()),
-                              backgroundColor: const Color(0xFF10B981),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
                   ],
                 ),
               ),
             );
           }
 
-          final allUsers = snapshot.data ?? [];
+          final allUsers = _allUsers;
+
 
           final isManagerOnly = AppFirebaseService().isManager && !AppFirebaseService().isSuperAdmin;
 
@@ -236,160 +201,192 @@ service cloud.firestore {
             return matchesType && matchesRole;
           }).toList();
 
+          final activeFilterCount = (_filterType != 'all' ? 1 : 0) + (_roleFilter != 'all' ? 1 : 0);
+          final hasActiveFilter = activeFilterCount > 0;
+
+          // ─ Search Row + Filter Toggle Button ─────────────────────────────────
+          final searchRow = Padding(
+            padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (val) => setState(() => _searchQuery = val),
+                    style: GoogleFonts.quicksand(color: Colors.white),
+                    decoration: InputDecoration(
+                      hintText: 'Tìm theo Name, Email, UID...',
+                      hintStyle: GoogleFonts.quicksand(color: Colors.white38, fontSize: 13),
+                      prefixIcon: const Icon(Icons.search_rounded, color: Colors.white54, size: 20),
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear_rounded, color: Colors.white54, size: 18),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() => _searchQuery = '');
+                              },
+                            )
+                          : null,
+                      filled: true,
+                      fillColor: const Color(0xFF1A1A2E),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                      isDense: true,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: Colors.white12),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: Colors.white12),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: Color(0xFF3B82F6), width: 1.5),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () => setState(() => _filterExpanded = !_filterExpanded),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: _filterExpanded || hasActiveFilter
+                          ? const Color(0xFF3B82F6).withValues(alpha: 0.2)
+                          : const Color(0xFF1A1A2E),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: _filterExpanded || hasActiveFilter ? const Color(0xFF3B82F6) : Colors.white12,
+                        width: _filterExpanded || hasActiveFilter ? 1.5 : 1,
+                      ),
+                    ),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Icon(
+                          _filterExpanded ? Icons.filter_list_off_rounded : Icons.filter_list_rounded,
+                          color: _filterExpanded || hasActiveFilter ? const Color(0xFF60A5FA) : Colors.white54,
+                          size: 20,
+                        ),
+                        if (hasActiveFilter)
+                          Positioned(
+                            top: 6, right: 6,
+                            child: Container(
+                              width: 14, height: 14,
+                              decoration: const BoxDecoration(color: Color(0xFF3B82F6), shape: BoxShape.circle),
+                              child: Center(
+                                child: Text('$activeFilterCount',
+                                    style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+
+          // ─ Filter Panel ─────────────────────────────────────────────────────
+          final filterPanel = Container(
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1A1A2E),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Colors.white10),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  const Icon(Icons.tune_rounded, color: Color(0xFF60A5FA), size: 12),
+                  const SizedBox(width: 5),
+                  Text('Loại:', style: GoogleFonts.quicksand(color: const Color(0xFF60A5FA), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
+                ]),
+                const SizedBox(height: 7),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(children: [
+                    _buildFilterChip(isManagerOnly ? 'Tất cả ($googleUsers)' : 'Tất cả ($totalUsers)', 'all', const Color(0xFF3B82F6)),
+                    const SizedBox(width: 6),
+                    _buildFilterChip('Google ($googleUsers)', 'google', const Color(0xFF3B82F6)),
+                    if (!isManagerOnly) ...[
+                      const SizedBox(width: 6),
+                      _buildFilterChip('Ẩn danh ($anonymousUsers)', 'anonymous', const Color(0xFF3B82F6)),
+                    ],
+                    const SizedBox(width: 6),
+                    _buildFilterChip('Premium ($premiumUsers)', 'premium', const Color(0xFFF59E0B)),
+                    const SizedBox(width: 6),
+                    _buildFilterChip('Miễn phí ($freeUsers)', 'free', const Color(0xFF10B981)),
+                    if (blockedUsers > 0 && !isManagerOnly) ...[
+                      const SizedBox(width: 6),
+                      _buildFilterChip('Đã khóa ($blockedUsers)', 'blocked', Colors.redAccent),
+                    ],
+                  ]),
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Divider(color: Colors.white10, height: 1),
+                ),
+                Row(children: [
+                  const Icon(Icons.shield_rounded, color: Color(0xFFA78BFA), size: 12),
+                  const SizedBox(width: 5),
+                  Text('Vai trò:', style: GoogleFonts.quicksand(color: const Color(0xFFA78BFA), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
+                ]),
+                const SizedBox(height: 7),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(children: [
+                    _buildRoleChip('Tất cả', 'all', null),
+                    if (AppFirebaseService().isSuperAdmin) ...[
+                      const SizedBox(width: 6),
+                      _buildRoleChip('👑 Super Admin ($cntSuperAdmin)', 'super_admin', const Color(0xFFF59E0B)),
+                    ],
+                    const SizedBox(width: 6),
+                    _buildRoleChip('🛡️ Admin ($cntAdmin)', 'admin', const Color(0xFF10B981)),
+                    const SizedBox(width: 6),
+                    _buildRoleChip('👔 Manager ($cntManager)', 'manager', const Color(0xFF3B82F6)),
+                    const SizedBox(width: 6),
+                    _buildRoleChip('👤 User ($cntUser)', 'user', Colors.white60),
+                  ]),
+                ),
+              ],
+            ),
+          );
+
           return Column(
             children: [
-              // 1. Stat Cards Top Bar
+              // ─ Stats: Luôn hiển thị cố định ──────────────────────────────
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
                 child: Row(
                   children: [
-                    _buildStatCard('Tổng User', '$totalUsers', const Color(0xFF3B82F6), Icons.people_alt_rounded),
+                    _buildStatCard('Tổng', '$totalUsers', const Color(0xFF3B82F6), Icons.people_alt_rounded),
                     const SizedBox(width: 8),
-                    _buildStatCard('VIP Premium', '$premiumUsers', const Color(0xFFF59E0B), Icons.workspace_premium_rounded),
+                    _buildStatCard('Premium', '$premiumUsers', const Color(0xFFF59E0B), Icons.workspace_premium_rounded),
                     const SizedBox(width: 8),
                     _buildStatCard('Miễn Phí', '$freeUsers', const Color(0xFF10B981), Icons.person_outline_rounded),
                   ],
                 ),
               ),
 
-              // 2. Search Box
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: (val) => setState(() => _searchQuery = val),
-                  style: GoogleFonts.quicksand(color: Colors.white),
-                  decoration: InputDecoration(
-                    hintText: 'Tìm theo Name, Email hoặc UID...',
-                    hintStyle: GoogleFonts.quicksand(color: Colors.white38),
-                    prefixIcon: const Icon(Icons.search_rounded, color: Colors.white54),
-                    suffixIcon: _searchQuery.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear_rounded, color: Colors.white54),
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() => _searchQuery = '');
-                            },
-                          )
-                        : null,
-                    filled: true,
-                    fillColor: const Color(0xFF1A1A2E),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: Colors.white12),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: Colors.white12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: Color(0xFF3B82F6), width: 1.5),
-                    ),
-                  ),
-                ),
+              // ─ Search Row + Filter Button (always visible) ────────────────
+              searchRow,
+
+              // ─ Filter Panel (toggle by button) ────────────────────────
+              AnimatedSize(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeInOut,
+                child: _filterExpanded ? filterPanel : const SizedBox.shrink(),
               ),
 
-              // 3. Filter Chips - 2 Rows
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1A1A2E),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: Colors.white10),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Group 1: Loại tài khoản
-                    Row(
-                      children: [
-                        const Icon(Icons.tune_rounded, color: Color(0xFF60A5FA), size: 13),
-                        const SizedBox(width: 5),
-                        Text(
-                          'Loại:',
-                          style: GoogleFonts.quicksand(
-                            color: const Color(0xFF60A5FA),
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.8,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _buildFilterChip(isManagerOnly ? 'Tất cả ($googleUsers)' : 'Tất cả ($totalUsers)', 'all', const Color(0xFF3B82F6)),
-                          const SizedBox(width: 6),
-                          _buildFilterChip('Google ($googleUsers)', 'google', const Color(0xFF3B82F6)),
-                          if (!isManagerOnly) ...[
-                            const SizedBox(width: 6),
-                            _buildFilterChip('Ẩn danh ($anonymousUsers)', 'anonymous', const Color(0xFF3B82F6)),
-                          ],
-                          const SizedBox(width: 6),
-                          _buildFilterChip('Premium ($premiumUsers)', 'premium', const Color(0xFFF59E0B)),
-                          const SizedBox(width: 6),
-                          _buildFilterChip('Miễn phí ($freeUsers)', 'free', const Color(0xFF10B981)),
-                          if (blockedUsers > 0 && !isManagerOnly) ...[
-                            const SizedBox(width: 6),
-                            _buildFilterChip('Đã khóa ($blockedUsers)', 'blocked', Colors.redAccent),
-                          ],
-                        ],
-                      ),
-                    ),
-
-                    // Divider
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 10),
-                      child: Divider(color: Colors.white10, height: 1),
-                    ),
-
-                    // Group 2: Vai trò
-                    Row(
-                      children: [
-                        const Icon(Icons.shield_rounded, color: Color(0xFFA78BFA), size: 13),
-                        const SizedBox(width: 5),
-                        Text(
-                          'Vai trò:',
-                          style: GoogleFonts.quicksand(
-                            color: const Color(0xFFA78BFA),
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.8,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _buildRoleChip('Tất cả', 'all', null),
-                          if (AppFirebaseService().isSuperAdmin) ...[
-                            const SizedBox(width: 6),
-                            _buildRoleChip('👑 Super Admin ($cntSuperAdmin)', 'super_admin', const Color(0xFFF59E0B)),
-                          ],
-                          const SizedBox(width: 6),
-                          _buildRoleChip('🛡️ Admin ($cntAdmin)', 'admin', const Color(0xFF10B981)),
-                          const SizedBox(width: 6),
-                          _buildRoleChip('👔 Manager ($cntManager)', 'manager', const Color(0xFF3B82F6)),
-                          const SizedBox(width: 6),
-                          _buildRoleChip('👤 User ($cntUser)', 'user', Colors.white60),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // 4. User List
+              // ─ User List ────────────────────────────────────────────
               Expanded(
                 child: filteredUsers.isEmpty
                     ? Center(
@@ -401,59 +398,15 @@ service cloud.firestore {
                     : ListView.builder(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         itemCount: filteredUsers.length,
-                        itemBuilder: (context, index) {
-                          final user = filteredUsers[index];
-                          return _buildUserTile(user);
-                        },
+                        itemBuilder: (context, index) => _buildUserTile(filteredUsers[index]),
                       ),
               ),
             ],
           );
-        },
-      ),
+        }),
     );
   }
 
-  Widget _buildStatCard(String title, String count, Color color, IconData icon) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1A1A2E),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
-        ),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, color: color, size: 18),
-                const SizedBox(width: 6),
-                Text(
-                  count,
-                  style: GoogleFonts.quicksand(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: GoogleFonts.quicksand(
-                color: Colors.white60,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildFilterChip(String label, String value, Color accentColor) {
     final isSelected = _filterType == value;
@@ -1253,3 +1206,32 @@ service cloud.firestore {
     );
   }
 }
+
+  Widget _buildStatCard(String title, String count, Color color, IconData icon) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1A2E),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: color, size: 15),
+                const SizedBox(width: 4),
+                Text(count, style: GoogleFonts.quicksand(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+              ],
+            ),
+            const SizedBox(height: 2),
+            Text(title, style: GoogleFonts.quicksand(color: Colors.white60, fontSize: 10, fontWeight: FontWeight.w500)),
+          ],
+        ),
+      ),
+    );
+  }
+

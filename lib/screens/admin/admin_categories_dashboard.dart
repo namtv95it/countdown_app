@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/event_category.dart';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'admin_edit_category_screen.dart';
+import 'admin_role_guard.dart';
 
 class AdminCategoriesDashboard extends StatefulWidget {
   const AdminCategoriesDashboard({super.key});
@@ -199,7 +199,9 @@ class _AdminCategoriesDashboardState extends State<AdminCategoriesDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AdminRoleGuard(
+      screenTitle: 'Quản lý Danh Mục',
+      child: Scaffold(
       backgroundColor: const Color(0xFF0F0F1A),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -291,6 +293,7 @@ class _AdminCategoriesDashboardState extends State<AdminCategoriesDashboard> {
               icon: const Icon(Icons.add, color: Colors.white),
               label: Text('Thêm Danh Mục', style: GoogleFonts.quicksand(fontWeight: FontWeight.bold, color: Colors.white)),
             ),
-    );
+    ),  // Scaffold
+    );  // AdminRoleGuard
   }
 }

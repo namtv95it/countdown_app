@@ -235,8 +235,48 @@ class _AccountSyncScreenState extends State<AccountSyncScreen> {
     }
   }
 
+  // ── So sánh data local vs cloud (theo id + title + date) ──
+  bool _isDataSynced(
+    List<Map<String, dynamic>> local,
+    List<Map<String, dynamic>> cloud,
+  ) {
+    if (local.length != cloud.length) return false;
+    final localIds = local.map((e) => e['id']?.toString() ?? '').toSet();
+    final cloudIds = cloud.map((e) => e['id']?.toString() ?? '').toSet();
+    if (!localIds.containsAll(cloudIds) || !cloudIds.containsAll(localIds)) return false;
+    // So sánh từng item theo id
+    final cloudMap = {for (var e in cloud) e['id']?.toString(): e};
+    for (final item in local) {
+      final id = item['id']?.toString();
+      final cloudItem = cloudMap[id];
+      if (cloudItem == null) return false;
+      if (item['title']?.toString() != cloudItem['title']?.toString()) return false;
+      if (item['date']?.toString() != cloudItem['date']?.toString()) return false;
+      if (item['note']?.toString() != cloudItem['note']?.toString()) return false;
+    }
+    return true;
+  }
+
   // ── Handle Sign Out ──
   Future<void> _handleSignOut() async {
+    // Hiện loading khi kiểm tra
+    if (mounted) setState(() => _isOperating = true);
+
+    bool isSynced = false;
+    try {
+      final localList = await _storage.getAnniversaries();
+      final localData = localList.map((e) => e.toMap()).toList();
+      final cloudResult = await _auth.restoreAnniversariesFromCloud();
+      final cloudData = (cloudResult?['anniversaries'] as List<Map<String, dynamic>>?) ?? [];
+      isSynced = _isDataSynced(localData, cloudData);
+    } catch (_) {
+      isSynced = false;
+    } finally {
+      if (mounted) setState(() => _isOperating = false);
+    }
+
+    if (!mounted) return;
+
     final action = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
@@ -244,11 +284,15 @@ class _AccountSyncScreenState extends State<AccountSyncScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            const Icon(Icons.logout_rounded, color: Colors.redAccent, size: 24),
+            Icon(
+              isSynced ? Icons.check_circle_rounded : Icons.warning_amber_rounded,
+              color: isSynced ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
+              size: 24,
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                t('sign_out_smart_title'),
+                isSynced ? t('sign_out_smart_title') : 'Dữ liệu chưa sao lưu',
                 style: GoogleFonts.quicksand(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -258,35 +302,82 @@ class _AccountSyncScreenState extends State<AccountSyncScreen> {
             ),
           ],
         ),
-        content: Text(
-          t('sign_out_smart_msg'),
-          style: GoogleFonts.quicksand(color: Colors.white70, fontSize: 14, height: 1.4),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (isSynced)
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.cloud_done_rounded, color: Color(0xFF10B981), size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Dữ liệu của bạn đã được đồng bộ với đám mây. Bạn có thể đăng xuất an toàn.',
+                        style: GoogleFonts.quicksand(color: Colors.white70, fontSize: 13, height: 1.4),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF59E0B).withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.35)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.cloud_off_rounded, color: Color(0xFFF59E0B), size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Dữ liệu trên máy chưa trùng khớp với bản sao lưu. Hãy sao lưu trước khi đăng xuất để không mất dữ liệu.',
+                        style: GoogleFonts.quicksand(color: Colors.white70, fontSize: 13, height: 1.4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
         ),
         actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
         actions: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              ElevatedButton.icon(
-                onPressed: () => Navigator.pop(context, 'backup_and_signout'),
-                icon: const Icon(Icons.cloud_upload_rounded, size: 18, color: Colors.white),
-                label: Text(
-                  t('backup_and_sign_out'),
-                  style: GoogleFonts.quicksand(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+              if (!isSynced) ...[
+                ElevatedButton.icon(
+                  onPressed: () => Navigator.pop(context, 'backup_and_signout'),
+                  icon: const Icon(Icons.cloud_upload_rounded, size: 18, color: Colors.white),
+                  label: Text(
+                    t('backup_and_sign_out'),
+                    style: GoogleFonts.quicksand(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF7C3AED),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 2,
+                  ),
                 ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF7C3AED),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 2,
-                ),
-              ),
-              const SizedBox(height: 8),
+                const SizedBox(height: 8),
+              ],
               OutlinedButton.icon(
                 onPressed: () => Navigator.pop(context, 'signout_only'),
                 icon: const Icon(Icons.logout_rounded, size: 18, color: Colors.redAccent),
                 label: Text(
-                  t('sign_out_only'),
+                  isSynced ? 'Đăng xuất' : t('sign_out_only'),
                   style: GoogleFonts.quicksand(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 style: OutlinedButton.styleFrom(
@@ -299,7 +390,7 @@ class _AccountSyncScreenState extends State<AccountSyncScreen> {
               TextButton(
                 onPressed: () => Navigator.pop(context, null),
                 style: TextButton.styleFrom(
-                  backgroundColor: Colors.white.withOpacity(0.12),
+                  backgroundColor: Colors.white.withValues(alpha: 0.12),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
@@ -337,9 +428,11 @@ class _AccountSyncScreenState extends State<AccountSyncScreen> {
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
-    final user = _auth.currentUser;
+
+
     final photoUrl = _auth.userPhotoUrl;
     final email = _auth.userEmail ?? '';
     final displayName = _auth.userDisplayName ?? email.split('@').first;

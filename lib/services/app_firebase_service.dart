@@ -278,6 +278,11 @@ class AppFirebaseService {
       }
       AdService.isPremium = false;
 
+      // Reset admin flags ngay khi đăng xuất
+      _isAdmin = false;
+      _isSuperAdmin = false;
+      _isManager = false;
+
       // Tạo anonymous session mới — không có dữ liệu cũ
       final cred = await _auth.signInAnonymously();
       _currentUser = cred.user;
@@ -520,6 +525,11 @@ class AppFirebaseService {
       _isManager = false;
       return false;
     }
+
+    // Reset trước, rồi mới check lại từ đầu
+    _isAdmin = false;
+    _isSuperAdmin = false;
+    _isManager = false;
 
     if (_currentUser!.uid == defaultSuperAdminUid) {
       _isSuperAdmin = true;

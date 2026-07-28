@@ -5,6 +5,7 @@ import '../../models/special_occasion.dart';
 import '../../services/special_occasion_service.dart';
 import 'admin_edit_special_occasion_screen.dart';
 import 'admin_assign_products_screen.dart';
+import 'admin_role_guard.dart';
 
 
 class AdminSpecialOccasionsDashboard extends StatefulWidget {
@@ -170,7 +171,9 @@ class _AdminSpecialOccasionsDashboardState extends State<AdminSpecialOccasionsDa
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AdminRoleGuard(
+      screenTitle: 'Quản lý Sự Kiện',
+      child: Scaffold(
       backgroundColor: const Color(0xFF0F0F1A),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -209,6 +212,7 @@ class _AdminSpecialOccasionsDashboardState extends State<AdminSpecialOccasionsDa
         icon: const Icon(Icons.add, color: Colors.white),
         label: Text('Thêm Sự Kiện', style: GoogleFonts.quicksand(fontWeight: FontWeight.bold, color: Colors.white)),
       ),
-    );
+    ),  // Scaffold
+    );  // AdminRoleGuard
   }
 }

@@ -5,7 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/gift_product.dart';
 import '../../services/gift_service.dart';
 import 'admin_edit_gift_screen.dart';
-
+import 'admin_role_guard.dart';
 
 class AdminGiftDashboard extends StatefulWidget {
   const AdminGiftDashboard({super.key});
@@ -167,7 +167,10 @@ class _AdminGiftDashboardState extends State<AdminGiftDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AdminRoleGuard(
+      screenTitle: 'Quản lý Quà Tặng',
+      child: Scaffold(
+
       backgroundColor: const Color(0xFF0F0F1A),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -263,6 +266,7 @@ class _AdminGiftDashboardState extends State<AdminGiftDashboard> {
               icon: const Icon(Icons.add),
               label: Text('Thêm Quà', style: GoogleFonts.quicksand(fontWeight: FontWeight.bold)),
             ),
-    );
+    ),  // Scaffold
+    );  // AdminRoleGuard
   }
 }

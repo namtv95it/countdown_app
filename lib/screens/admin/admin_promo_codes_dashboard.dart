@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'admin_edit_promo_code_screen.dart';
+import 'admin_role_guard.dart';
 
 class AdminPromoCodesDashboard extends StatefulWidget {
   const AdminPromoCodesDashboard({super.key});
@@ -69,7 +70,9 @@ class _AdminPromoCodesDashboardState extends State<AdminPromoCodesDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AdminRoleGuard(
+      screenTitle: 'Quản lý Promo Codes',
+      child: Scaffold(
       backgroundColor: const Color(0xFF0F0F1A),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -321,7 +324,8 @@ class _AdminPromoCodesDashboardState extends State<AdminPromoCodesDashboard> {
         },
         child: const Icon(Icons.add, color: Colors.black),
       ),
-    );
+    ),  // Scaffold
+    );  // AdminRoleGuard
   }
 
   Widget _buildDetailBadge(IconData icon, String text) {
