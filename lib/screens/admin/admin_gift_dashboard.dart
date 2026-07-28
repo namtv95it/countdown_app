@@ -169,6 +169,7 @@ class _AdminGiftDashboardState extends State<AdminGiftDashboard> {
   Widget build(BuildContext context) {
     return AdminRoleGuard(
       screenTitle: 'Quản lý Quà Tặng',
+      adminOnly: true,
       child: Scaffold(
 
       backgroundColor: const Color(0xFF0F0F1A),

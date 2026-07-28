@@ -12,10 +12,15 @@ class AdminRoleGuard extends StatefulWidget {
   /// Tiêu đề màn hình (dùng trong AppBar của trang lỗi)
   final String screenTitle;
 
+  /// Nếu true: chỉ cho phép super_admin và admin (KHÔNG cho manager).
+  /// Nếu false (mặc định): cho phép mọi admin kể cả manager.
+  final bool adminOnly;
+
   const AdminRoleGuard({
     super.key,
     required this.child,
     required this.screenTitle,
+    this.adminOnly = false,
   });
 
   @override
@@ -33,10 +38,21 @@ class _AdminRoleGuardState extends State<AdminRoleGuard> {
   }
 
   Future<void> _checkRole() async {
-    final isAdmin = await AppFirebaseService().checkIsCurrentUserAdmin();
+    final auth = AppFirebaseService();
+    await auth.checkIsCurrentUserAdmin();
+
+    final bool authorized;
+    if (widget.adminOnly) {
+      // Chỉ super_admin hoặc admin (không bao gồm manager)
+      authorized = auth.isSuperAdmin || (auth.isAdmin && !auth.isManager);
+    } else {
+      // Bất kỳ role admin nào (kể cả manager)
+      authorized = auth.isAdmin;
+    }
+
     if (mounted) {
       setState(() {
-        _isAuthorized = isAdmin;
+        _isAuthorized = authorized;
         _isChecking = false;
       });
     }

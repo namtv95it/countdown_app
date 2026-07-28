@@ -124,7 +124,6 @@ class AdminDashboardScreen extends StatelessWidget {
                     final result = await SyncService().upgradeDataVersion();
                     if (context.mounted) {
                       final isSuccess = result.startsWith('success');
-                      final count = isSuccess ? result.split(':').last : '';
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(isSuccess

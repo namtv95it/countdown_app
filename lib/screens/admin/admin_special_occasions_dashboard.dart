@@ -173,6 +173,7 @@ class _AdminSpecialOccasionsDashboardState extends State<AdminSpecialOccasionsDa
   Widget build(BuildContext context) {
     return AdminRoleGuard(
       screenTitle: 'Quản lý Sự Kiện',
+      adminOnly: true,
       child: Scaffold(
       backgroundColor: const Color(0xFF0F0F1A),
       appBar: AppBar(
