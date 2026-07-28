@@ -73,7 +73,7 @@ class _GiftScreenState extends State<GiftScreen> with SingleTickerProviderStateM
     // Dùng SyncService để lấy occasions (3 lớp cache) và lắng nghe cập nhật
     _occasionsSubscription = SyncService().occasionsStream().listen((occasions) {
       final activeOccasions = occasions.where((o) => o.isActive).toList();
-      final upcoming = SpecialOccasion.getUpcomingOccasions(activeOccasions, limit: 5);
+      final upcoming = SpecialOccasion.getUpcomingOccasions(activeOccasions, limit: 3);
       if (mounted) {
         setState(() {
           _upcomingEvents = upcoming;

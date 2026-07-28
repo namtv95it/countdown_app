@@ -103,7 +103,7 @@ class SpecialOccasion {
   }
 
   // Find the top upcoming occasions
-  static List<SpecialOccasion> getUpcomingOccasions(List<SpecialOccasion> occasions, {int limit = 5}) {
+  static List<SpecialOccasion> getUpcomingOccasions(List<SpecialOccasion> occasions, {int limit = 3}) {
     if (occasions.isEmpty) return [];
     
     // Sort occasions by days remaining (ascending)
