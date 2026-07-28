@@ -930,59 +930,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ],
 
-            if (!AppFirebaseService().isAnonymous) ...[
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _isSigningIn ? null : () async {
-                    final confirm = await showDialog<bool>(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        backgroundColor: const Color(0xFF1A1A2E),
-                        title: Text(t('sign_out'), style: GoogleFonts.quicksand(color: Colors.white, fontWeight: FontWeight.bold)),
-                        content: Text(t('sign_out_confirm'), style: GoogleFonts.quicksand(color: Colors.white70)),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, false),
-                            child: Text(t('cancel'), style: GoogleFonts.quicksand(color: Colors.white54)),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, true),
-                            child: Text(t('sign_out'), style: GoogleFonts.quicksand(color: Colors.redAccent, fontWeight: FontWeight.bold)),
-                          ),
-                        ],
-                      ),
-                    );
 
-                    if (confirm == true) {
-                      setState(() => _isSigningIn = true);
-                      await AppFirebaseService().signOut();
-                      if (mounted) {
-                        await _loadSettings();
-                        widget.onPremiumChanged?.call(_isPremium);
-                        setState(() => _isSigningIn = false);
-                        _showMessage(t('sign_out_success'));
-                      }
-                    }
-                  },
-                  icon: _isSigningIn
-                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Icon(Icons.logout_rounded, size: 20),
-                  label: Text(
-                    t('sign_out'),
-                    style: GoogleFonts.quicksand(fontWeight: FontWeight.bold, fontSize: 15),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.redAccent.withValues(alpha: 0.85),
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  ),
-                ),
-              ),
-            ],
 
             const SizedBox(height: 180), // Khoảng trống cho BottomNav và Ad
           ],

@@ -489,18 +489,23 @@ class _AccountSyncScreenState extends State<AccountSyncScreen> {
             const SizedBox(height: 40),
 
             // ── Sign Out Button ──
-            Center(
-              child: TextButton.icon(
-                onPressed: _handleSignOut,
-                icon: const Icon(Icons.logout_rounded, color: Colors.redAccent, size: 20),
-                label: Text(
-                  t('sign_out'),
-                  style: GoogleFonts.quicksand(
-                    color: Colors.redAccent,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
+            ElevatedButton.icon(
+              onPressed: _handleSignOut,
+              icon: const Icon(Icons.logout_rounded, color: Colors.white, size: 20),
+              label: Text(
+                t('sign_out'),
+                style: GoogleFonts.quicksand(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
                 ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent.withOpacity(0.85),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                elevation: 2,
+                shadowColor: Colors.redAccent.withOpacity(0.3),
               ),
             ),
           ],
