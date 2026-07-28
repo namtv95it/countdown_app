@@ -462,7 +462,17 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _loadBannerAd() {
-    if (kIsWeb || AdService.isPremium) return;
+    if (kIsWeb || AdService.isPremium) {
+      if (_bannerAd != null) {
+        _bannerAd?.dispose();
+        _bannerAd = null;
+        _isBannerAdReady = false;
+      }
+      return;
+    }
+
+    if (_bannerAd != null) return; // Đã khởi tạo và đang tải/sẵn sàng
+
     _bannerAd = BannerAd(
       adUnitId: AdService.bannerAdUnitId,
       request: const AdRequest(),
@@ -479,6 +489,7 @@ class _HomeScreenState extends State<HomeScreen>
           debugPrint('BannerAd failed to load: $err');
           _isBannerAdReady = false;
           ad.dispose();
+          _bannerAd = null;
         },
       ),
     )..load();
@@ -1105,10 +1116,12 @@ class _HomeScreenState extends State<HomeScreen>
             setState(() => _selectedEffect = effect);
           },
           onPremiumChanged: (isPremium) {
-            setState(() {}); // Rebuild để ẩn/hiện banner
+            _loadBannerAd();
+            setState(() {});
           },
           onEventsChanged: () {
             _loadAnniversaries();
+            _loadBannerAd();
           },
         ),
       ],

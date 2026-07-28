@@ -619,7 +619,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       return _buildListTile(
         title: email ?? displayName,
         subtitle: t('google_account'),
-        trailing: const Icon(Icons.check_circle_rounded, color: Color(0xFF00C853), size: 22),
+        trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white54, size: 24),
         leading: photoUrl != null
             ? CircleAvatar(
                 radius: 20,
@@ -646,6 +646,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           );
           if (mounted) {
             await _loadSettings();
+            widget.onPremiumChanged?.call(_isPremium);
+            widget.onEventsChanged?.call();
             setState(() {});
           }
         },
@@ -689,6 +691,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               if (result == GoogleSignInResult.success) {
                 _showMessage(t('sign_in_success'));
+                if (mounted) {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AccountSyncScreen(
+                        onDataChanged: () {
+                          widget.onEventsChanged?.call();
+                        },
+                      ),
+                    ),
+                  );
+                  if (mounted) {
+                    await _loadSettings();
+                    widget.onPremiumChanged?.call(_isPremium);
+                    widget.onEventsChanged?.call();
+                    setState(() {});
+                  }
+                }
               } else if (result == GoogleSignInResult.error) {
                 _showMessage(t('sign_in_error'));
               }
