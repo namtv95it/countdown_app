@@ -1176,8 +1176,10 @@ class _HomeScreenState extends State<HomeScreen>
                 Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  child: Row(
-                  children: [
+                  child: SizedBox(
+                    height: 44,
+                    child: Row(
+                      children: [
                     Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
@@ -1246,92 +1248,12 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                     
                     // Nút Theme
-                    PopupMenuButton<String>(
-                      key: _themeButtonKey,
-                      icon: const Icon(Icons.palette_rounded, color: Colors.amber),
-                      color: const Color(0xFF1A1A2E),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        side: const BorderSide(color: Colors.white12),
-                      ),
-                      onSelected: (value) {
-                        if (value == 'effect' || value == 'font' || value == 'music') {
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            backgroundColor: Colors.transparent,
-                            builder: (_) => ThemePickerSheet(
-                              initialTabIndex: value == 'effect' ? 0 : (value == 'font' ? 1 : 2),
-                              onEffectChanged: (effect) {
-                                setState(() => _selectedEffect = effect);
-                              },
-                            ),
-                          );
-                        } else if (value == 'bg_image') {
-                          _pickBackgroundImage();
-                        } else if (value == 'bg_clear') {
-                          _clearBackgroundImage();
-                        }
-                      },
-                      itemBuilder: (context) => [
-                        PopupMenuItem(
-                          value: 'effect',
-                          child: Row(
-                            children: [
-                              const Icon(Icons.auto_awesome_rounded, color: Colors.amber, size: 20),
-                              const SizedBox(width: 12),
-                              Text(t('background_effect'), style: GoogleFonts.quicksand(color: Colors.white)),
-                            ],
-                          ),
-                        ),
-                        PopupMenuItem(
-                          value: 'font',
-                          child: Row(
-                            children: [
-                              const Icon(Icons.font_download_rounded, color: Colors.blueAccent, size: 20),
-                              const SizedBox(width: 12),
-                              Text(t('font_style'), style: GoogleFonts.quicksand(color: Colors.white)),
-                            ],
-                          ),
-                        ),
-                        PopupMenuItem(
-                          value: 'music',
-                          child: Row(
-                            children: [
-                              const Icon(Icons.library_music_rounded, color: Colors.pinkAccent, size: 20),
-                              const SizedBox(width: 12),
-                              Text(t('tab_music') == 'tab_music' ? 'Nhạc nền' : t('tab_music'), style: GoogleFonts.quicksand(color: Colors.white)),
-                            ],
-                          ),
-                        ),
-                        const PopupMenuDivider(height: 1),
-                        PopupMenuItem(
-                          value: 'bg_image',
-                          child: Row(
-                            children: [
-                              const Icon(Icons.image_rounded, color: Colors.greenAccent, size: 20),
-                              const SizedBox(width: 12),
-                              Text(t('select_bg_image'), style: GoogleFonts.quicksand(color: Colors.white)),
-                            ],
-                          ),
-                        ),
-                        if (_backgroundImagePath != null)
-                          PopupMenuItem(
-                            value: 'bg_clear',
-                            child: Row(
-                              children: [
-                                const Icon(Icons.delete_rounded, color: Colors.redAccent, size: 20),
-                                const SizedBox(width: 12),
-                                Text(t('remove_bg_image'), style: GoogleFonts.quicksand(color: Colors.redAccent)),
-                              ],
-                            ),
-                          ),
-                      ],
-                    ),
+                    _buildThemeButton(key: _themeButtonKey),
 
                   ],
                 ),
               ),
+            ),
 
               Expanded(
                 child: PageView.builder(
@@ -1816,7 +1738,7 @@ class _HomeScreenState extends State<HomeScreen>
   // ─────────────────────────────────────────────────────────
   Widget _buildAllEventsTab() {
     if (_anniversaries.isEmpty) {
-      return _buildEmptyState();
+      return _buildEmptyState(showThemeButton: false);
     }
 
     return Column(
@@ -1833,48 +1755,51 @@ class _HomeScreenState extends State<HomeScreen>
         // Tiêu đề trang
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
-              child: Row(
-                children: [
-                  Container(
-                    width: 5,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Color(0xFF7C3AED), Color(0xFFEC4899)],
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              child: SizedBox(
+                height: 44,
+                child: Row(
+                  children: [
+                    Container(
+                      width: 5,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Color(0xFF7C3AED), Color(0xFFEC4899)],
+                        ),
+                        borderRadius: BorderRadius.circular(3),
                       ),
-                      borderRadius: BorderRadius.circular(3),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    t('all_events_tab'),
-                    style: GoogleFonts.quicksand(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF7C3AED).withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      '${_anniversaries.length}',
+                    const SizedBox(width: 10),
+                    Text(
+                      t('all_events_tab'),
                       style: GoogleFonts.quicksand(
-                        fontSize: 14,
-                        color: const Color(0xFF7C3AED),
+                        fontSize: 24,
                         fontWeight: FontWeight.w800,
+                        color: Colors.white,
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF7C3AED).withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '${_anniversaries.length}',
+                        style: GoogleFonts.quicksand(
+                          fontSize: 14,
+                          color: const Color(0xFF7C3AED),
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -2096,70 +2021,191 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
+  Widget _buildThemeButton({Key? key}) {
+    return PopupMenuButton<String>(
+      key: key,
+      icon: const Icon(Icons.palette_rounded, color: Colors.amber),
+      color: const Color(0xFF1A1A2E),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: Colors.white12),
+      ),
+      onSelected: (value) {
+        if (value == 'effect' || value == 'font' || value == 'music') {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (_) => ThemePickerSheet(
+              initialTabIndex: value == 'effect' ? 0 : (value == 'font' ? 1 : 2),
+              onEffectChanged: (effect) {
+                setState(() => _selectedEffect = effect);
+              },
+            ),
+          );
+        } else if (value == 'bg_image') {
+          _pickBackgroundImage();
+        } else if (value == 'bg_clear') {
+          _clearBackgroundImage();
+        }
+      },
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: 'effect',
+          child: Row(
+            children: [
+              const Icon(Icons.auto_awesome_rounded, color: Colors.amber, size: 20),
+              const SizedBox(width: 12),
+              Text(t('background_effect'), style: GoogleFonts.quicksand(color: Colors.white)),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'font',
+          child: Row(
+            children: [
+              const Icon(Icons.font_download_rounded, color: Colors.blueAccent, size: 20),
+              const SizedBox(width: 12),
+              Text(t('font_style'), style: GoogleFonts.quicksand(color: Colors.white)),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'music',
+          child: Row(
+            children: [
+              const Icon(Icons.library_music_rounded, color: Colors.pinkAccent, size: 20),
+              const SizedBox(width: 12),
+              Text(t('tab_music') == 'tab_music' ? 'Nhạc nền' : t('tab_music'), style: GoogleFonts.quicksand(color: Colors.white)),
+            ],
+          ),
+        ),
+        const PopupMenuDivider(height: 1),
+        PopupMenuItem(
+          value: 'bg_image',
+          child: Row(
+            children: [
+              const Icon(Icons.image_rounded, color: Colors.greenAccent, size: 20),
+              const SizedBox(width: 12),
+              Text(t('select_bg_image'), style: GoogleFonts.quicksand(color: Colors.white)),
+            ],
+          ),
+        ),
+        if (_backgroundImagePath != null)
+          PopupMenuItem(
+            value: 'bg_clear',
+            child: Row(
+              children: [
+                const Icon(Icons.delete_rounded, color: Colors.redAccent, size: 20),
+                const SizedBox(width: 12),
+                Text(t('remove_bg_image'), style: GoogleFonts.quicksand(color: Colors.redAccent)),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
   // ─────────────────────────────────────────────────────────
   // Empty states
   // ─────────────────────────────────────────────────────────
-  Widget _buildEmptyState() {
-    return Center(
+  Widget _buildEmptyState({bool showThemeButton = true}) {
+    return SafeArea(
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: [
-                  const Color(0xFF7C3AED).withValues(alpha: 0.3),
-                  const Color(0xFFEC4899).withValues(alpha: 0.3),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            child: SizedBox(
+              height: 44,
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: _accentColor,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.favorite_rounded, color: Colors.white, size: 18),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    _currentTab == 1 ? t('all_events_tab') : t('upcoming'),
+                    style: GoogleFonts.quicksand(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white),
+                  ),
+                  const Spacer(),
+                  if (showThemeButton) _buildThemeButton(),
                 ],
               ),
             ),
-            child: const Center(
-              child: Text('💝', style: TextStyle(fontSize: 44)),
-            ),
           ),
-          const SizedBox(height: 24),
-          Text(
-            t('no_events_yet'),
-            style: GoogleFonts.quicksand(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            t('empty_state_desc'),
-            textAlign: TextAlign.center,
-            style: GoogleFonts.quicksand(fontSize: 15, color: Colors.white38),
-          ),
-          const SizedBox(height: 32),
-          GestureDetector(
-            onTap: _navigateToAdd,
-            child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF7C3AED), Color(0xFFEC4899)],
-                ),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF7C3AED).withValues(alpha: 0.4),
-                    blurRadius: 16,
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xFF7C3AED).withValues(alpha: 0.3),
+                          const Color(0xFFEC4899).withValues(alpha: 0.3),
+                        ],
+                      ),
+                    ),
+                    child: const Center(
+                      child: Text('💝', style: TextStyle(fontSize: 44)),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    t('no_events_yet'),
+                    style: GoogleFonts.quicksand(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    t('empty_state_desc'),
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.quicksand(fontSize: 15, color: Colors.white38),
+                  ),
+                  const SizedBox(height: 32),
+                  GestureDetector(
+                    onTap: _navigateToAdd,
+                    child: Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF7C3AED), Color(0xFFEC4899)],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF7C3AED).withValues(alpha: 0.4),
+                            blurRadius: 16,
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        t('add_now'),
+                        style: GoogleFonts.quicksand(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
                   ),
                 ],
-              ),
-              child: Text(
-                t('add_now'),
-                style: GoogleFonts.quicksand(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
               ),
             ),
           ),
@@ -2169,41 +2215,74 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Widget _buildNoUpcomingState() {
-    return Center(
+    return SafeArea(
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text('📅', style: TextStyle(fontSize: 60)),
-          const SizedBox(height: 20),
-          Text(
-            t('no_upcoming_events'),
-            style: GoogleFonts.quicksand(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: _accentColor,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.favorite_rounded, color: Colors.white, size: 18),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  t('upcoming'),
+                  style: GoogleFonts.quicksand(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white),
+                ),
+                const Spacer(),
+                _buildThemeButton(),
+              ],
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            t('no_upcoming_desc'),
-            textAlign: TextAlign.center,
-            style: GoogleFonts.quicksand(fontSize: 14, color: Colors.white38),
-          ),
-          const SizedBox(height: 24),
-          GestureDetector(
-            onTap: () => setState(() => _currentTab = 1),
-            child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white12),
-              ),
-              child: Text(
-                t('view_all_events_arrow'),
-                style: GoogleFonts.quicksand(
-                    fontSize: 14, color: Colors.white70),
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('📅', style: TextStyle(fontSize: 60)),
+                  const SizedBox(height: 20),
+                  Text(
+                    t('no_upcoming_events'),
+                    style: GoogleFonts.quicksand(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    t('no_upcoming_desc'),
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.quicksand(fontSize: 14, color: Colors.white38),
+                  ),
+                  const SizedBox(height: 24),
+                  GestureDetector(
+                    onTap: () => setState(() => _currentTab = 1),
+                    child: Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white12),
+                      ),
+                      child: Text(
+                        t('view_all_events_arrow'),
+                        style: GoogleFonts.quicksand(
+                            fontSize: 14, color: Colors.white70),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
