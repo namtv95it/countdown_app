@@ -85,53 +85,97 @@ document.getElementById('f-imageUrl').addEventListener('input', (e) => {
 });
 
 // ==========================================
-// 3. AUTHENTICATION
+// 3. AUTHENTICATION & USER MANAGEMENT
 // ==========================================
-['admin-email', 'admin-pwd'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-        el.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                btnLogin.click();
+const DEFAULT_SUPER_ADMIN_UID = 'dKth5JKXdKg9SLEoyCSDTMsqYrr2';
+
+const EFFECT_NAMES_VI = {
+    'hearts': 'Trái tim',
+    'bubbles': 'Bóng bóng',
+    'snow': 'Tuyết rơi',
+    'stars': 'Sao đêm',
+    'meteor': 'Sao băng',
+    'rain': 'Mưa rơi',
+    'rain_ripple': 'Gợn sóng mưa',
+    'rainbow': 'Cầu vồng',
+    'waves': 'Sóng biển',
+    'leaves': 'Lá rơi',
+    'sunset_birds': 'Chim hoàng hôn',
+    'aurora': 'Cực quang',
+    'fireflies': 'Đom đốm',
+    'fireworks': 'Pháo hoa',
+    'cherry_blossom': 'Hoa đào',
+    'galaxy': 'Thiên hà'
+};
+
+let allUsersData = [];
+let currentUserFilter = 'all';
+let currentSearchQuery = '';
+let currentUserRole = 'user';
+let isSuperAdmin = false;
+let isAdmin = false;
+let isManager = false;
+let userListenerUnsubscribe = null;
+let selectedUserForModal = null;
+
+// Google Sign-In Provider
+const googleProvider = new firebase.auth.GoogleAuthProvider();
+const btnLoginGoogle = document.getElementById('btn-login-google');
+
+if (btnLoginGoogle) {
+    btnLoginGoogle.addEventListener('click', async () => {
+        const errorEl = document.getElementById('login-error');
+        btnLoginGoogle.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-lg"></i> <span>ĐANG ĐĂNG NHẬP...</span>';
+        btnLoginGoogle.disabled = true;
+
+        try {
+            await firebase.auth().signInWithPopup(googleProvider);
+            if (errorEl) {
+                errorEl.classList.add('hidden');
+                errorEl.style.display = 'none';
             }
-        });
-    }
-});
+        } catch (error) {
+            if (errorEl) {
+                if (error.code === 'auth/unauthorized-domain' || (error.message && error.message.includes('unauthorized-domain'))) {
+                    const currentDomain = window.location.hostname || 'localhost';
+                    errorEl.innerHTML = `
+                        <div class="text-left bg-red-500/10 border border-red-500/30 p-3.5 rounded-xl text-xs text-red-400 space-y-2 mt-4">
+                            <p class="font-bold flex items-center gap-1.5 text-sm text-red-400">
+                                <i class="fa-solid fa-triangle-exclamation text-amber-400"></i> Tên miền chưa được thêm vào Firebase Console
+                            </p>
+                            <p>Tên miền bạn đang mở (<b>${currentDomain}</b>) chưa có trong danh sách Authorized Domains của Firebase.</p>
+                            <p class="font-semibold text-gray-200">👉 Hướng dẫn khắc phục (Chỉ cần 1 phút):</p>
+                            <ol class="list-decimal list-inside space-y-1 text-[11px] text-gray-300">
+                                <li>Vào <a href="https://console.firebase.google.com/" target="_blank" class="underline text-blue-400 font-bold">Firebase Console</a> ➔ Chọn dự án <b>lovin-c69f3</b></li>
+                                <li>Chọn tab <b>Authentication</b> ➔ <b>Settings</b> ➔ <b>Authorized domains</b></li>
+                                <li>Bấm <b>Add domain</b> ➔ Nhập <code>${currentDomain}</code> (hoặc <code>localhost</code>) và Lưu.</li>
+                            </ol>
+                        </div>`;
+                } else {
+                    errorEl.textContent = "Lỗi đăng nhập Google: " + (error.message || "Vui lòng thử lại");
+                }
+                errorEl.classList.remove('hidden');
+                errorEl.style.display = 'block';
+            }
+            console.error(error);
+        }
 
-btnLogin.addEventListener('click', async () => {
-    const email = document.getElementById('admin-email').value.trim();
-    const pwd = document.getElementById('admin-pwd').value;
-    const errorEl = document.getElementById('login-error');
-
-    if (!email || !pwd) {
-        errorEl.textContent = "Vui lòng nhập Email và Mật khẩu!";
-        errorEl.classList.remove('hidden');
-        errorEl.style.display = 'block';
-        return;
-    }
-
-    btnLogin.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ĐANG KIỂM TRA...';
-    btnLogin.disabled = true;
-
-    try {
-        await firebase.auth().signInWithEmailAndPassword(email, pwd);
-        errorEl.classList.add('hidden');
-        errorEl.style.display = 'none';
-    } catch (error) {
-        errorEl.textContent = "Email hoặc mật khẩu không chính xác!";
-        errorEl.classList.remove('hidden');
-        errorEl.style.display = 'block';
-        console.error(error);
-    }
-
-    btnLogin.innerHTML = '<span>ĐĂNG NHẬP</span> <i class="fa-solid fa-right-to-bracket"></i>';
-    btnLogin.disabled = false;
-});
+        btnLoginGoogle.innerHTML = `
+            <svg class="w-5 h-5" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            </svg>
+            <span>ĐĂNG NHẬP VỚI GOOGLE</span>`;
+        btnLoginGoogle.disabled = false;
+    });
+}
 
 menuLogout.addEventListener('click', (e) => {
     e.preventDefault();
     dropdownMenu.classList.add('hidden');
+    if (userListenerUnsubscribe) userListenerUnsubscribe();
     firebase.auth().signOut().catch(err => {
         showToast("Lỗi khi đăng xuất", true);
     });
@@ -146,59 +190,6 @@ document.addEventListener('click', () => {
     dropdownMenu.classList.add('hidden');
 });
 dropdownMenu.addEventListener('click', (e) => e.stopPropagation());
-
-// Change Password logic
-menuChangePwd.addEventListener('click', (e) => {
-    e.preventDefault();
-    dropdownMenu.classList.add('hidden');
-    document.getElementById('pwd-form').reset();
-    pwdModal.classList.remove('hidden');
-    // slight delay for transition
-    setTimeout(() => pwdModal.querySelector('.modal-content').classList.replace('scale-95', 'scale-100'), 10);
-    setTimeout(() => pwdModal.querySelector('.modal-content').classList.replace('opacity-0', 'opacity-100'), 10);
-});
-
-btnSavePwd.addEventListener('click', async () => {
-    const form = document.getElementById('pwd-form');
-    if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
-    }
-
-    const oldPwd = document.getElementById('f-oldPwd').value;
-    const newPwd = document.getElementById('f-newPwd').value;
-    const confirmPwd = document.getElementById('f-confirmPwd').value;
-
-    if (newPwd !== confirmPwd) {
-        showToast("Mật khẩu mới không khớp!", true);
-        return;
-    }
-
-    btnSavePwd.textContent = "Đang lưu...";
-    btnSavePwd.disabled = true;
-
-    try {
-        const user = firebase.auth().currentUser;
-        if (user) {
-            const credential = firebase.auth.EmailAuthProvider.credential(user.email, oldPwd);
-            await user.reauthenticateWithCredential(credential);
-            await user.updatePassword(newPwd);
-            
-            showToast("Đổi mật khẩu thành công!");
-            pwdModal.querySelector('.modal-content').classList.replace('scale-100', 'scale-95');
-            pwdModal.querySelector('.modal-content').classList.replace('opacity-100', 'opacity-0');
-            setTimeout(() => pwdModal.classList.add('hidden'), 300);
-        } else {
-            showToast("Không tìm thấy thông tin phiên đăng nhập!", true);
-        }
-    } catch (e) {
-        showToast("Lỗi khi đổi mật khẩu: " + (e.message || "Kiểm tra lại mật khẩu cũ"), true);
-        console.error(e);
-    }
-
-    btnSavePwd.textContent = "Lưu Lại";
-    btnSavePwd.disabled = false;
-});
 
 // Theme Toggling
 const btnThemeToggle = document.getElementById('btn-theme-toggle');
@@ -218,10 +209,64 @@ btnThemeToggle.addEventListener('click', () => {
     }
 });
 
-// Check auth on load using Firebase Auth SDK
-firebase.auth().onAuthStateChanged((user) => {
+// Auth state observer
+firebase.auth().onAuthStateChanged(async (user) => {
     if (user) {
-        showDashboard();
+        try {
+            // Read role from Firestore users/{uid}
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            let role = userDoc.exists ? (userDoc.data().role || 'user') : 'user';
+
+            if (user.uid === DEFAULT_SUPER_ADMIN_UID) {
+                role = 'super_admin';
+            }
+
+            currentUserRole = role;
+            isSuperAdmin = role === 'super_admin';
+            isAdmin = role === 'admin' || isSuperAdmin;
+            isManager = role === 'manager';
+
+            if (!isSuperAdmin && !isAdmin && !isManager) {
+                const errorEl = document.getElementById('login-error');
+                if (errorEl) {
+                    errorEl.textContent = "Tài khoản Google không có quyền truy cập hệ thống Quản trị!";
+                    errorEl.classList.remove('hidden');
+                    errorEl.style.display = 'block';
+                }
+                await firebase.auth().signOut();
+                hideDashboard();
+                return;
+            }
+
+            // Update Header User Profile UI
+            const nameEl = document.getElementById('user-display-name');
+            const emailEl = document.getElementById('user-email-text');
+            const avatarEl = document.getElementById('user-avatar-img');
+            const roleBadgeEl = document.getElementById('user-role-badge');
+
+            if (nameEl) nameEl.textContent = user.displayName || user.email || 'Admin';
+            if (emailEl) emailEl.textContent = user.email || 'Google User';
+            if (avatarEl && user.photoURL) avatarEl.src = user.photoURL;
+
+            if (roleBadgeEl) {
+                if (isSuperAdmin) {
+                    roleBadgeEl.textContent = '👑 Super Admin';
+                    roleBadgeEl.className = 'inline-block mt-1 px-2 py-0.5 text-[10px] font-bold rounded bg-purple-500/20 text-purple-400 border border-purple-500/30';
+                } else if (role === 'admin') {
+                    roleBadgeEl.textContent = '🛡️ Admin';
+                    roleBadgeEl.className = 'inline-block mt-1 px-2 py-0.5 text-[10px] font-bold rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+                } else if (role === 'manager') {
+                    roleBadgeEl.textContent = '👔 Manager';
+                    roleBadgeEl.className = 'inline-block mt-1 px-2 py-0.5 text-[10px] font-bold rounded bg-blue-500/20 text-blue-400 border border-blue-500/30';
+                }
+            }
+
+            showDashboard();
+        } catch (e) {
+            console.error("Auth role check error:", e);
+            await firebase.auth().signOut();
+            hideDashboard();
+        }
     } else {
         hideDashboard();
     }
@@ -232,9 +277,40 @@ function showDashboard() {
     lockScreen.classList.remove('flex');
     dashboardScreen.classList.remove('hidden');
     dashboardScreen.classList.add('flex');
-    loadOccasions();
-    loadGifts();
-    loadCategories();
+
+    const tabGifts = document.getElementById('tab-gifts');
+    const tabOccasions = document.getElementById('tab-occasions');
+    const tabCategories = document.getElementById('tab-categories');
+    const tabStartupBanner = document.getElementById('tab-startup-banner');
+    const tabPromoCodes = document.getElementById('tab-promo-codes');
+    const tabUsers = document.getElementById('tab-users');
+    const chipFilterAnon = document.getElementById('chip-filter-anon');
+
+    if (isManager) {
+        // Manager role: hide content editing tabs, show only User Management
+        if (tabGifts) tabGifts.style.display = 'none';
+        if (tabOccasions) tabOccasions.style.display = 'none';
+        if (tabCategories) tabCategories.style.display = 'none';
+        if (tabStartupBanner) tabStartupBanner.style.display = 'none';
+        if (tabPromoCodes) tabPromoCodes.style.display = 'none';
+        if (chipFilterAnon) chipFilterAnon.style.display = 'none';
+
+        // Auto activate Users tab
+        if (tabUsers) tabUsers.click();
+    } else {
+        if (tabGifts) tabGifts.style.display = 'flex';
+        if (tabOccasions) tabOccasions.style.display = 'flex';
+        if (tabCategories) tabCategories.style.display = 'flex';
+        if (tabStartupBanner) tabStartupBanner.style.display = 'flex';
+        if (tabPromoCodes) tabPromoCodes.style.display = 'flex';
+        if (chipFilterAnon) chipFilterAnon.style.display = 'inline-block';
+
+        loadOccasions();
+        loadGifts();
+        loadCategories();
+    }
+
+    loadUsersData();
 }
 
 function hideDashboard() {
@@ -242,10 +318,6 @@ function hideDashboard() {
     dashboardScreen.classList.remove('flex');
     lockScreen.classList.remove('hidden');
     lockScreen.classList.add('flex');
-    const emailEl = document.getElementById('admin-email');
-    const pwdEl = document.getElementById('admin-pwd');
-    if (emailEl) emailEl.value = '';
-    if (pwdEl) pwdEl.value = '';
 }
 
 async function loadOccasions() {
@@ -2010,49 +2082,83 @@ window.deleteCategory = async (id) => {
 // CATEGORY TAB NAVIGATION FIX
 // ==========================================
 // ==========================================
-// CATEGORY TAB NAVIGATION FIX & PROMO CODES TAB NAVIGATION
+// ==========================================
+// ALL TABS NAVIGATION MANAGER
 // ==========================================
 document.addEventListener('click', (e) => {
     const tabCategories = document.getElementById('tab-categories');
     const viewCategories = document.getElementById('view-categories');
     const tabPromoCodes = document.getElementById('tab-promo-codes');
     const viewPromoCodes = document.getElementById('view-promo-codes');
-    
-    if (!tabCategories || !viewCategories || !tabPromoCodes || !viewPromoCodes) return;
+    const tabUsers = document.getElementById('tab-users');
+    const viewUsers = document.getElementById('view-users');
 
     const isTabCategories = e.target.closest('#tab-categories');
     const isTabGifts = e.target.closest('#tab-gifts');
     const isTabOccasions = e.target.closest('#tab-occasions');
     const isTabBanner = e.target.closest('#tab-startup-banner');
     const isTabPromoCodes = e.target.closest('#tab-promo-codes');
+    const isTabUsers = e.target.closest('#tab-users');
 
     const inactive = "w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 transition-colors";
 
-    if (isTabGifts || isTabOccasions || isTabBanner || isTabPromoCodes) {
-        viewCategories.classList.add('hidden');
-        tabCategories.className = inactive;
+    if (isTabGifts || isTabOccasions || isTabBanner || isTabPromoCodes || isTabUsers) {
+        if (viewCategories) viewCategories.classList.add('hidden');
+        if (tabCategories) tabCategories.className = inactive;
         const btnCat = document.getElementById('btn-add-new-cat-trigger');
-        if(btnCat) btnCat.classList.add('hidden');
+        if (btnCat) btnCat.classList.add('hidden');
     }
 
-    if (isTabGifts || isTabOccasions || isTabBanner || isTabCategories) {
-        viewPromoCodes.classList.add('hidden');
-        tabPromoCodes.className = inactive;
+    if (isTabGifts || isTabOccasions || isTabBanner || isTabCategories || isTabUsers) {
+        if (viewPromoCodes) viewPromoCodes.classList.add('hidden');
+        if (tabPromoCodes) tabPromoCodes.className = inactive;
         const btnPc = document.getElementById('btn-add-new-pc-trigger');
-        if(btnPc) btnPc.classList.add('hidden');
+        if (btnPc) btnPc.classList.add('hidden');
     }
 
-    if (isTabCategories) {
+    if (isTabGifts || isTabOccasions || isTabBanner || isTabCategories || isTabPromoCodes) {
+        if (viewUsers) viewUsers.classList.add('hidden');
+        if (tabUsers) tabUsers.className = inactive;
+    }
+
+    if (isTabUsers && viewUsers && tabUsers) {
         document.getElementById('view-gifts')?.classList.add('hidden');
         document.getElementById('view-occasions')?.classList.add('hidden');
         document.getElementById('view-startup-banner')?.classList.add('hidden');
+        if (viewCategories) viewCategories.classList.add('hidden');
+        if (viewPromoCodes) viewPromoCodes.classList.add('hidden');
+
+        document.querySelectorAll('nav button').forEach(btn => {
+            btn.className = inactive;
+        });
+
+        tabUsers.className = "w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl bg-primary/10 text-primary transition-colors";
+        viewUsers.classList.remove('hidden');
+
+        const titleEl = document.getElementById('page-title');
+        if (titleEl) titleEl.textContent = "Quản Lý Người Dùng";
+
+        // Hide sidebar on mobile
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        if (window.innerWidth < 1024 && sidebar) {
+            sidebar.classList.add('-translate-x-full');
+            if (sidebarOverlay) sidebarOverlay.classList.add('hidden');
+        }
+
+        renderUsersDashboard();
+    } else if (isTabCategories && viewCategories && tabCategories) {
+        document.getElementById('view-gifts')?.classList.add('hidden');
+        document.getElementById('view-occasions')?.classList.add('hidden');
+        document.getElementById('view-startup-banner')?.classList.add('hidden');
+        if (viewPromoCodes) viewPromoCodes.classList.add('hidden');
+        if (viewUsers) viewUsers.classList.add('hidden');
         
-        document.getElementById('tab-gifts').className = inactive;
-        document.getElementById('tab-occasions').className = inactive;
-        document.getElementById('tab-startup-banner').className = inactive;
+        document.querySelectorAll('nav button').forEach(btn => {
+            btn.className = inactive;
+        });
 
         tabCategories.className = "w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl bg-primary/10 text-primary transition-colors";
-        
         viewCategories.classList.remove('hidden');
         document.getElementById('page-title').textContent = "Danh Mục Quà Tặng";
         
@@ -2067,14 +2173,16 @@ document.addEventListener('click', (e) => {
         }
         
         loadCategories();
-    } else if (isTabPromoCodes) {
+    } else if (isTabPromoCodes && viewPromoCodes && tabPromoCodes) {
         document.getElementById('view-gifts')?.classList.add('hidden');
         document.getElementById('view-occasions')?.classList.add('hidden');
         document.getElementById('view-startup-banner')?.classList.add('hidden');
+        if (viewCategories) viewCategories.classList.add('hidden');
+        if (viewUsers) viewUsers.classList.add('hidden');
         
-        document.getElementById('tab-gifts').className = inactive;
-        document.getElementById('tab-occasions').className = inactive;
-        document.getElementById('tab-startup-banner').className = inactive;
+        document.querySelectorAll('nav button').forEach(btn => {
+            btn.className = inactive;
+        });
 
         tabPromoCodes.className = "w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl bg-primary/10 text-primary transition-colors";
         
@@ -2465,3 +2573,491 @@ const modalScrollObserver = new MutationObserver(() => {
 document.querySelectorAll('.modal-overlay').forEach(modal => {
     modalScrollObserver.observe(modal, { attributes: true, attributeFilter: ['class'] });
 });
+
+// ==========================================
+// USER MANAGEMENT DASHBOARD LOGIC
+// ==========================================
+const tabUsers = document.getElementById('tab-users');
+const viewUsers = document.getElementById('view-users');
+const userSearchInput = document.getElementById('user-search-input');
+const userFilterChips = document.getElementById('user-filter-chips');
+const userListEl = document.getElementById('user-list');
+const userDetailModal = document.getElementById('user-detail-modal');
+
+if (tabUsers) {
+    tabUsers.addEventListener('click', () => {
+        if (pageTitle) pageTitle.textContent = "Quản Lý Người Dùng";
+
+        // Hide other views
+        const views = ['view-gifts', 'view-occasions', 'view-categories', 'view-startup-banner', 'view-promo-codes'];
+        views.forEach(vId => {
+            const el = document.getElementById(vId);
+            if (el) el.classList.add('hidden');
+        });
+        if (viewUsers) viewUsers.classList.remove('hidden');
+
+        // Style tab buttons
+        document.querySelectorAll('nav button').forEach(btn => {
+            btn.classList.remove('bg-primary/10', 'text-primary');
+            btn.classList.add('text-gray-500', 'hover:bg-gray-100', 'dark:text-gray-400', 'dark:hover:bg-white/5');
+        });
+        tabUsers.classList.add('bg-primary/10', 'text-primary');
+        tabUsers.classList.remove('text-gray-500', 'hover:bg-gray-100', 'dark:text-gray-400', 'dark:hover:bg-white/5');
+    });
+}
+
+function loadUsersData() {
+    if (userListenerUnsubscribe) userListenerUnsubscribe();
+
+    userListenerUnsubscribe = db.collection('users').onSnapshot(snap => {
+        allUsersData = [];
+        snap.forEach(doc => {
+            const data = doc.data();
+            data.uid = doc.id;
+            allUsersData.push(data);
+        });
+        renderUsersDashboard();
+    }, err => {
+        console.error("Error loading users:", err);
+        showToast("Lỗi tải danh sách người dùng", true);
+    });
+}
+
+if (userFilterChips) {
+    userFilterChips.querySelectorAll('.user-chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+            userFilterChips.querySelectorAll('.user-chip').forEach(b => {
+                b.classList.remove('active', 'bg-primary', 'text-white', 'shadow-sm');
+                b.classList.add('bg-gray-100', 'dark:bg-white/5', 'text-gray-600', 'dark:text-gray-300');
+            });
+            btn.classList.add('active', 'bg-primary', 'text-white', 'shadow-sm');
+            btn.classList.remove('bg-gray-100', 'dark:bg-white/5', 'text-gray-600', 'dark:text-gray-300');
+            currentUserFilter = btn.dataset.filter || 'all';
+            renderUsersDashboard();
+        });
+    });
+}
+
+if (userSearchInput) {
+    userSearchInput.addEventListener('input', (e) => {
+        currentSearchQuery = e.target.value.trim().toLowerCase();
+        renderUsersDashboard();
+    });
+}
+
+function renderUsersDashboard() {
+    if (!userListEl) return;
+
+    // Manager role filters out anonymous users first
+    let targetUsers = isManager 
+        ? allUsersData.filter(u => u.isAnonymous !== true && (u.email || '').trim().length > 0)
+        : [...allUsersData];
+
+    // Compute stats
+    let totalCount = targetUsers.length;
+    let premiumCount = 0;
+    let freeCount = 0;
+    let googleCount = 0;
+    let anonCount = 0;
+
+    targetUsers.forEach(u => {
+        const unlocked = Array.isArray(u.unlocked_features) ? u.unlocked_features : [];
+        const isPrem = unlocked.includes('premium');
+        if (isPrem) premiumCount++;
+        else freeCount++;
+
+        const isAnon = u.isAnonymous === true || !(u.email || '').trim();
+        if (isAnon) anonCount++;
+        else googleCount++;
+    });
+
+    const elTotal = document.getElementById('stat-total-users');
+    const elPrem = document.getElementById('stat-premium-users');
+    const elFree = document.getElementById('stat-free-users');
+    const cntAll = document.getElementById('cnt-all');
+    const cntGoogle = document.getElementById('cnt-google');
+    const cntAnon = document.getElementById('cnt-anon');
+    const cntPrem = document.getElementById('cnt-premium');
+    const cntFree = document.getElementById('cnt-free');
+
+    if (elTotal) elTotal.textContent = totalCount;
+    if (elPrem) elPrem.textContent = premiumCount;
+    if (elFree) elFree.textContent = freeCount;
+    if (cntAll) cntAll.textContent = totalCount;
+    if (cntGoogle) cntGoogle.textContent = googleCount;
+    if (cntAnon) cntAnon.textContent = anonCount;
+    if (cntPrem) cntPrem.textContent = premiumCount;
+    if (cntFree) cntFree.textContent = freeCount;
+
+    // Filter by selected chip & query
+    const filtered = targetUsers.filter(u => {
+        const email = (u.email || '').toLowerCase();
+        const name = (u.displayName || '').toLowerCase();
+        const uid = (u.uid || '').toLowerCase();
+        const matchesQuery = !currentSearchQuery || email.includes(currentSearchQuery) || name.includes(currentSearchQuery) || uid.includes(currentSearchQuery);
+
+        const unlocked = Array.isArray(u.unlocked_features) ? u.unlocked_features : [];
+        const isPrem = unlocked.includes('premium');
+        const isAnon = u.isAnonymous === true || !email;
+
+        let matchesChip = true;
+        if (currentUserFilter === 'google') matchesChip = !isAnon;
+        else if (currentUserFilter === 'anon') matchesChip = isAnon;
+        else if (currentUserFilter === 'premium') matchesChip = isPrem;
+        else if (currentUserFilter === 'free') matchesChip = !isPrem;
+
+        return matchesQuery && matchesChip;
+    });
+
+    if (filtered.length === 0) {
+        userListEl.innerHTML = `
+            <div class="col-span-full text-center py-16 bg-white dark:bg-darkcard rounded-2xl border border-gray-200 dark:border-darkborder shadow-sm">
+                <i class="fa-solid fa-user-slash text-4xl text-gray-400 mb-3"></i>
+                <h4 class="text-base font-bold text-gray-700 dark:text-gray-300">Không tìm thấy người dùng phù hợp</h4>
+            </div>`;
+        return;
+    }
+
+    let html = '';
+    filtered.forEach(u => {
+        const uid = u.uid || '';
+        const email = u.email || '';
+        const displayName = u.displayName || '';
+        const photoUrl = u.photoUrl || '';
+        const role = (u.role || '').toLowerCase();
+        const isBlocked = u.is_blocked === true;
+        const unlocked = Array.isArray(u.unlocked_features) ? u.unlocked_features : [];
+        const isPremium = unlocked.includes('premium');
+        const anniversaries = Array.isArray(u.anniversaries) ? u.anniversaries.length : 0;
+        const isAnon = u.isAnonymous === true || !email;
+
+        // Frame Border & Glow logic
+        let borderColor = 'border-gray-200 dark:border-white/10';
+        let glowStyle = '';
+        let emoji = '👤';
+
+        if (isBlocked) {
+            borderColor = 'border-red-500';
+            glowStyle = 'box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);';
+            emoji = '🚫';
+        } else if (role === 'super_admin') {
+            borderColor = 'border-purple-400';
+            glowStyle = 'box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);';
+            emoji = '👑';
+        } else if (role === 'admin') {
+            borderColor = 'border-emerald-400';
+            glowStyle = 'box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);';
+            emoji = '🛡️';
+        } else if (role === 'manager') {
+            borderColor = 'border-blue-400';
+            glowStyle = 'box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);';
+            emoji = '👔';
+        } else if (isPremium) {
+            borderColor = 'border-amber-400';
+            glowStyle = 'box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);';
+            emoji = '👤';
+        }
+
+        // Expirations format
+        let premLabel = 'Miễn phí';
+        if (isPremium) {
+            premLabel = 'VIP Vĩnh viễn';
+            if (u.expirations && u.expirations.premium) {
+                const exp = u.expirations.premium;
+                let expDate = null;
+                if (exp.toDate) expDate = exp.toDate();
+                else if (typeof exp === 'string') expDate = new Date(exp);
+                if (expDate) premLabel = `VIP đến ${expDate.getDate()}/${expDate.getMonth()+1}/${expDate.getFullYear()}`;
+            }
+        }
+
+        const initial = displayName ? displayName[0].toUpperCase() : 'U';
+
+        html += `
+            <div onclick="openUserDetailModal('${uid}')" class="bg-white dark:bg-darkcard border border-gray-200 dark:border-darkborder rounded-2xl p-4 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer relative group">
+                <div class="flex items-center gap-3">
+                    <div class="relative shrink-0">
+                        <div class="w-12 h-12 rounded-full border-2 ${borderColor} p-0.5" style="${glowStyle}">
+                            ${photoUrl ? `<img src="${photoUrl}" class="w-full h-full rounded-full object-cover">` : `<div class="w-full h-full rounded-full bg-primary/20 flex items-center justify-center font-bold text-primary text-base">${initial}</div>`}
+                        </div>
+                        <span class="absolute -right-1 -bottom-1 w-5 h-5 rounded-full bg-darkcard border border-white/20 flex items-center justify-center text-[10px] shadow-sm">${emoji}</span>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <h4 class="text-sm font-bold text-gray-900 dark:text-white truncate">${email ? email : (isAnon ? 'Tài khoản ẩn danh' : 'Người dùng')}</h4>
+                        ${displayName && displayName !== 'Người dùng' && displayName !== 'User Ẩn Danh' ? `<p class="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">${displayName}</p>` : ''}
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-xs text-gray-400 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all"></i>
+                </div>
+
+                <div class="border-t border-gray-100 dark:border-white/10 my-3"></div>
+
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div class="px-2.5 py-1.5 rounded-lg ${isPremium ? 'bg-amber-500/10 text-amber-500 border border-amber-500/30' : 'bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400'} font-semibold truncate flex items-center gap-1.5">
+                        <i class="fa-solid ${isPremium ? 'fa-award' : 'fa-user'}"></i>
+                        <span class="truncate">${premLabel}</span>
+                    </div>
+                    <div class="px-2.5 py-1.5 rounded-lg bg-blue-500/10 text-blue-500 border border-blue-500/20 font-semibold truncate flex items-center gap-1.5">
+                        <i class="fa-solid fa-calendar-days"></i>
+                        <span>${anniversaries} sự kiện</span>
+                    </div>
+                </div>
+
+                <div onclick="event.stopPropagation(); copyTextToClipboard('${uid}', 'Đã sao chép UID!')" class="mt-3 flex items-center justify-between text-[11px] text-gray-400 hover:text-primary transition-colors p-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5">
+                    <span class="font-mono truncate"><i class="fa-solid fa-fingerprint mr-1 opacity-70"></i> UID: ${uid}</span>
+                    <i class="fa-solid fa-copy ml-1"></i>
+                </div>
+            </div>`;
+    });
+
+    userListEl.innerHTML = html;
+}
+
+window.copyTextToClipboard = (text, toastMsg) => {
+    navigator.clipboard.writeText(text);
+    showToast(toastMsg || "Đã sao chép!");
+};
+
+window.openUserDetailModal = (uid) => {
+    const user = allUsersData.find(u => u.uid === uid);
+    if (!user) return;
+
+    selectedUserForModal = user;
+    const email = user.email || '';
+    const displayName = user.displayName || '';
+    const photoUrl = user.photoUrl || '';
+    const role = (user.role || '').toLowerCase();
+    const isBlocked = user.is_blocked === true;
+    const unlocked = Array.isArray(user.unlocked_features) ? user.unlocked_features : [];
+    const isPremium = unlocked.includes('premium');
+    const anniversaries = Array.isArray(user.anniversaries) ? user.anniversaries : [];
+
+    // Header
+    const udEmail = document.getElementById('ud-email');
+    const udName = document.getElementById('ud-name');
+    const udUid = document.getElementById('ud-uid');
+    const udAvatar = document.getElementById('ud-avatar');
+    const udEmoji = document.getElementById('ud-emoji');
+
+    if (udEmail) udEmail.textContent = email || 'Tài khoản ẩn danh';
+    if (udName) udName.textContent = displayName || 'Chưa cập nhật tên';
+    if (udUid) udUid.textContent = `UID: ${uid}`;
+    if (udAvatar && photoUrl) udAvatar.src = photoUrl;
+    if (udEmoji) udEmoji.textContent = isBlocked ? '🚫' : (role === 'super_admin' ? '👑' : (role === 'admin' ? '🛡️' : (role === 'manager' ? '👔' : '👤')));
+
+    // Section 0: System Roles (Super Admin Only)
+    const secSysRole = document.getElementById('sec-sys-role');
+    const sysRoleBtns = document.getElementById('sys-role-btns');
+    if (secSysRole && sysRoleBtns) {
+        if (isSuperAdmin) {
+            secSysRole.classList.remove('hidden');
+            sysRoleBtns.innerHTML = `
+                <button onclick="updateUserRole('${uid}', 'admin')" class="w-full py-2.5 px-2 rounded-xl text-xs font-bold ${role === 'admin' ? 'bg-emerald-600 text-white shadow-lg' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20'} flex items-center justify-center gap-1.5 transition-all">🛡️ Admin</button>
+                <button onclick="updateUserRole('${uid}', 'manager')" class="w-full py-2.5 px-2 rounded-xl text-xs font-bold ${role === 'manager' ? 'bg-blue-600 text-white shadow-lg' : 'bg-blue-500/10 text-blue-400 border border-blue-500/30 hover:bg-blue-500/20'} flex items-center justify-center gap-1.5 transition-all">👔 Manager</button>
+                <button onclick="updateUserRole('${uid}', 'user')" class="w-full py-2.5 px-2 rounded-xl text-xs font-bold ${role === 'user' || !role ? 'bg-gray-600 text-white' : 'bg-gray-100 dark:bg-white/5 text-gray-400 border border-gray-300 dark:border-white/10 hover:bg-gray-200'} flex items-center justify-center gap-1.5 transition-all">👤 Thu hồi vai trò</button>
+            `;
+        } else {
+            secSysRole.classList.add('hidden');
+        }
+    }
+
+    // Section 1: VIP Premium Grant
+    const udPremBtns = document.getElementById('ud-premium-btns');
+    const udPremBanner = document.getElementById('ud-premium-status-banner');
+
+    if (udPremBtns) {
+        if (isManager) {
+            if (isPremium) {
+                if (udPremBanner) udPremBanner.classList.remove('hidden');
+                udPremBtns.className = 'grid grid-cols-1 gap-2.5';
+                udPremBtns.innerHTML = `<button disabled class="w-full py-2.5 px-3 rounded-xl text-xs font-bold bg-gray-400 text-white opacity-50 cursor-not-allowed flex items-center justify-center gap-1.5"><i class="fa-solid fa-ban"></i> Đã có VIP (Chỉ cấp 1 lần)</button>`;
+            } else {
+                if (udPremBanner) udPremBanner.classList.add('hidden');
+                udPremBtns.className = 'grid grid-cols-1 gap-2.5';
+                udPremBtns.innerHTML = `<button onclick="grantUserPremium('${uid}', 30)" class="w-full py-2.5 px-3 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-lg flex items-center justify-center gap-1.5 transition-all"><i class="fa-solid fa-gift"></i> Cấp 30 Ngày VIP Premium</button>`;
+            }
+        } else {
+            if (udPremBanner) udPremBanner.classList.add('hidden');
+            udPremBtns.className = isPremium ? 'grid grid-cols-2 sm:grid-cols-4 gap-2.5' : 'grid grid-cols-3 gap-2.5';
+            udPremBtns.innerHTML = `
+                <button onclick="grantUserPremium('${uid}', 30)" class="w-full py-2.5 px-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-md transition-all flex items-center justify-center gap-1.5"><i class="fa-solid fa-calendar-plus"></i> +30 Ngày</button>
+                <button onclick="grantUserPremium('${uid}', 365)" class="w-full py-2.5 px-2 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-md transition-all flex items-center justify-center gap-1.5"><i class="fa-solid fa-crown"></i> +1 Năm</button>
+                <button onclick="grantUserPremium('${uid}', -1)" class="w-full py-2.5 px-2 rounded-xl text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white shadow-md transition-all flex items-center justify-center gap-1.5"><i class="fa-solid fa-infinity"></i> Vĩnh Viễn</button>
+                ${isPremium ? `<button onclick="revokeUserPremium('${uid}')" class="w-full py-2.5 px-2 rounded-xl text-xs font-bold bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/40 transition-all flex items-center justify-center gap-1.5"><i class="fa-solid fa-trash-can"></i> Hủy VIP</button>` : ''}
+            `;
+        }
+    }
+
+    // Section 2: Account Block Toggle
+    const secBlockUser = document.getElementById('sec-block-user');
+    const udBlockSwitch = document.getElementById('ud-block-switch');
+    const udBlockDesc = document.getElementById('ud-block-desc');
+
+    if (secBlockUser) {
+        if (isManager) {
+            secBlockUser.classList.add('hidden');
+        } else {
+            secBlockUser.classList.remove('hidden');
+            if (udBlockSwitch) {
+                udBlockSwitch.checked = isBlocked;
+                udBlockSwitch.onchange = (e) => toggleUserBlockStatus(uid, e.target.checked);
+            }
+            if (udBlockDesc) udBlockDesc.textContent = isBlocked ? 'Tài khoản đang bị KHÓA truy cập' : 'Tài khoản hoạt động bình thường';
+        }
+    }
+
+    // Section 3: Background Effects Unlock Manager
+    const udEffectsGrid = document.getElementById('ud-effects-grid');
+    if (udEffectsGrid) {
+        let effHtml = '';
+        Object.keys(EFFECT_NAMES_VI).forEach(effId => {
+            const isUnlocked = unlocked.includes(effId);
+            effHtml += `
+                <button onclick="toggleUserEffect('${uid}', '${effId}', ${!isUnlocked})" class="w-full py-2 px-2 rounded-xl text-xs font-semibold ${isUnlocked ? 'bg-violet-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10'} border border-transparent transition-all flex items-center justify-center gap-1.5 truncate" title="${EFFECT_NAMES_VI[effId]}">
+                    <i class="fa-solid ${isUnlocked ? 'fa-check-circle' : 'fa-circle-plus'} text-[11px] shrink-0"></i>
+                    <span class="truncate">${EFFECT_NAMES_VI[effId]}</span>
+                </button>`;
+        });
+        udEffectsGrid.innerHTML = effHtml;
+    }
+
+    // Section 4: Synced Anniversaries
+    const udAnnCount = document.getElementById('ud-ann-count');
+    const udAnnList = document.getElementById('ud-ann-list');
+
+    if (udAnnCount) udAnnCount.textContent = anniversaries.length;
+    if (udAnnList) {
+        if (anniversaries.length === 0) {
+            udAnnList.innerHTML = `<p class="text-xs text-gray-400 italic">Chưa có sự kiện nào được sao lưu đồng bộ.</p>`;
+        } else {
+            let annHtml = '';
+            anniversaries.forEach(item => {
+                const title = item.title || item.titleVi || 'Sự kiện';
+                const dateStr = item.date || item.targetDate || '';
+                annHtml += `
+                    <div class="p-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 flex items-center justify-between text-xs">
+                        <span class="font-semibold text-gray-800 dark:text-gray-200 truncate"><i class="fa-solid fa-heart text-pink-500 mr-1.5"></i>${title}</span>
+                        <span class="font-mono text-gray-400 shrink-0">${dateStr}</span>
+                    </div>`;
+            });
+            udAnnList.innerHTML = annHtml;
+        }
+    }
+
+    // Show modal
+    if (userDetailModal) {
+        userDetailModal.classList.remove('hidden');
+        setTimeout(() => userDetailModal.querySelector('.modal-content')?.classList.replace('scale-95', 'scale-100'), 10);
+        setTimeout(() => userDetailModal.querySelector('.modal-content')?.classList.replace('opacity-0', 'opacity-100'), 10);
+    }
+};
+
+window.closeUserDetailModalFunc = () => {
+    if (!userDetailModal) return;
+    const content = userDetailModal.querySelector('.modal-content');
+    if (content) {
+        content.classList.replace('scale-100', 'scale-95');
+        content.classList.replace('opacity-100', 'opacity-0');
+    }
+    setTimeout(() => {
+        userDetailModal.classList.add('hidden');
+    }, 300);
+};
+
+if (userDetailModal) {
+    userDetailModal.querySelectorAll('.close-modal').forEach(btn => {
+        btn.addEventListener('click', window.closeUserDetailModalFunc);
+    });
+    userDetailModal.addEventListener('click', (e) => {
+        if (e.target === userDetailModal) window.closeUserDetailModalFunc();
+    });
+}
+
+window.updateUserRole = async (uid, newRole) => {
+    if (!isSuperAdmin) {
+        showToast("Chỉ Super Admin mới có quyền phân vai trò!", true);
+        return;
+    }
+    if (newRole === 'super_admin') {
+        showToast("Không được phép cấp quyền Super Admin!", true);
+        return;
+    }
+    try {
+        await db.collection('users').doc(uid).set({ role: newRole }, { merge: true });
+        showToast(`Đã phân vai trò: ${newRole.toUpperCase()}`);
+        openUserDetailModal(uid);
+    } catch (e) {
+        console.error(e);
+        showToast("Lỗi khi cập nhật vai trò", true);
+    }
+};
+
+window.grantUserPremium = async (uid, days) => {
+    try {
+        const user = allUsersData.find(u => u.uid === uid);
+        let unlocked = Array.isArray(user?.unlocked_features) ? [...user.unlocked_features] : [];
+        if (!unlocked.includes('premium')) unlocked.push('premium');
+
+        const updateData = { unlocked_features: unlocked };
+
+        if (days > 0) {
+            const expDate = new Date();
+            expDate.setDate(expDate.getDate() + days);
+            updateData['expirations.premium'] = firebase.firestore.Timestamp.fromDate(expDate);
+        } else if (days < 0) {
+            updateData['expirations.premium'] = null; // Lifetime
+        }
+
+        await db.collection('users').doc(uid).update(updateData);
+        showToast("Cấp VIP Premium thành công!");
+        openUserDetailModal(uid);
+    } catch (e) {
+        console.error(e);
+        showToast("Lỗi khi cấp VIP Premium", true);
+    }
+};
+
+window.revokeUserPremium = async (uid) => {
+    try {
+        const user = allUsersData.find(u => u.uid === uid);
+        let unlocked = Array.isArray(user?.unlocked_features) ? user.unlocked_features.filter(x => x !== 'premium') : [];
+        await db.collection('users').doc(uid).update({
+            unlocked_features: unlocked,
+            'expirations.premium': firebase.firestore.FieldValue.delete()
+        });
+        showToast("Đã hủy quyền VIP Premium!");
+        openUserDetailModal(uid);
+    } catch (e) {
+        console.error(e);
+        showToast("Lỗi khi hủy VIP Premium", true);
+    }
+};
+
+window.toggleUserBlockStatus = async (uid, shouldBlock) => {
+    try {
+        await db.collection('users').doc(uid).set({ is_blocked: shouldBlock }, { merge: true });
+        showToast(shouldBlock ? "Đã KHÓA tài khoản người dùng!" : "Đã MỞ KHÓA tài khoản người dùng!");
+        openUserDetailModal(uid);
+    } catch (e) {
+        console.error(e);
+        showToast("Lỗi khi cập nhật trạng thái khóa", true);
+    }
+};
+
+window.toggleUserEffect = async (uid, effectId, unlock) => {
+    try {
+        const user = allUsersData.find(u => u.uid === uid);
+        let unlocked = Array.isArray(user?.unlocked_features) ? [...user.unlocked_features] : [];
+        if (unlock) {
+            if (!unlocked.includes(effectId)) unlocked.push(effectId);
+        } else {
+            unlocked = unlocked.filter(x => x !== effectId);
+        }
+
+        await db.collection('users').doc(uid).update({ unlocked_features: unlocked });
+        showToast(unlock ? `Đã mở hiệu ứng ${EFFECT_NAMES_VI[effectId] || effectId}` : `Đã khóa hiệu ứng ${EFFECT_NAMES_VI[effectId] || effectId}`);
+        openUserDetailModal(uid);
+    } catch (e) {
+        console.error(e);
+        showToast("Lỗi khi cập nhật hiệu ứng", true);
+    }
+};
