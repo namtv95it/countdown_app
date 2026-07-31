@@ -6,13 +6,27 @@ import '../widgets/gift_product_card.dart';
 import '../services/localization_service.dart';
 import '../services/sync_service.dart';
 
-class SpecialOccasionScreen extends StatelessWidget {
+class SpecialOccasionScreen extends StatefulWidget {
   final SpecialOccasion occasion;
 
   const SpecialOccasionScreen({super.key, required this.occasion});
 
   @override
+  State<SpecialOccasionScreen> createState() => _SpecialOccasionScreenState();
+}
+
+class _SpecialOccasionScreenState extends State<SpecialOccasionScreen> {
+  late Stream<List<GiftProduct>> _giftsStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _giftsStream = SyncService().giftsStream();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final occasion = widget.occasion;
     final lang = LocalizationService.languageNotifier.value;
     final colors = occasion.colors;
 
@@ -131,18 +145,46 @@ class SpecialOccasionScreen extends StatelessWidget {
           SliverPadding(
             padding: const EdgeInsets.all(16.0),
             sliver: StreamBuilder<List<GiftProduct>>(
-              stream: SyncService().giftsStream(),
+              stream: _giftsStream,
               builder: (context, snapshot) {
                 if (snapshot.hasError && snapshot.error == 'no_internet') {
                   return SliverToBoxAdapter(
                     child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.wifi_off, color: Colors.white54, size: 48),
-                          const SizedBox(height: 16),
-                          Text('Vui lòng kết nối mạng để tải dữ liệu', style: GoogleFonts.quicksand(color: Colors.white70, fontSize: 16)),
-                        ],
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 40.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.wifi_off, color: Colors.white54, size: 48),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Vui lòng kết nối mạng để tải dữ liệu',
+                              style: GoogleFonts.quicksand(color: Colors.white70, fontSize: 16),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 20),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                setState(() {
+                                  _giftsStream = SyncService().giftsStream();
+                                });
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF7C3AED),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              ),
+                              icon: const Icon(Icons.refresh, size: 20),
+                              label: Text(
+                                'Tải lại',
+                                style: GoogleFonts.quicksand(fontWeight: FontWeight.w600, fontSize: 14),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   );

@@ -585,7 +585,33 @@ class _GiftScreenState extends State<GiftScreen> with SingleTickerProviderStateM
                     children: [
                       const Icon(Icons.wifi_off, color: Colors.white54, size: 48),
                       const SizedBox(height: 16),
-                      Text(LocalizationService.translate('no_internet_gifts'), style: GoogleFonts.quicksand(color: Colors.white70, fontSize: 16)),
+                      Text(
+                        LocalizationService.translate('no_internet_gifts'),
+                        style: GoogleFonts.quicksand(color: Colors.white70, fontSize: 16),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            _giftsStream = SyncService().giftsStream();
+                            _categoriesStream = SyncService().categoriesStream();
+                          });
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF7C3AED),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                        ),
+                        icon: const Icon(Icons.refresh, size: 20),
+                        label: Text(
+                          LocalizationService.translate('retry') == 'retry' ? 'Tải lại' : LocalizationService.translate('retry'),
+                          style: GoogleFonts.quicksand(fontWeight: FontWeight.w600, fontSize: 14),
+                        ),
+                      ),
                     ],
                   ),
                 );
