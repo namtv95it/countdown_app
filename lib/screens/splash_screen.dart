@@ -66,7 +66,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       await FontService.init();
 
       // 2. Kiểm tra Firebase & Mạng với Timeout 4 giây
-      if (mounted) setState(() => _statusText = 'Kiểm tra kết nối mạng...');
+      if (mounted) setState(() => _statusText = 'Chuẩn bị dữ liệu...');
       try {
         await Firebase.initializeApp(
           options: DefaultFirebaseOptions.currentPlatform,
