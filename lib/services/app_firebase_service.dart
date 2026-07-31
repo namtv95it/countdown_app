@@ -102,13 +102,27 @@ class AppFirebaseService {
 
   User? _currentUser;
   bool _isInitialized = false;
+  bool _isOffline = false;
 
   User? get currentUser => _currentUser;
   bool get isAnonymous => _currentUser?.isAnonymous ?? true;
   bool get isSignedInWithGoogle => !isAnonymous && _currentUser != null;
+  bool get isOffline => _isOffline;
   String? get userEmail => _currentUser?.email;
   String? get userDisplayName => _currentUser?.displayName;
   String? get userPhotoUrl => _currentUser?.photoURL;
+
+  /// Kiểm tra xem một exception có phải do mất mạng/offline không
+  bool _isNetworkError(dynamic e) {
+    final msg = e.toString().toLowerCase();
+    return msg.contains('network') ||
+        msg.contains('socket') ||
+        msg.contains('connection') ||
+        msg.contains('unavailable') ||
+        msg.contains('timeout') ||
+        msg.contains('no internet') ||
+        (e is FirebaseException && (e.code == 'unavailable' || e.code == 'network-request-failed'));
+  }
 
   Future<void> init() async {
     if (_isInitialized) return;
@@ -118,6 +132,7 @@ class AppFirebaseService {
       if (existing != null) {
         _currentUser = existing;
         _isInitialized = true;
+        _isOffline = false;
         debugPrint('Firebase Auth: Reusing existing session uid=${existing.uid} anonymous=${existing.isAnonymous}');
         await syncPremiumStatusOnStartup();
         return;
@@ -126,10 +141,39 @@ class AppFirebaseService {
       UserCredential userCredential = await _auth.signInAnonymously();
       _currentUser = userCredential.user;
       _isInitialized = true;
+      _isOffline = false;
       debugPrint('Firebase Auth: Signed in anonymously as ${_currentUser?.uid}');
       await syncPremiumStatusOnStartup();
     } catch (e) {
       debugPrint('Firebase Auth Error: $e');
+      if (_isNetworkError(e)) {
+        // Offline mode: app vẫn chạy bình thường với dữ liệu local cache
+        _isOffline = true;
+        _isInitialized = true; // Đánh dấu đã init để không retry vô hạn
+        debugPrint('Firebase Auth: Offline mode - using local cache');
+        // Đọc premium từ cache local không cần Firebase
+        await _syncPremiumFromLocalCache();
+      }
+    }
+  }
+
+  /// Retry kết nối Firebase khi có mạng trở lại (gọi từ UI khi detect online)
+  Future<void> retryInit() async {
+    if (!_isOffline) return;
+    _isInitialized = false;
+    _isOffline = false;
+    await init();
+  }
+
+  /// Đọc premium status từ local cache mà không cần Firebase (dùng khi offline)
+  Future<void> _syncPremiumFromLocalCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final localPremium = prefs.getBool('is_premium_account') ?? false;
+      AdService.isPremium = localPremium;
+      debugPrint('Offline: Loaded premium from local cache: $localPremium');
+    } catch (e) {
+      debugPrint('Error reading local premium cache: $e');
     }
   }
 
@@ -138,9 +182,26 @@ class AppFirebaseService {
     if (_currentUser == null) return;
     try {
       final prefs = await SharedPreferences.getInstance();
+      
+      // Thử đồng bộ profile metadata (có thể fail khi offline)
       await syncUserProfileMetadata();
+      
       bool localPremium = prefs.getBool('is_premium_account') ?? false;
-      final featuresMap = await getUnlockedFeatures();
+      
+      Map<String, DateTime?> featuresMap = {};
+      try {
+        featuresMap = await getUnlockedFeatures();
+        _isOffline = false;
+      } catch (e) {
+        if (_isNetworkError(e)) {
+          // Offline: dùng dữ liệu local cache đã lưu từ lần trước
+          debugPrint('Offline: Cannot sync features from Firebase, using local cache');
+          _isOffline = true;
+          AdService.isPremium = localPremium;
+          return;
+        }
+        rethrow;
+      }
       
       final features = featuresMap.keys.toList();
       bool cloudPremium = false;
@@ -394,12 +455,37 @@ class AppFirebaseService {
     }
   }
 
-  /// Lấy danh sách các tính năng đã mở khóa kèm thời hạn của User từ Cloud (luôn lấy từ server)
+  /// Lấy danh sách các tính năng đã mở khóa kèm thời hạn của User từ Cloud
+  /// Ưu tiên lấy từ server, fallback về cache local nếu offline
   Future<Map<String, DateTime?>> getUnlockedFeatures() async {
     if (_currentUser == null) return {};
     
-    // Cố gắng lấy trực tiếp từ server. Nếu rớt mạng sẽ throw Exception
-    final doc = await _firestore.collection('users').doc(_currentUser!.uid).get(const GetOptions(source: Source.server));
+    DocumentSnapshot<Map<String, dynamic>> doc;
+    try {
+      // Ưu tiên lấy từ server để có dữ liệu mới nhất
+      doc = await _firestore
+          .collection('users')
+          .doc(_currentUser!.uid)
+          .get(const GetOptions(source: Source.server));
+      _isOffline = false;
+    } catch (e) {
+      if (_isNetworkError(e)) {
+        debugPrint('Offline: Falling back to Firestore cache for features');
+        _isOffline = true;
+        try {
+          // Fallback về cache local của Firestore
+          doc = await _firestore
+              .collection('users')
+              .doc(_currentUser!.uid)
+              .get(const GetOptions(source: Source.cache));
+        } catch (_) {
+          // Không có cache → trả về rỗng, dùng SharedPreferences
+          return {};
+        }
+      } else {
+        rethrow;
+      }
+    }
     
     Map<String, DateTime?> result = {};
     if (doc.exists && doc.data() != null) {
@@ -569,6 +655,10 @@ class AppFirebaseService {
   /// Đồng bộ thông tin cá nhân cơ bản của User lên Firestore collection 'users'
   Future<void> syncUserProfileMetadata() async {
     if (_currentUser == null) return;
+    if (_isOffline) {
+      debugPrint('Offline: Skipping syncUserProfileMetadata');
+      return;
+    }
     try {
       final data = {
         'uid': _currentUser!.uid,
@@ -581,6 +671,11 @@ class AppFirebaseService {
       await _firestore.collection('users').doc(_currentUser!.uid).set(data, SetOptions(merge: true));
       await checkIsCurrentUserAdmin();
     } catch (e) {
+      if (_isNetworkError(e)) {
+        debugPrint('Offline: Cannot sync profile metadata, skipping');
+        _isOffline = true;
+        return;
+      }
       debugPrint('Error syncing user profile metadata: $e');
     }
   }
