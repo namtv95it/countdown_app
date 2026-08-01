@@ -4,8 +4,13 @@ import 'package:google_fonts/google_fonts.dart';
 
 class CongratulationsView extends StatefulWidget {
   final String title;
+  final bool showConfetti;
 
-  const CongratulationsView({super.key, required this.title});
+  const CongratulationsView({
+    super.key,
+    required this.title,
+    this.showConfetti = false,
+  });
 
   @override
   State<CongratulationsView> createState() => _CongratulationsViewState();
@@ -18,7 +23,17 @@ class _CongratulationsViewState extends State<CongratulationsView> {
   void initState() {
     super.initState();
     _confettiController = ConfettiController(duration: const Duration(seconds: 10));
-    _confettiController.play();
+    if (widget.showConfetti) {
+      _confettiController.play();
+    }
+  }
+
+  @override
+  void didUpdateWidget(CongratulationsView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.showConfetti && !oldWidget.showConfetti) {
+      _confettiController.play();
+    }
   }
 
   @override
@@ -66,28 +81,29 @@ class _CongratulationsViewState extends State<CongratulationsView> {
           ],
         ),
         // Pháo hoa nổ từ vị trí cao hơn (gần khu vực trên cùng của thẻ sự kiện)
-        Positioned(
-          top: -250,
-          left: 0,
-          right: 0,
-          child: Align(
-            alignment: Alignment.center,
-            child: ConfettiWidget(
-              confettiController: _confettiController,
-              blastDirectionality: BlastDirectionality.explosive, // Nổ tỏa ra mọi hướng
-              maxBlastForce: 60, // Lực nổ mạnh hơn một chút
-              minBlastForce: 20,
-              emissionFrequency: 0.05,
-              numberOfParticles: 40, // Đủ để trông rực rỡ
-              gravity: 0.2, // Rơi từ từ xuống
-              shouldLoop: false,
-              colors: const [
-                Colors.green, Colors.blue, Colors.pink, 
-                Colors.orange, Colors.purple, Colors.yellow,
-              ],
+        if (widget.showConfetti)
+          Positioned(
+            top: -250,
+            left: 0,
+            right: 0,
+            child: Align(
+              alignment: Alignment.center,
+              child: ConfettiWidget(
+                confettiController: _confettiController,
+                blastDirectionality: BlastDirectionality.explosive, // Nổ tỏa ra mọi hướng
+                maxBlastForce: 60, // Lực nổ mạnh hơn một chút
+                minBlastForce: 20,
+                emissionFrequency: 0.05,
+                numberOfParticles: 40, // Đủ để trông rực rỡ
+                gravity: 0.2, // Rơi từ từ xuống
+                shouldLoop: false,
+                colors: const [
+                  Colors.green, Colors.blue, Colors.pink, 
+                  Colors.orange, Colors.purple, Colors.yellow,
+                ],
+              ),
             ),
           ),
-        ),
       ],
     );
   }

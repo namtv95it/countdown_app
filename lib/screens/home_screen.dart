@@ -1407,7 +1407,7 @@ class _HomeScreenState extends State<HomeScreen>
                           const SizedBox(height: 16),
 
                           if (isToday && (_customCountdownTarget == null || !_isFullscreenMode))
-                            CongratulationsView(title: item.title)
+                            CongratulationsView(title: item.title, showConfetti: false)
                           else ...[
 
 
@@ -1428,7 +1428,7 @@ class _HomeScreenState extends State<HomeScreen>
                                     : Duration.zero;
 
                                 if (remaining == Duration.zero) {
-                                  return CongratulationsView(title: item.title);
+                                  return CongratulationsView(title: item.title, showConfetti: true);
                                 }
 
                                 final int totalSeconds = (remaining.inMilliseconds / 1000).ceil();
