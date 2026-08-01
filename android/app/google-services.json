@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "730119079486-61bil0o41nr4q124mho6o7iuoeg1gthh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mynkyo.lovin",
+            "certificate_hash": "748b552cfe0d41099507e93fcddc59e749c2957a"
+          }
+        },
+        {
           "client_id": "730119079486-88qu7gmg1ghdodg8248r4mq16rng4act.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
